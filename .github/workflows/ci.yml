@@ -1,0 +1,177 @@
+name: CI
+
+# Chạy trên MỌI nhánh: mỗi thành viên đẩy code lên nhánh riêng là biết ngay
+# code của mình có build được không, không phải chờ tới lúc mở PR.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+# Đẩy commit mới lên cùng một nhánh thì hủy lượt chạy cũ - tiết kiệm phút CI
+# và không phải chờ kết quả của code đã lỗi thời.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    # BẮT BUỘC windows: SAT.App là WPF (net8.0-windows), không build được trên Linux.
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # Đọc version từ global.json để CI dùng ĐÚNG SDK mà cả nhóm đang dùng.
+          # Ghi cứng version ở đây sẽ có ngày lệch với global.json mà không ai biết.
+          global-json-file: global.json
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore FAT.sln
+
+      - name: Build
+        run: dotnet build FAT.sln --configuration Release --no-restore
+
+      # Test tích hợp cần SQL Server. Runner của GitHub không có sẵn SQL Server,
+      # nên các test đó TỰ SKIP (xem SkippableFact trong DatabaseSchemaTests).
+      # Test đơn vị về quy tắc tính điểm vẫn chạy đầy đủ - đó mới là phần dễ sai.
+      - name: Test
+        run: >
+          dotnet test FAT.sln
+          --configuration Release
+          --no-build
+          --logger "trx;LogFileName=test-results.trx"
+          --logger "console;verbosity=normal"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        # Chạy cả khi test đỏ - đó chính là lúc cần xem kết quả nhất.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults
+          retention-days: 14
+
+  format:
+    name: Code Format
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore FAT.sln
+
+      # Chặn ngay ở PR những khác biệt định dạng thuần túy. Không có bước này,
+      # PR sẽ lẫn lộn giữa thay đổi thật và thay đổi do IDE tự format lại,
+      # làm người review (@LucFr1746) rất khó đọc.
+      - name: Verify formatting
+        run: dotnet format FAT.sln --verify-no-changes --verbosity diagnostic
+
+      - name: Hướng dẫn khi bước trên thất bại
+        if: failure()
+        run: |
+          Write-Host "::error::Code chua dung chuan dinh dang."
+          Write-Host "Chay lenh sau tren may cua ban roi commit lai:"
+          Write-Host "    dotnet format FAT.sln"
+        shell: pwsh
+
+  database:
+    name: Database Scripts
+    # Ubuntu chứ KHÔNG phải windows-latest: image SQL Server là Linux container,
+    # mà runner Windows của GitHub chỉ chạy được Windows container.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Dựng SQL Server thật để chạy toàn bộ script từ đầu. Mục đích: bắt lỗi cú
+    # pháp T-SQL và lỗi ràng buộc NGAY khi ai đó sửa schema, thay vì để cả nhóm
+    # phát hiện khi chạy setup-db.ps1 trên máy mình. Dự án không dùng EF
+    # Migrations nên đây là lưới an toàn duy nhất cho thay đổi schema.
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        env:
+          ACCEPT_EULA: 'Y'
+          MSSQL_SA_PASSWORD: 'YourStrong@Passw0rd'
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -C -Q 'SELECT 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+          --health-start-period 20s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Dùng luôn sqlcmd CÓ SẴN trong image SQL Server thay vì cài thêm công cụ
+      # lên runner. Bớt được một bước tải mạng hay hỏng, và phiên bản sqlcmd
+      # luôn khớp với phiên bản server.
+      - name: Chạy script tạo database
+        run: |
+          set -euo pipefail
+          CID='${{ job.services.mssql.id }}'
+          docker cp db/. "$CID:/tmp/db/"
+
+          run_scripts() {
+            for f in 01_schema.sql 02_seed_master.sql 03_seed_demo.sql; do
+              echo "--> $f"
+              docker exec "$CID" /opt/mssql-tools18/bin/sqlcmd \
+                -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -i "/tmp/db/$f"
+            done
+          }
+
+          echo "=== Lần 1: dựng mới ==="
+          run_scripts
+
+          # Lần 2 chứng minh script là idempotent: dựng lại bao nhiêu lần cũng
+          # phải thành công, không được lỗi trùng khóa.
+          echo "=== Lần 2: kiểm tra idempotent ==="
+          run_scripts
+
+      - name: Kiểm tra dữ liệu đã nạp đúng
+        run: |
+          set -euo pipefail
+          CID='${{ job.services.mssql.id }}'
+          docker exec "$CID" /opt/mssql-tools18/bin/sqlcmd \
+            -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -d SAT -h -1 -W \
+            -Q "SET NOCOUNT ON;
+                DECLARE @c INT = (SELECT COUNT(*) FROM dbo.Course);
+                DECLARE @s INT = (SELECT COUNT(*) FROM dbo.Student);
+                DECLARE @m INT = (SELECT COUNT(*) FROM dbo.Material);
+                IF @c <> 31 OR @s <> 3 OR @m <> 8
+                    THROW 51000, N'Du lieu seed khong dung so luong mong doi.', 1;
+                PRINT CONCAT('OK: ', @c, ' mon, ', @s, ' sinh vien, ', @m, ' tai lieu.');"
+
+      - name: Xem log SQL Server khi thất bại
+        if: failure()
+        run: docker logs '${{ job.services.mssql.id }}'

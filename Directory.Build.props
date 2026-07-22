@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Thuộc tính dùng chung cho MỌI project trong solution.
+    Chỉ TV1 (Lead) được sửa file này - xem docs/plan §6.
+  -->
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Bật CPM: version package khai báo tập trung ở Directory.Packages.props -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!--
+      KHÔNG bật TreatWarningsAsErrors: với 2 ngày code, một warning nullable
+      lặt vặt chặn build cả nhóm là cái giá quá đắt. Warning vẫn hiện để sửa dần.
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

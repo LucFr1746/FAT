@@ -1,0 +1,23 @@
+# Tự động gán người review cho Pull Request.
+#
+# @LucFr1746 phụ trách review code toàn dự án (theo phân công vai trò của nhóm),
+# nên được gán mặc định cho mọi PR.
+# @Nlonggg phụ trách quản lý Git và merge, nên được gán thêm ở những file dùng
+# chung mà một thay đổi sai sẽ làm hỏng build của cả 5 người.
+
+# Mặc định: mọi thay đổi
+*                           @LucFr1746
+
+# Vùng NHẠY CẢM - sửa những file này ảnh hưởng toàn nhóm, cần cả 2 người duyệt
+/db/                        @LucFr1746 @Nlonggg
+/.github/                   @LucFr1746 @Nlonggg
+/Directory.Packages.props   @LucFr1746 @Nlonggg
+/Directory.Build.props      @LucFr1746 @Nlonggg
+/global.json                @LucFr1746 @Nlonggg
+/.editorconfig              @LucFr1746 @Nlonggg
+/FAT.sln                    @LucFr1746 @Nlonggg
+
+# Hợp đồng interface đã đóng băng - đổi là gãy code của người khác
+/src/SAT.Services/Abstractions/  @LucFr1746 @Nlonggg
+/src/SAT.Domain/Entities/        @LucFr1746 @Nlonggg
+/src/SAT.Data/SatDbContext.cs    @LucFr1746 @Nlonggg

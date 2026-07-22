@@ -1,0 +1,56 @@
+## Build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+publish/
+[Pp]ublish/
+
+## Visual Studio / Rider / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+*.csproj.user
+.vscode/*
+!.vscode/extensions.json
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+!packages/build/
+*.nuget.props
+*.nuget.targets
+
+## Cấu hình cá nhân - KHÔNG BAO GIỜ commit
+# Mỗi thành viên có SQL Server instance khác nhau; connection string riêng
+# nằm ở đây và không được đẩy lên repo (xem docs/plan §3.1).
+appsettings.Local.json
+appsettings.*.Local.json
+*.local.json
+secrets.json
+
+## Database
+*.mdf
+*.ldf
+*.ndf
+*.bak
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+coverage*.info
+*.coverage
+*.trx
+
+## Misc
+*.dll.config
+*.pdb
+Thumbs.db
+desktop.ini
+.DS_Store

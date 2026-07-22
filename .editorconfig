@@ -1,0 +1,113 @@
+# Quy chuẩn định dạng dùng chung cho cả nhóm.
+#
+# VÌ SAO CẦN FILE NÀY: Visual Studio, Rider và VS Code mặc định format khác
+# nhau (tab/space, vị trí dấu ngoặc, thứ tự using). Không có file này thì mỗi
+# lần một người mở file của người khác và bấm Ctrl+K,D là cả file bị format
+# lại => diff hàng trăm dòng và conflict giả khi merge.
+#
+# CI chạy `dotnet format --verify-no-changes` nên sai chuẩn sẽ bị chặn ở PR.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,xml,csproj,props,targets}]
+indent_size = 2
+
+[*.{md,sql}]
+# Markdown dùng 2 dấu cách cuối dòng để xuống dòng - đừng cắt mất
+trim_trailing_whitespace = false
+
+[*.cs]
+indent_size = 4
+
+# ---- using ----
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = false
+csharp_using_directive_placement = outside_namespace:warning
+
+# ---- namespace ----
+# File-scoped namespace: bớt một cấp thụt lề cho toàn bộ file
+csharp_style_namespace_declarations = file_scoped:warning
+
+# ---- dấu ngoặc nhọn ----
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+csharp_prefer_braces = true:warning
+
+# ---- this. ----
+dotnet_style_qualification_for_field = false:warning
+dotnet_style_qualification_for_property = false:warning
+dotnet_style_qualification_for_method = false:warning
+
+# ---- var ----
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# ---- cú pháp hiện đại ----
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_throw_expression = true:suggestion
+dotnet_style_null_propagation = true:warning
+dotnet_style_coalesce_expression = true:warning
+
+# ---- đặt tên ----
+dotnet_naming_rule.interfaces_start_with_i.severity = warning
+dotnet_naming_rule.interfaces_start_with_i.symbols = interface_symbol
+dotnet_naming_rule.interfaces_start_with_i.style = prefix_i_style
+dotnet_naming_symbols.interface_symbol.applicable_kinds = interface
+dotnet_naming_style.prefix_i_style.required_prefix = I
+dotnet_naming_style.prefix_i_style.capitalization = pascal_case
+
+# THỨ TỰ CÁC RULE DƯỚI ĐÂY QUAN TRỌNG: Roslyn dùng rule KHỚP ĐẦU TIÊN.
+# Hằng số và static readonly phải đứng TRƯỚC rule field thường, nếu không
+# chúng cũng bị bắt thêm dấu '_' - trong khi hằng số phải là PascalCase.
+
+# const  -> PascalCase
+dotnet_naming_rule.const_fields_pascal.severity = warning
+dotnet_naming_rule.const_fields_pascal.symbols = const_field_symbol
+dotnet_naming_rule.const_fields_pascal.style = pascal_style
+dotnet_naming_symbols.const_field_symbol.applicable_kinds = field
+dotnet_naming_symbols.const_field_symbol.required_modifiers = const
+
+# static readonly -> PascalCase
+dotnet_naming_rule.static_readonly_pascal.severity = warning
+dotnet_naming_rule.static_readonly_pascal.symbols = static_readonly_symbol
+dotnet_naming_rule.static_readonly_pascal.style = pascal_style
+dotnet_naming_symbols.static_readonly_symbol.applicable_kinds = field
+dotnet_naming_symbols.static_readonly_symbol.required_modifiers = static,readonly
+
+# field private thường -> _camelCase
+dotnet_naming_rule.private_fields_underscore.severity = warning
+dotnet_naming_rule.private_fields_underscore.symbols = private_field_symbol
+dotnet_naming_rule.private_fields_underscore.style = underscore_camel_style
+dotnet_naming_symbols.private_field_symbol.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbol.applicable_accessibilities = private
+
+dotnet_naming_style.pascal_style.capitalization = pascal_case
+dotnet_naming_style.underscore_camel_style.required_prefix = _
+dotnet_naming_style.underscore_camel_style.capitalization = camel_case
+
+# ---- cảnh báo cần chú ý ----
+# CA2007 (ConfigureAwait) tắt: đây là app WPF, code sau await PHẢI quay về
+# UI thread thì mới cập nhật được binding.
+dotnet_diagnostic.CA2007.severity = none
+
+# File do template hoặc trình sinh mã tạo ra - không bắt lỗi định dạng
+[**/AssemblyInfo.cs]
+generated_code = true
+
+[**/obj/**]
+generated_code = true
+
+[**/bin/**]
+generated_code = true
