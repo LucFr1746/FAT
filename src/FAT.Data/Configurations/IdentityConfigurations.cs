@@ -47,6 +47,7 @@ public class MajorConfiguration : IEntityTypeConfiguration<Major>
         builder.HasKey(x => x.MajorId);
         builder.Property(x => x.MajorCode).HasMaxLength(20).IsRequired();
         builder.Property(x => x.MajorName).HasMaxLength(150).IsRequired();
+        builder.Property(x => x.Description).HasMaxLength(500);
         builder.HasIndex(x => x.MajorCode).IsUnique();
     }
 }

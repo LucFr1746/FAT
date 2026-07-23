@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FAT.App.Navigation;
 using FAT.App.ViewModels.Auth;
+using FAT.App.ViewModels.Catalog;
+using FAT.App.ViewModels.Student;
 using FAT.Services.Abstractions;
 using FAT.Services.Dtos;
 using Microsoft.Extensions.DependencyInjection;
@@ -87,7 +89,11 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
             switch (tabName)
             {
                 case "Profile":
-                    if (IsAdmin) break; // Admin does not view/edit student profile
+                    if (IsAdmin)
+                    {
+                        break; // Admin does not view/edit student profile
+                    }
+
                     var profileVm = _serviceProvider.GetRequiredService<ProfileViewModel>();
                     CurrentTabViewModel = profileVm;
                     await profileVm.OnNavigatedToAsync(null);
@@ -103,6 +109,83 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     await userMgmtVm.OnNavigatedToAsync(null);
                     break;
 
+                // ----- Catalog administration -----
+                // Guarded here as well as in the XAML: hiding a button is not
+                // authorization, and every service behind these screens
+                // re-checks IsAdmin for itself.
+                case "MajorAdmin":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<MajorAdminViewModel>();
+                    break;
+
+                case "TermAdmin":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<TermAdminViewModel>();
+                    break;
+
+                case "SemesterAdmin":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<SemesterAdminViewModel>();
+                    break;
+
+                case "SubjectAdmin":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<SubjectAdminViewModel>();
+                    break;
+
+                case "CurriculumAdmin":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<CurriculumAdminViewModel>();
+                    break;
+
+                case "FlmImport":
+                    if (!IsAdmin)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<FlmImportViewModel>();
+                    break;
+
+                // ----- Student screens -----
+                case "MyCurriculum":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<MyCurriculumViewModel>();
+                    break;
+
+                case "GpaPrediction":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GpaPredictionViewModel>();
+                    break;
+
                 case "Home":
                 default:
                     CurrentTabViewModel = null; // Show Home Dashboard Cards
@@ -112,6 +195,24 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error switching tab to {tabName}: {ex}");
+        }
+    }
+
+    /// <summary>
+    /// Resolves a tab's view model, shows it and lets it load.
+    ///
+    /// Written once rather than repeated per case: the step easily forgotten is
+    /// the OnNavigatedToAsync call, and a screen that never loads shows an empty
+    /// grid with no error to explain it.
+    /// </summary>
+    private async Task ShowTabAsync<TViewModel>() where TViewModel : ViewModelBase
+    {
+        var viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        CurrentTabViewModel = viewModel;
+
+        if (viewModel is INavigationAware navigationAware)
+        {
+            await navigationAware.OnNavigatedToAsync(null);
         }
     }
 

@@ -6,6 +6,7 @@ public class Major
     public int MajorId { get; set; }
     public string MajorCode { get; set; } = string.Empty;
     public string MajorName { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     /// <summary>
     /// Total credits required to graduate. This is the DENOMINATOR of the

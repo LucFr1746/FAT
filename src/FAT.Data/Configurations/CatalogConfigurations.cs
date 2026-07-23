@@ -13,7 +13,15 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
         builder.HasKey(x => x.CourseId);
         builder.Property(x => x.CourseCode).HasMaxLength(20).IsRequired();
         builder.Property(x => x.CourseName).HasMaxLength(200).IsRequired();
-        builder.Property(x => x.Description).HasMaxLength(500);
+
+        // nvarchar(max), NOT 500: the longest real FLM syllabus description is
+        // over 6,000 characters, so a capped column silently truncates it.
+        builder.Property(x => x.Description).HasColumnType("nvarchar(max)");
+
+        builder.Property(x => x.MinAvgMarkToPass).HasPrecision(4, 2);
+        builder.Property(x => x.SyllabusCode).HasMaxLength(20);
+        builder.Property(x => x.PrerequisiteText).HasMaxLength(500);
+
         builder.HasIndex(x => x.CourseCode).IsUnique();
     }
 }
@@ -41,6 +49,10 @@ public class PrerequisiteConfiguration : IEntityTypeConfiguration<Prerequisite>
 
         builder.HasIndex(x => new { x.CourseId, x.RequiredCourseId }).IsUnique();
 
+        // Rows sharing a GroupNo above zero are alternatives (OR); the index
+        // supports the grouping the eligibility check does on every lookup.
+        builder.HasIndex(x => new { x.CourseId, x.GroupNo });
+
         builder.HasOne(x => x.Course)
                .WithMany(c => c.Prerequisites)
                .HasForeignKey(x => x.CourseId)
@@ -62,6 +74,10 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Curriculum>
         builder.HasKey(x => x.CurriculumId);
         builder.HasIndex(x => new { x.MajorId, x.CourseId }).IsUnique();
 
+        // Covers the curriculum screen's natural ordering: a major's subjects,
+        // by term, in the order the reorder feature stores.
+        builder.HasIndex(x => new { x.MajorId, x.TermNo, x.DisplayOrder });
+
         builder.HasOne(x => x.Major)
                .WithMany(m => m.CurriculumItems)
                .HasForeignKey(x => x.MajorId)
@@ -70,6 +86,15 @@ public class CurriculumConfiguration : IEntityTypeConfiguration<Curriculum>
         builder.HasOne(x => x.Course)
                .WithMany(c => c.CurriculumItems)
                .HasForeignKey(x => x.CourseId)
+               .OnDelete(DeleteBehavior.Restrict);
+
+        // Foreign key onto Term.TermNo (a unique column), not Term.TermId, so
+        // the existing TermNo values and every query over them stay valid.
+        // Restrict: deleting a kỳ must not silently delete a curriculum.
+        builder.HasOne(x => x.Term)
+               .WithMany(t => t.CurriculumItems)
+               .HasForeignKey(x => x.TermNo)
+               .HasPrincipalKey(t => t.TermNo)
                .OnDelete(DeleteBehavior.Restrict);
     }
 }
@@ -98,7 +123,9 @@ public class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
     {
         builder.ToTable("Assessment");
         builder.HasKey(x => x.AssessmentId);
-        builder.Property(x => x.Name).HasMaxLength(100).IsRequired();
+        // 200, not 100: FLM category names reach 156 characters
+        // ("Tham gia trên lớpParticipation" and friends).
+        builder.Property(x => x.Name).HasMaxLength(200).IsRequired();
 
         // Four decimal places so that awkward ratios such as one third can be
         // represented while the components still sum to exactly 1.00.

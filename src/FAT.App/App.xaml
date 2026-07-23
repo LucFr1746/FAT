@@ -13,6 +13,12 @@
                                              PrimaryColor="DeepPurple"
                                              SecondaryColor="Teal" />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                <!--
+                    Shared styling for the catalog admin and student curriculum
+                    screens. Merged here so the eight of them do not each carry
+                    their own copy of the same 150 lines of brushes and templates.
+                -->
+                <ResourceDictionary Source="Styles/CatalogStyles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Global Converters -->
@@ -38,6 +44,34 @@
 
             <DataTemplate DataType="{x:Type vm:DashboardViewModel}" xmlns:vm="clr-namespace:FAT.App.ViewModels" xmlns:v="clr-namespace:FAT.App.Views">
                 <v:DashboardView/>
+            </DataTemplate>
+
+            <!-- Catalog administration (Admin only) -->
+            <DataTemplate DataType="{x:Type vmCat:MajorAdminViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:MajorAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:TermAdminViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:TermAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:SemesterAdminViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:SemesterAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:SubjectAdminViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:SubjectAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:CurriculumAdminViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:CurriculumAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:FlmImportViewModel}" xmlns:vmCat="clr-namespace:FAT.App.ViewModels.Catalog" xmlns:vCat="clr-namespace:FAT.App.Views.Catalog">
+                <vCat:FlmImportView/>
+            </DataTemplate>
+
+            <!-- Student curriculum & prediction -->
+            <DataTemplate DataType="{x:Type vmStu:MyCurriculumViewModel}" xmlns:vmStu="clr-namespace:FAT.App.ViewModels.Student" xmlns:vStu="clr-namespace:FAT.App.Views.Student">
+                <vStu:MyCurriculumView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmStu:GpaPredictionViewModel}" xmlns:vmStu="clr-namespace:FAT.App.ViewModels.Student" xmlns:vStu="clr-namespace:FAT.App.Views.Student">
+                <vStu:GpaPredictionView/>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>

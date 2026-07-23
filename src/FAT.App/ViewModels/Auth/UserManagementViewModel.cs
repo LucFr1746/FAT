@@ -83,7 +83,10 @@ public partial class UserManagementViewModel : ViewModelBase, INavigationAware
     private async Task ToggleUserStatusAsync(UserDto? user)
     {
         var target = user ?? SelectedUser;
-        if (target == null) return;
+        if (target == null)
+        {
+            return;
+        }
 
         if (CurrentUserContext.User != null && target.UserId == CurrentUserContext.User.UserId)
         {
@@ -126,7 +129,10 @@ public partial class UserManagementViewModel : ViewModelBase, INavigationAware
     private void OpenResetPasswordModal(UserDto? user)
     {
         var target = user ?? SelectedUser;
-        if (target == null) return;
+        if (target == null)
+        {
+            return;
+        }
 
         ResetTargetUser = target;
         NewPassword = string.Empty;

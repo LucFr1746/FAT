@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using FAT.App.Startup;
 using FAT.Data;
 using FAT.Services;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,10 @@ public partial class App : Application
 
                 services.AddFatData(connectionString);
                 services.AddFatCoreServices();
+
+                // One line per module, per docs/TEAM.md: the module owns its own
+                // registration file so nobody else has to edit this one.
+                services.AddCatalogModule();
 
                 // Navigation & Container ViewModels
                 services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();
@@ -98,6 +103,9 @@ public partial class App : Application
 
             if (await db.Database.CanConnectAsync())
             {
+                // Applies any schema change a teammate's database has not seen
+                // yet. Idempotent and never destructive - see SchemaUpgrader.
+                db.EnsureDatabaseSchemaUpToDate();
                 return true;
             }
 

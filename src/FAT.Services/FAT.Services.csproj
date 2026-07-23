@@ -12,11 +12,24 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="BCrypt.Net-Next" />
+    <!-- Reads db/data/flm_chuong_trinh_hoc.xlsx. See Import/XlsxFlmDataReader. -->
+    <PackageReference Include="ClosedXML" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\FAT.Domain\FAT.Domain.csproj" />
     <ProjectReference Include="..\FAT.Data\FAT.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Lets the tests reach internal helpers (PrerequisiteGraph,
+      MajorCreditCalculator, the seam that injects a stub IFlmDataReader).
+      These are implementation details the App must not depend on, but leaving
+      them untestable would mean covering cycle detection and credit
+      synchronisation only indirectly, through the database.
+    -->
+    <InternalsVisibleTo Include="FAT.Tests" />
   </ItemGroup>
 
 </Project>

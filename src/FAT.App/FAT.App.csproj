@@ -44,4 +44,15 @@
     <None Update="appsettings.Local.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('appsettings.Local.json')" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      The FLM catalog export, copied next to the executable so the Import screen
+      can offer it as the default without the user hunting for a path.
+      Link= flattens the repository layout into a single Data folder in output.
+    -->
+    <None Include="..\..\db\data\**\*.*"
+          Link="Data\%(RecursiveDir)%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

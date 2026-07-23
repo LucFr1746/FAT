@@ -56,12 +56,7 @@ public class UserService : IUserService
             throw new ArgumentException("Họ và tên không được để trống.", nameof(fullName));
         }
 
-        var student = await _db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken);
-        if (student == null)
-        {
-            throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
-        }
-
+        var student = await _db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken) ?? throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
         student.FullName = fullName.Trim();
         student.Email = email?.Trim();
         student.DateOfBirth = dateOfBirth;
@@ -158,12 +153,7 @@ public class UserService : IUserService
 
     public async Task SetActiveAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
     {
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
-        if (user == null)
-        {
-            throw new InvalidOperationException("Không tìm thấy tài khoản.");
-        }
-
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken) ?? throw new InvalidOperationException("Không tìm thấy tài khoản.");
         user.IsActive = isActive;
         await _db.SaveChangesAsync(cancellationToken);
     }
@@ -175,12 +165,7 @@ public class UserService : IUserService
             throw new ArgumentException("Mật khẩu mới phải có tối thiểu 8 ký tự.");
         }
 
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken);
-        if (user == null)
-        {
-            throw new InvalidOperationException("Không tìm thấy tài khoản.");
-        }
-
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, cancellationToken) ?? throw new InvalidOperationException("Không tìm thấy tài khoản.");
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 11);
         await _db.SaveChangesAsync(cancellationToken);
     }

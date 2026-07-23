@@ -1,0 +1,176 @@
+<UserControl x:Class="FAT.App.Views.Student.GpaPredictionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="760" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <ScrollViewer Background="{StaticResource SurfaceBrush}" VerticalScrollBarVisibility="Auto">
+        <Grid Margin="28,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,18">
+                <TextBlock Text="Dự Đoán GPA &amp; Xếp Loại Tốt Nghiệp" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"
+                           Text="Nhập điểm dự kiến cho các môn còn lại để xem GPA và xếp loại tốt nghiệp dự kiến. Số môn học lại được tính vào kết quả xếp loại." />
+            </StackPanel>
+
+            <!-- Banners -->
+            <StackPanel Grid.Row="1">
+                <Border Style="{StaticResource StatusBannerStyle}"
+                        Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextBrush}"
+                               FontWeight="Bold" TextWrapping="Wrap" />
+                </Border>
+                <Border Style="{StaticResource ErrorBannerStyle}"
+                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                               FontWeight="Bold" TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+
+            <!-- Result cards -->
+            <Grid Grid.Row="2" Margin="0,0,0,16"
+                  Visibility="{Binding HasPrediction, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="GPA hiện tại" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding Prediction.CurrentGpa, StringFormat={}{0:0.00}}"
+                                   FontSize="30" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}"
+                        Background="{StaticResource SuccessBackgroundBrush}">
+                    <StackPanel>
+                        <TextBlock Text="GPA dự kiến" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding Prediction.PredictedGpa, StringFormat={}{0:0.00}}"
+                                   FontSize="30" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}">
+                    <StackPanel>
+                        <TextBlock Text="Xếp loại theo GPA" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding Prediction.BaseClassificationName}"
+                                   FontSize="20" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- The adjusted result is shown SEPARATELY from the raw one. A single
+                     downgraded number reads as a bug; two numbers plus the reason is
+                     actionable. -->
+                <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}"
+                        Background="{StaticResource InfoBackgroundBrush}">
+                    <StackPanel>
+                        <TextBlock Text="Xếp loại sau khi tính học lại" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding Prediction.AdjustedClassificationName}"
+                                   FontSize="20" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}"
+                                   TextWrapping="Wrap" />
+                        <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,6,0,0">
+                            <Run Text="Số môn học lại:" />
+                            <Run Text="{Binding Prediction.RetakenSubjectCount, Mode=OneWay}" FontWeight="Bold" />
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Demotion notice -->
+            <Border Grid.Row="3" Style="{StaticResource InfoBannerStyle}" Margin="0,0,0,16"
+                    Visibility="{Binding IsDemoted, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding DemotionMessage}" Foreground="{StaticResource TextBrush}"
+                           FontWeight="Bold" TextWrapping="Wrap" />
+            </Border>
+
+            <!-- Planner -->
+            <Border Grid.Row="4" Style="{StaticResource CardBorderStyle}">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <TextBlock Text="Điểm dự kiến cho các môn còn lại"
+                                   Style="{StaticResource SectionTitleStyle}" Margin="0" />
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Chọn tất cả" Command="{Binding IncludeAllCommand}"
+                                    Style="{StaticResource GhostButtonStyle}" />
+                            <Button Content="Bỏ chọn" Command="{Binding ClearAllCommand}"
+                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                            <Button Content="Tính lại dự đoán" Command="{Binding PredictCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" Margin="12,0,0,0" MinWidth="160" />
+                            <Button Content="Lưu kết quả" Command="{Binding SaveSnapshotCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="{Binding RetakeRuleMessage}" Style="{StaticResource PageSubtitleStyle}"
+                               Margin="0,0,0,10" />
+
+                    <DataGrid ItemsSource="{Binding PlannedSubjects}"
+                              Style="{StaticResource CatalogDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                              CellStyle="{StaticResource CatalogCellStyle}"
+                              IsReadOnly="False" MaxHeight="340">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Tính vào dự đoán"
+                                                    Binding="{Binding IsIncluded, UpdateSourceTrigger=PropertyChanged}"
+                                                    Width="140" />
+                            <DataGridTextColumn Header="Mã môn" Binding="{Binding CourseCode}" Width="110"
+                                                IsReadOnly="True" />
+                            <DataGridTextColumn Header="Tên môn học" Binding="{Binding CourseName}" Width="*"
+                                                IsReadOnly="True" />
+                            <DataGridTextColumn Header="Tín chỉ" Binding="{Binding Credits}" Width="80"
+                                                IsReadOnly="True" />
+                            <DataGridTextColumn Header="Điểm dự kiến"
+                                                Binding="{Binding ExpectedScore, UpdateSourceTrigger=PropertyChanged}"
+                                                Width="130" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,10,0,0"
+                               Text="Chỉ những môn được tick mới đưa vào dự đoán. Môn có điểm dự kiến dưới 5.0 được xem là chưa qua nên không cộng vào GPA." />
+
+                    <TextBlock Text="Lịch sử dự đoán" Style="{StaticResource SectionTitleStyle}"
+                               Margin="0,20,0,6" />
+                    <DataGrid ItemsSource="{Binding History}"
+                              Style="{StaticResource CatalogDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                              CellStyle="{StaticResource CatalogCellStyle}"
+                              MaxHeight="200">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="GPA hiện tại" Width="120"
+                                                Binding="{Binding CurrentGpa, StringFormat={}{0:0.00}}" />
+                            <DataGridTextColumn Header="GPA dự kiến" Width="120"
+                                                Binding="{Binding PredictedGpa, StringFormat={}{0:0.00}}" />
+                            <DataGridTextColumn Header="Số môn học lại" Binding="{Binding RetakenSubjectCount}"
+                                                Width="130" />
+                            <DataGridTextColumn Header="Xếp loại theo GPA" Binding="{Binding BaseClassificationName}"
+                                                Width="160" />
+                            <DataGridTextColumn Header="Xếp loại sau điều chỉnh"
+                                                Binding="{Binding AdjustedClassificationName}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

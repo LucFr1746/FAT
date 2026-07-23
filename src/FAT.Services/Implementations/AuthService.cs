@@ -36,7 +36,7 @@ public class AuthService : IAuthService
         var user = await _db.Users
             .Include(u => u.Role)
             .Include(u => u.Student)
-            .SingleOrDefaultAsync(u => u.Username.ToLower() == normalized 
+            .SingleOrDefaultAsync(u => u.Username.ToLower() == normalized
                                    || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalized), cancellationToken);
 
         if (user is null)
@@ -201,7 +201,10 @@ public class AuthService : IAuthService
 
         // Major ID selection
         var majorId = dto.MajorId > 0 ? dto.MajorId : (await _db.Majors.Select(m => m.MajorId).FirstOrDefaultAsync(cancellationToken));
-        if (majorId == 0) majorId = 1;
+        if (majorId == 0)
+        {
+            majorId = 1;
+        }
 
         // Create Student Profile
         var newStudent = new Domain.Entities.Student

@@ -143,14 +143,52 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Navigation Tabs in Header (Trang Chủ & Quản Lý Tài Khoản [Admin Only]) -->
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="Home" Content="🏠 Trang Chủ" Style="{StaticResource NavTabButtonStyle}"/>
-                    <!-- Quản Lý Tài Khoản - Hiển thị CHỈ KHI Role là Admin -->
-                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="🛡️ Quản Lý Tài Khoản" 
-                            Style="{StaticResource NavTabButtonStyle}" 
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                </StackPanel>
+                <!--
+                    Navigation tabs. Wrapped in a ScrollViewer because an Admin sees
+                    eight of them and a fixed StackPanel would push the last ones
+                    off the window on a smaller screen.
+                    Every tab is gated on role; DashboardViewModel.SwitchTabAsync
+                    re-checks the same condition, since a hidden button is not
+                    authorization.
+                -->
+                <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="Home" Content="🏠 Trang Chủ" Style="{StaticResource NavTabButtonStyle}"/>
+
+                        <!-- Student -->
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="MyCurriculum" Content="📖 Chương Trình Học"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="GpaPrediction" Content="📈 Dự Đoán GPA"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
+
+                        <!-- Admin -->
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="🛡️ Tài Khoản"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="MajorAdmin" Content="🎓 Ngành"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="TermAdmin" Content="📅 Kỳ Học"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="SemesterAdmin" Content="🗓️ Học Kỳ"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="SubjectAdmin" Content="📚 Môn Học"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="CurriculumAdmin" Content="🗂️ Chương Trình"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="FlmImport" Content="⬇️ Import FLM"
+                                Style="{StaticResource NavTabButtonStyle}"
+                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- User Profile Clickable Badge -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">

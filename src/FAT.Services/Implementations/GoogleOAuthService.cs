@@ -40,7 +40,7 @@ public class GoogleOAuthService : IGoogleOAuthService
         if (string.IsNullOrWhiteSpace(clientId) || clientId.Contains("YOUR_GOOGLE_CLIENT_ID"))
         {
             _logger.LogWarning("Google OAuth ClientId is not configured. Falling back to Google Auth Simulation / Dev Mode.");
-            
+
             // Simulating Google OAuth for dev testing when ClientId is unconfigured
             await Task.Delay(800, cancellationToken);
             var mockUser = new GoogleUserInfoDto(

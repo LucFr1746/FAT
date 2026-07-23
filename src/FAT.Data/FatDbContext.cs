@@ -29,27 +29,30 @@ public class FatDbContext : DbContext
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Material> Materials => Set<Material>();
     public DbSet<MaterialFile> MaterialFiles => Set<MaterialFile>();
+    public DbSet<Term> Terms => Set<Term>();
+    public DbSet<SubjectMaterial> SubjectMaterials => Set<SubjectMaterial>();
+    public DbSet<AssessmentSchedule> AssessmentSchedules => Set<AssessmentSchedule>();
+    public DbSet<GradePrediction> GradePredictions => Set<GradePrediction>();
 
+    /// <summary>
+    /// Brings an existing database up to the current model. The individual
+    /// changes live in <see cref="SchemaUpgrader"/>; this method only decides
+    /// whether a failure should stop the caller.
+    ///
+    /// Swallowing the exception is deliberate: the app must still start against
+    /// an in-memory provider or a database the user cannot ALTER. When the
+    /// schema really is stale the first query fails with a message that names
+    /// the missing column, which is more useful than a crash on launch.
+    /// </summary>
     public void EnsureDatabaseSchemaUpToDate()
     {
         try
         {
-            if (Database.IsSqlServer())
-            {
-                Database.ExecuteSqlRaw(@"
-                    IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Student')
-                    BEGIN
-                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Student') AND name = 'CurrentSemester')
-                        BEGIN
-                            ALTER TABLE dbo.Student ADD CurrentSemester NVARCHAR(20) NULL;
-                        END
-                    END
-                ");
-            }
+            SchemaUpgrader.Upgrade(this);
         }
         catch
         {
-            // Ignore for in-memory or non-relational test providers
+            // Non-relational provider, or an account without ALTER rights.
         }
     }
 

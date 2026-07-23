@@ -15,7 +15,7 @@ public class AuthServiceTests
             .Options;
 
         var db = new FatDbContext(options);
-        
+
         // Seed default roles
         db.Roles.Add(new Domain.Entities.Role { RoleId = 1, RoleName = Domain.Constants.RoleNames.Admin, Description = "Admin" });
         db.Roles.Add(new Domain.Entities.Role { RoleId = 2, RoleName = Domain.Constants.RoleNames.Student, Description = "Student" });

@@ -72,6 +72,126 @@ public class DatabaseSchemaTests : IDisposable
         (await db.AuditLogs.Take(1).ToListAsync()).Should().NotBeNull();
         (await db.Materials.Take(1).ToListAsync()).Should().NotBeNull();
         (await db.MaterialFiles.Take(1).ToListAsync()).Should().NotBeNull();
+
+        // Catalog tables added with the curriculum module.
+        (await db.Terms.Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.SubjectMaterials.Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.AssessmentSchedules.Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.GradePredictions.Take(1).ToListAsync()).Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// The columns SchemaUpgrader adds. Selecting them is the cheapest proof the
+    /// upgrade actually ran against this database - a missing one surfaces here
+    /// rather than as "Invalid column name" on a user's first click.
+    /// </summary>
+    [SkippableFact]
+    public async Task Columns_added_by_the_schema_upgrader_exist()
+    {
+        var db = RequireDb();
+
+        var courses = await db.Courses
+            .Select(c => new { c.CountsTowardGpa, c.MinAvgMarkToPass, c.SyllabusCode, c.PrerequisiteText })
+            .Take(1)
+            .ToListAsync();
+        courses.Should().NotBeNull();
+
+        (await db.CurriculumItems.Select(ci => ci.DisplayOrder).Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.Prerequisites.Select(p => p.GroupNo).Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.Majors.Select(m => m.Description).Take(1).ToListAsync()).Should().NotBeNull();
+        (await db.Students.Select(s => s.CurrentTermNo).Take(1).ToListAsync()).Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// Kỳ 0 is real data (OTP101), so CK_Curriculum_Term must allow it. The
+    /// original constraint said TermNo &gt;= 1 and would reject this insert.
+    /// </summary>
+    [SkippableFact]
+    public async Task Curriculum_accepts_term_zero_and_round_trips()
+    {
+        var db = RequireDb();
+
+        var major = await db.Majors.FirstOrDefaultAsync();
+        Skip.If(major is null, "No major in the database - run db/setup-db.ps1 first.");
+
+        // A throwaway subject, so the check never collides with seeded data.
+        var probeCode = $"ZZT{DateTime.UtcNow:ffff}";
+        var course = new Domain.Entities.Course
+        {
+            CourseCode = probeCode,
+            CourseName = "Term zero probe",
+            Credits = 0,
+            CountsTowardGpa = false,
+            IsActive = true
+        };
+
+        db.Courses.Add(course);
+        await db.SaveChangesAsync();
+
+        var item = new Domain.Entities.Curriculum
+        {
+            MajorId = major!.MajorId,
+            CourseId = course.CourseId,
+            TermNo = 0,
+            DisplayOrder = 0,
+            IsMandatory = true
+        };
+
+        try
+        {
+            db.CurriculumItems.Add(item);
+            await db.SaveChangesAsync();
+
+            var stored = await db.CurriculumItems
+                .AsNoTracking()
+                .SingleAsync(ci => ci.CurriculumId == item.CurriculumId);
+
+            stored.TermNo.Should().Be(0);
+        }
+        finally
+        {
+            // Always cleaned up: this test runs against the shared development
+            // database, and leaving a probe row behind would break the seed-count
+            // assertions above on the next run.
+            db.CurriculumItems.Remove(item);
+            db.Courses.Remove(course);
+            await db.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>Kỳ 0..9 are seeded by 01_schema.sql, and Curriculum FKs onto them.</summary>
+    [SkippableFact]
+    public async Task Terms_are_seeded_from_zero()
+    {
+        var db = RequireDb();
+
+        var terms = await db.Terms.OrderBy(t => t.TermNo).ToListAsync();
+
+        terms.Should().NotBeEmpty();
+        terms.First().TermNo.Should().Be(0, "OTP101 sits in Kỳ 0");
+        terms.Select(t => t.TermNo).Should().BeInAscendingOrder();
+    }
+
+    /// <summary>
+    /// AssessmentSchedule.ExpectedDate is DATE, not datetime2. A time component
+    /// sneaking in would break every "is this inside the semester" comparison.
+    /// </summary>
+    [SkippableFact]
+    public async Task Assessment_schedule_expected_date_has_no_time_component()
+    {
+        var db = RequireDb();
+
+        var dated = await db.AssessmentSchedules
+            .AsNoTracking()
+            .Where(s => s.ExpectedDate != null)
+            .Select(s => s.ExpectedDate!.Value)
+            .Take(20)
+            .ToListAsync();
+
+        // NotContain rather than OnlyContain: an empty set is the normal state
+        // (FLM publishes no dates, so ExpectedDate imports as null), and
+        // OnlyContain treats "nothing to check" as a failure.
+        dated.Should().NotContain(d => d.TimeOfDay != TimeSpan.Zero);
     }
 
     [SkippableFact]
@@ -124,7 +244,7 @@ public class DatabaseSchemaTests : IDisposable
     public async Task Fix_and_verify_user_records_in_database()
     {
         var db = RequireDb();
-        
+
         // Correct any DE prefix to SE prefix in database for student codes and usernames
         await db.Database.ExecuteSqlRawAsync("UPDATE dbo.AppUser SET Username = REPLACE(Username, 'DE', 'SE') WHERE Username LIKE 'DE%'");
         await db.Database.ExecuteSqlRawAsync("UPDATE dbo.Student SET StudentCode = REPLACE(StudentCode, 'DE', 'SE') WHERE StudentCode LIKE 'DE%'");

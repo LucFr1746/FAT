@@ -14,6 +14,19 @@ public class Student
     public DateTime? DateOfBirth { get; set; }
     public DateTime EnrollmentDate { get; set; }
     public int MajorId { get; set; }
+
+    /// <summary>
+    /// Which kỳ the student is in right now - the term the curriculum screen
+    /// opens on. Points at Term.TermNo.
+    ///
+    /// <see cref="CurrentSemester"/> is the older free-text version of the same
+    /// fact ("Kỳ 5"). Both are kept in sync from one place
+    /// (IStudentCurriculumService.SetCurrentTermAsync) so the Profile screen,
+    /// which binds to the string, keeps working.
+    /// </summary>
+    public int? CurrentTermNo { get; set; }
+
+    /// <summary>Display form of <see cref="CurrentTermNo"/>, e.g. "Kỳ 5".</summary>
     public string? CurrentSemester { get; set; }
 
     [NotMapped]
