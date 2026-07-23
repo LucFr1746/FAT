@@ -1,0 +1,18 @@
+// RENAME this file to "appsettings.Local.json" if your SQL Server is NOT the
+// default instance on localhost.
+//
+// appsettings.Local.json is listed in .gitignore, so it never gets committed -
+// everyone keeps their own connection settings without disturbing the others.
+//
+// Common values for Server:
+//   localhost               default instance (MSSQLSERVER)
+//   .\SQLEXPRESS            SQL Server Express
+//   (localdb)\MSSQLLocalDB  LocalDB shipped with Visual Studio
+//
+// Not sure of the instance name? Run:
+//   sqlcmd -S localhost -E -C -Q "SELECT @@SERVERNAME"
+{
+  "ConnectionStrings": {
+    "FatDatabase": "Server=.\\SQLEXPRESS;Database=FAT;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=10"
+  }
+}

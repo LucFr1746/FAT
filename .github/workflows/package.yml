@@ -1,16 +1,16 @@
 name: Package
 
-# Nhóm KHÔNG deploy - workflow này chỉ đóng gói app thành một thư mục zip
-# chạy được, để nộp bài hoặc gửi cho người khác dùng thử.
+# The team does not deploy - this workflow only packages the app into a single
+# runnable zip, for submission or for handing to someone to try out.
 #
-# Cách chạy:
-#   - Thủ công: tab Actions -> Package -> Run workflow
-#   - Tự động : đẩy tag dạng v1.0.0 lên repo (git tag v1.0.0 && git push --tags)
+# How to run it:
+#   - Manually:    Actions tab -> Package -> Run workflow
+#   - Automatically: push a tag such as v1.0.0 (git tag v1.0.0 && git push --tags)
 on:
   workflow_dispatch:
     inputs:
       self_contained:
-        description: 'Kèm sẵn .NET runtime (người dùng không cần cài .NET 8)'
+        description: 'Bundle the .NET runtime (users will not need to install .NET 8)'
         type: boolean
         default: true
   push:
@@ -22,48 +22,48 @@ env:
 
 jobs:
   package:
-    name: Đóng gói ứng dụng
+    name: Package the application
     runs-on: windows-latest
     timeout-minutes: 25
 
     permissions:
-      contents: write   # cần để tạo Release khi đẩy tag
+      contents: write   # needed to create a Release when a tag is pushed
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - name: Xác định thông tin bản dựng
+      - name: Determine build information
         id: info
         shell: pwsh
         run: |
-          # Đẩy tag v1.2.3 thì lấy 1.2.3 làm số hiệu bản dựng; chạy tay thì
-          # dùng số thứ tự lượt chạy để mỗi gói có một tên khác nhau.
+          # A tag v1.2.3 becomes version 1.2.3; a manual run uses the run number
+          # so that each package gets a distinct name.
           if ('${{ github.ref }}' -like 'refs/tags/v*') {
               $version = '${{ github.ref_name }}'.TrimStart('v')
           } else {
               $version = "0.1.0-build.${{ github.run_number }}"
           }
 
-          # push tag không có input nên mặc định là self-contained
+          # A tag push carries no inputs, so default to self-contained.
           $sc = '${{ github.event.inputs.self_contained }}'
           if ([string]::IsNullOrEmpty($sc)) { $sc = 'true' }
 
-          "version=$version"       | Out-File $env:GITHUB_OUTPUT -Append
-          "selfContained=$sc"      | Out-File $env:GITHUB_OUTPUT -Append
-          "packageName=SAT-v$version-win-x64" | Out-File $env:GITHUB_OUTPUT -Append
+          "version=$version"                  | Out-File $env:GITHUB_OUTPUT -Append
+          "selfContained=$sc"                 | Out-File $env:GITHUB_OUTPUT -Append
+          "packageName=FAT-v$version-win-x64" | Out-File $env:GITHUB_OUTPUT -Append
           Write-Host "Version = $version, self-contained = $sc"
 
       - name: Restore
         run: dotnet restore FAT.sln
 
       - name: Build & Test
-        # Không đóng gói code chưa chạy được test.
+        # Never package code that has not passed its tests.
         run: |
           dotnet build FAT.sln --configuration Release --no-restore
           dotnet test FAT.sln --configuration Release --no-build
@@ -71,11 +71,12 @@ jobs:
       - name: Publish
         shell: pwsh
         run: |
-          # KHÔNG dùng PublishSingleFile: WPF + SkiaSharp (LiveCharts2) có thư
-          # viện native, gói vào một file exe rồi tự giải nén ra thư mục tạm khi
-          # chạy - vừa chậm khi khởi động vừa hay bị phần mềm diệt virus chặn.
-          # Xuất ra một thư mục rồi zip lại thì chắc chắn chạy được hơn.
-          dotnet publish src/SAT.App/SAT.App.csproj `
+          # PublishSingleFile is deliberately NOT used: WPF plus SkiaSharp
+          # (LiveCharts2) carries native libraries, so a single-file build
+          # extracts itself into a temp folder on every launch - slow to start
+          # and frequently flagged by antivirus. A plain folder, zipped, is far
+          # more reliable.
+          dotnet publish src/FAT.App/FAT.App.csproj `
             --configuration Release `
             --runtime win-x64 `
             --self-contained ${{ steps.info.outputs.selfContained }} `
@@ -84,63 +85,64 @@ jobs:
             -p:DebugType=none `
             -p:PublishReadyToRun=true
 
-      - name: Kèm script dựng database và hướng dẫn
+      - name: Include the database scripts and a readme
         shell: pwsh
         run: |
-          # Gói app mà thiếu script tạo DB thì người nhận không chạy được:
-          # app cần sẵn database SAT mới đăng nhập được.
+          # A package without the database scripts is useless to the recipient:
+          # the app needs the FAT database to exist before anyone can sign in.
           New-Item -ItemType Directory -Force -Path publish/app/db | Out-Null
           Copy-Item db/*.sql, db/setup-db.ps1 -Destination publish/app/db/
 
-          # KHONG dung here-string @"..."@ o day: PowerShell bat buoc dau dong
-          # phai nam o cot 0, ma trong YAML moi dong deu bi thut le => loi parse.
-          # Dung mang chuoi roi noi lai bang xuong dong.
+          # Do NOT use a here-string @"..."@ here: PowerShell requires the
+          # closing delimiter at column 0, but every line inside a YAML block is
+          # indented, which is a parse error. Build an array and join instead.
           $runtimeNote = if ('${{ steps.info.outputs.selfContained }}' -eq 'false') {
               '- .NET 8 Desktop Runtime: https://dotnet.microsoft.com/download/dotnet/8.0'
           } else {
-              '- KHONG can cai .NET: runtime da duoc dong goi san.'
+              '- No .NET installation required: the runtime is bundled.'
           }
 
           $lines = @(
-              'SAT - Student Academic Tracker',
-              '==============================',
-              'Phien ban: ${{ steps.info.outputs.version }}',
+              'FAT - FPT Academic Tracker',
+              '==========================',
+              'Version: ${{ steps.info.outputs.version }}',
               '',
-              'YEU CAU',
-              '-------',
-              '- Windows 10 phien ban 2004 tro len',
-              '- SQL Server (ban Express mien phi la du)',
+              'REQUIREMENTS',
+              '------------',
+              '- Windows 10 version 2004 or later',
+              '- SQL Server (the free Express edition is enough)',
               $runtimeNote,
               '',
-              'CACH CHAY',
-              '---------',
-              '1. Mo PowerShell tai thu muc nay va chay:',
+              'HOW TO RUN',
+              '----------',
+              '1. Open PowerShell in this folder and run:',
               '       .\db\setup-db.ps1',
-              '   (Neu SQL Server khong phai instance mac dinh:',
+              '   (If your SQL Server is not the default instance:',
               '       .\db\setup-db.ps1 -Server ".\SQLEXPRESS")',
               '',
-              '2. Chay SAT.App.exe',
+              '2. Start FAT.App.exe',
               '',
-              '3. Dang nhap bang mot trong cac tai khoan:',
+              '3. Sign in with one of these accounts:',
               '       admin      / Admin@123',
               '       student01  / Student@123',
               '       student02  / Student@123',
               '       student03  / Student@123',
               '',
-              'KET NOI DATABASE',
-              '----------------',
-              "Mac dinh app noi toi 'localhost'. Neu SQL Server cua ban o instance",
-              'khac, sua chuoi ket noi trong appsettings.json canh SAT.App.exe.',
+              'DATABASE CONNECTION',
+              '-------------------',
+              "The app connects to 'localhost' by default. If your SQL Server is",
+              'elsewhere, edit the connection string in appsettings.json next to',
+              'FAT.App.exe.',
               '',
-              'CANH BAO',
-              '--------',
-              'setup-db.ps1 se XOA VA TAO LAI database SAT.',
-              'Moi du lieu ban tu nhap se mat.'
+              'WARNING',
+              '-------',
+              'setup-db.ps1 DROPS AND RECREATES the FAT database.',
+              'Any data you entered will be lost.'
           )
 
           $lines -join "`r`n" | Out-File -FilePath publish/app/README.txt -Encoding utf8
 
-      - name: Nén thành gói
+      - name: Create the zip
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path publish/out | Out-Null
@@ -148,42 +150,43 @@ jobs:
                            -DestinationPath "publish/out/${{ steps.info.outputs.packageName }}.zip" `
                            -CompressionLevel Optimal
           $zip = Get-Item "publish/out/${{ steps.info.outputs.packageName }}.zip"
-          Write-Host "Kich thuoc goi: $([math]::Round($zip.Length / 1MB, 1)) MB"
+          Write-Host "Package size: $([math]::Round($zip.Length / 1MB, 1)) MB"
 
-      # Kiểm tra gói thật sự chạy được, thay vì chỉ tin là nó chạy được.
-      # Không có bước này thì lỗi thiếu dll chỉ lộ ra khi người nhận mở app.
-      - name: Kiểm tra gói khởi động được
+      # Prove the package actually runs instead of assuming it does. Without
+      # this step a missing DLL only shows up when the recipient opens the app.
+      - name: Smoke-test the package
         shell: pwsh
         run: |
-          $exe = "publish/app/SAT.App.exe"
+          $exe = "publish/app/FAT.App.exe"
           if (-not (Test-Path $exe)) {
-              Write-Host "::error::Khong tim thay SAT.App.exe trong goi."
+              Write-Host "::error::FAT.App.exe is missing from the package."
               exit 1
           }
 
-          # App khong co database nen se hien hop thoai loi roi thoat - dieu
-          # can kiem tra o day la no NAP DUOC assembly, khong phai no chay tron.
+          # There is no database here, so the app shows an error dialog and
+          # exits. What this checks is that it LOADS its assemblies at all -
+          # not that it runs end to end.
           $p = Start-Process -FilePath $exe -PassThru -WindowStyle Hidden
           Start-Sleep -Seconds 8
 
           if ($p.HasExited -and $p.ExitCode -ne 0) {
-              Write-Host "::error::App thoat ngay voi ma loi $($p.ExitCode) - goi bi hong."
+              Write-Host "::error::The app exited immediately with code $($p.ExitCode) - the package is broken."
               exit 1
           }
 
           if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
-          Write-Host "Goi khoi dong duoc."
+          Write-Host "The package starts correctly."
 
-      - name: Tải gói lên Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload the package
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.info.outputs.packageName }}
           path: publish/out/*.zip
           retention-days: 90
 
-      - name: Tạo Release (chỉ khi đẩy tag)
+      - name: Create a Release (tag pushes only)
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: publish/out/*.zip
           generate_release_notes: true

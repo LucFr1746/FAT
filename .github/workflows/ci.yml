@@ -1,7 +1,7 @@
 name: CI
 
-# Chạy trên MỌI nhánh: mỗi thành viên đẩy code lên nhánh riêng là biết ngay
-# code của mình có build được không, không phải chờ tới lúc mở PR.
+# Runs on EVERY branch: pushing to your own branch tells you immediately whether
+# your code still builds, instead of finding out when you open the pull request.
 on:
   push:
     branches: ['**']
@@ -9,8 +9,8 @@ on:
     branches: [master, main]
   workflow_dispatch:
 
-# Đẩy commit mới lên cùng một nhánh thì hủy lượt chạy cũ - tiết kiệm phút CI
-# và không phải chờ kết quả của code đã lỗi thời.
+# A new commit on the same branch cancels the previous run - saves CI minutes
+# and avoids waiting on results for code that is already out of date.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -23,23 +23,25 @@ env:
 jobs:
   build-and-test:
     name: Build & Test
-    # BẮT BUỘC windows: SAT.App là WPF (net8.0-windows), không build được trên Linux.
+    # Windows is MANDATORY: FAT.App is WPF (net8.0-windows), which cannot be
+    # built on Linux.
     runs-on: windows-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
-          # Đọc version từ global.json để CI dùng ĐÚNG SDK mà cả nhóm đang dùng.
-          # Ghi cứng version ở đây sẽ có ngày lệch với global.json mà không ai biết.
+          # Read the version from global.json so CI uses exactly the SDK the
+          # team uses. Hard-coding it here guarantees it drifts out of sync
+          # eventually, and nobody notices.
           global-json-file: global.json
 
       - name: Cache NuGet
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
@@ -51,9 +53,10 @@ jobs:
       - name: Build
         run: dotnet build FAT.sln --configuration Release --no-restore
 
-      # Test tích hợp cần SQL Server. Runner của GitHub không có sẵn SQL Server,
-      # nên các test đó TỰ SKIP (xem SkippableFact trong DatabaseSchemaTests).
-      # Test đơn vị về quy tắc tính điểm vẫn chạy đầy đủ - đó mới là phần dễ sai.
+      # Integration tests need SQL Server. GitHub's Windows runners do not have
+      # one, so those tests SKIP themselves (see SkippableFact in
+      # DatabaseSchemaTests). The unit tests covering the grading rules - the
+      # part that actually goes wrong - still run in full.
       - name: Test
         run: >
           dotnet test FAT.sln
@@ -64,9 +67,9 @@ jobs:
           --results-directory ./TestResults
 
       - name: Upload test results
-        # Chạy cả khi test đỏ - đó chính là lúc cần xem kết quả nhất.
+        # Run even when tests fail - that is precisely when the results matter.
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results
           path: ./TestResults
@@ -79,41 +82,42 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
       - name: Restore
         run: dotnet restore FAT.sln
 
-      # Chặn ngay ở PR những khác biệt định dạng thuần túy. Không có bước này,
-      # PR sẽ lẫn lộn giữa thay đổi thật và thay đổi do IDE tự format lại,
-      # làm người review (@LucFr1746) rất khó đọc.
+      # Blocks purely cosmetic diffs at the pull request. Without this step a PR
+      # mixes real changes with whatever the author's IDE reformatted, which
+      # makes the reviewer's job much harder.
       - name: Verify formatting
         run: dotnet format FAT.sln --verify-no-changes --verbosity diagnostic
 
-      - name: Hướng dẫn khi bước trên thất bại
+      - name: How to fix a formatting failure
         if: failure()
         run: |
-          Write-Host "::error::Code chua dung chuan dinh dang."
-          Write-Host "Chay lenh sau tren may cua ban roi commit lai:"
+          Write-Host "::error::Code does not match the agreed formatting."
+          Write-Host "Run this locally and commit the result:"
           Write-Host "    dotnet format FAT.sln"
         shell: pwsh
 
   database:
     name: Database Scripts
-    # Ubuntu chứ KHÔNG phải windows-latest: image SQL Server là Linux container,
-    # mà runner Windows của GitHub chỉ chạy được Windows container.
+    # Ubuntu, NOT windows-latest: the SQL Server image is a Linux container and
+    # GitHub's Windows runners can only run Windows containers.
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    # Dựng SQL Server thật để chạy toàn bộ script từ đầu. Mục đích: bắt lỗi cú
-    # pháp T-SQL và lỗi ràng buộc NGAY khi ai đó sửa schema, thay vì để cả nhóm
-    # phát hiện khi chạy setup-db.ps1 trên máy mình. Dự án không dùng EF
-    # Migrations nên đây là lưới an toàn duy nhất cho thay đổi schema.
+    # Stand up a real SQL Server and run the scripts from scratch. The point is
+    # to catch T-SQL syntax and constraint errors AS SOON AS someone changes the
+    # schema, rather than when the whole team runs setup-db.ps1 locally. Since
+    # the project does not use EF Migrations, this is the only safety net for
+    # schema changes.
     services:
       mssql:
         image: mcr.microsoft.com/mssql/server:2022-latest
@@ -131,12 +135,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      # Dùng luôn sqlcmd CÓ SẴN trong image SQL Server thay vì cài thêm công cụ
-      # lên runner. Bớt được một bước tải mạng hay hỏng, và phiên bản sqlcmd
-      # luôn khớp với phiên bản server.
-      - name: Chạy script tạo database
+      # Use the sqlcmd ALREADY INSIDE the SQL Server image rather than
+      # installing tooling on the runner. One less network download to break,
+      # and the sqlcmd version always matches the server version.
+      - name: Run database scripts
         run: |
           set -euo pipefail
           CID='${{ job.services.mssql.id }}'
@@ -150,28 +154,28 @@ jobs:
             done
           }
 
-          echo "=== Lần 1: dựng mới ==="
+          echo "=== Pass 1: build from scratch ==="
           run_scripts
 
-          # Lần 2 chứng minh script là idempotent: dựng lại bao nhiêu lần cũng
-          # phải thành công, không được lỗi trùng khóa.
-          echo "=== Lần 2: kiểm tra idempotent ==="
+          # A second pass proves the scripts are idempotent: rebuilding any
+          # number of times must succeed, never fail on a duplicate key.
+          echo "=== Pass 2: idempotency check ==="
           run_scripts
 
-      - name: Kiểm tra dữ liệu đã nạp đúng
+      - name: Verify the seeded data
         run: |
           set -euo pipefail
           CID='${{ job.services.mssql.id }}'
           docker exec "$CID" /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -d SAT -h -1 -W \
+            -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -d FAT -h -1 -W \
             -Q "SET NOCOUNT ON;
                 DECLARE @c INT = (SELECT COUNT(*) FROM dbo.Course);
                 DECLARE @s INT = (SELECT COUNT(*) FROM dbo.Student);
                 DECLARE @m INT = (SELECT COUNT(*) FROM dbo.Material);
                 IF @c <> 31 OR @s <> 3 OR @m <> 8
-                    THROW 51000, N'Du lieu seed khong dung so luong mong doi.', 1;
-                PRINT CONCAT('OK: ', @c, ' mon, ', @s, ' sinh vien, ', @m, ' tai lieu.');"
+                    THROW 51000, N'Seed data row counts are not what was expected.', 1;
+                PRINT CONCAT('OK: ', @c, ' courses, ', @s, ' students, ', @m, ' materials.');"
 
-      - name: Xem log SQL Server khi thất bại
+      - name: Dump SQL Server logs on failure
         if: failure()
         run: docker logs '${{ job.services.mssql.id }}'

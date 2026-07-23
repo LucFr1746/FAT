@@ -1,15 +1,15 @@
-# Chuẩn hóa ký tự xuống dòng.
+# Normalise line endings.
 #
-# VÌ SAO CẦN: mỗi máy có thiết lập core.autocrlf khác nhau. Không có file này
-# thì một người commit sẽ thấy "toàn bộ file bị đổi" chỉ vì CRLF/LF, và merge
-# sẽ conflict trên những dòng thực ra không ai sửa.
+# WHY THIS FILE EXISTS: core.autocrlf differs from machine to machine. Without
+# it, one person commits and everyone sees "the whole file changed" purely
+# because of CRLF vs LF, and merges conflict on lines nobody actually touched.
 
 * text=auto eol=crlf
 
-# File chỉ chạy trên môi trường Unix (GitHub Actions dùng bash) phải giữ LF
+# Files that only ever run on Unix (GitHub Actions uses bash) must keep LF
 *.sh text eol=lf
 
-# Nhị phân - tuyệt đối không đụng vào nội dung
+# Binary - never touch the contents
 *.png  binary
 *.jpg  binary
 *.jpeg binary
@@ -22,6 +22,6 @@
 *.snk  binary
 *.bak  binary
 
-# Không tính vào thống kê ngôn ngữ của repo trên GitHub
+# GitHub language statistics
 *.sql linguist-detectable=true
 docs/* linguist-documentation=true

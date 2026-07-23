@@ -1,51 +1,51 @@
-# Mô tả
+# Description
 
-<!-- Làm gì, và VÌ SAO. Người review không đọc được suy nghĩ trong đầu bạn. -->
+<!-- What this changes, and WHY. The reviewer cannot read your mind. -->
 
 ## Module
 
-<!-- Đánh dấu x vào ô của mình -->
+<!-- Tick your own box -->
 
 - [ ] Member 1 — Authentication & User (Login, Logout, Profile, Change Password, User Management)
 - [ ] Member 2 — Catalog Admin (Manage Major/Semester/Subject, Assign Subject to Major, Curriculum Management)
 - [ ] Member 3 — Catalog & Progress (Select Major, View Subjects, View Semester, Subject Detail, Curriculum Progress)
 - [ ] Member 4 — Grade & GPA (View/Manage Grades, GPA Calculator, Transcript, Statistics)
 - [ ] Member 5 — Materials (Manage, Upload, Download, View, Search Materials)
-- [ ] Dùng chung / hạ tầng (cần thêm duyệt của @Nlonggg)
+- [ ] Shared / infrastructure (also needs @Nlonggg's approval)
 
-## Chức năng trong PR này
+## Features included in this PR
 
-<!-- Liệt kê từng chức năng đã hoàn thành, để dễ đối chiếu với bảng phân công -->
+<!-- List each completed feature so it can be checked against the assignment table -->
 
 -
 -
 
-## Cách kiểm thử
+## How to test
 
-<!-- Người review phải bấm những gì để thấy nó chạy? -->
+<!-- What does the reviewer have to click to see this working? -->
 
 1.
 2.
 
 ---
 
-## Checklist trước khi mở PR
+## Checklist before opening the PR
 
-- [ ] `dotnet build FAT.sln` chạy sạch, không lỗi
-- [ ] `dotnet test FAT.sln` xanh
-- [ ] `dotnet format FAT.sln` đã chạy (CI sẽ chặn nếu sai định dạng)
-- [ ] Đã `git pull --rebase origin master` và xử lý hết conflict
-- [ ] KHÔNG commit `appsettings.Local.json`, `bin/`, `obj/`, `publish/`
-- [ ] KHÔNG có mật khẩu / chuỗi kết nối cá nhân trong code
+- [ ] `dotnet build FAT.sln` succeeds with no errors
+- [ ] `dotnet test FAT.sln` is green
+- [ ] `dotnet format FAT.sln` has been run (CI blocks the PR otherwise)
+- [ ] `git pull --rebase origin master` done and all conflicts resolved
+- [ ] No `appsettings.Local.json`, `bin/`, `obj/` or `publish/` committed
+- [ ] No passwords or personal connection strings in the code
 
-## Nếu PR có đụng vùng dùng chung
+## If this PR touches shared areas
 
-<!-- Bỏ qua phần này nếu chỉ sửa file trong module của mình -->
+<!-- Skip this section if you only changed files inside your own module -->
 
-- [ ] Có sửa `db/*.sql` → đã báo cả nhóm chạy lại `.\db\setup-db.ps1`
-- [ ] Có sửa interface trong `SAT.Services/Abstractions/` → đã báo người đang dùng interface đó
-- [ ] Có thêm package → đã thêm version vào `Directory.Packages.props`, không ghi version trong `.csproj`
+- [ ] Changed `db/*.sql` → the team has been told to re-run `.\db\setup-db.ps1`
+- [ ] Changed an interface in `FAT.Services/Abstractions/` → whoever depends on it has been told
+- [ ] Added a package → the version is in `Directory.Packages.props`, not in the `.csproj`
 
-## Ảnh chụp màn hình
+## Screenshots
 
-<!-- Bắt buộc nếu PR có thay đổi giao diện - @Ngọc Ánh nghiệm thu UI dựa vào đây -->
+<!-- Required for any UI change - @Ngoc Anh signs off on the UI from these -->

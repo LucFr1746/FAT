@@ -1,46 +1,46 @@
-# Phân công & quy trình làm việc — SAT
+# Team assignments & workflow — FAT (FPT Academic Tracker)
 
-## 1. Vai trò trong quy trình
+## 1. Process roles
 
-Đây là vai trò về **cách làm việc**, độc lập với module code mà mỗi người viết.
+These are roles about *how we work*, independent of which module each person writes.
 
-| Người | Vai trò | Trách nhiệm |
+| Person | Role | Responsibility |
 |---|---|---|
-| **@Nlonggg** | Git lead | Merge các nhánh vào `master`, xử lý conflict, bảo đảm đủ tính năng trước khi merge |
-| **@Ngọc Ánh** | QA | Kiểm tra luồng chạy có đúng thiết kế không; nghiệm thu UI |
-| **@truonghieu11233** | Tester + Data | Lấy dữ liệu thật từ FLM (môn học, cột điểm, tài liệu); viết unit test & integration test |
-| **@Anhoa123** | Tester + Data | Như trên; kiểm tra lại các hàm đã hoạt động đúng chưa |
-| **@LucFr1746** | Code review | Review sạch code, bảo đảm mọi thành viên hiểu module mình viết |
+| **@Nlonggg** | Git lead | Merges branches into `master`, resolves conflicts, confirms features are complete before merging |
+| **@Ngoc Anh** | QA | Checks that flows match the agreed design; signs off on the UI |
+| **@truonghieu11233** | Tester + Data | Collects real data from FLM (courses, grade components, materials); writes unit and integration tests |
+| **@Anhoa123** | Tester + Data | As above; verifies that implemented functions behave correctly |
+| **@LucFr1746** | Code review | Reviews for clean code; makes sure every member understands the module they wrote |
 
-> `.github/CODEOWNERS` đã cấu hình để **@LucFr1746** tự động được gán review mọi PR,
-> và **@Nlonggg** được gán thêm ở các file dùng chung (`db/`, `Directory.Packages.props`,
-> `Abstractions/`, `SatDbContext.cs`) — nơi một thay đổi sai làm hỏng build của cả 5 người.
+> `.github/CODEOWNERS` assigns **@LucFr1746** to every PR automatically, and adds
+> **@Nlonggg** on shared files (`db/`, `Directory.Packages.props`, `Abstractions/`,
+> `FatDbContext.cs`) — the places where one bad change breaks the build for all five people.
 
 ---
 
-## 2. Phân công module & nhánh Git
+## 2. Module assignments & branches
 
-Mỗi người **5 chức năng**, làm trên **nhánh riêng**, không ai commit thẳng vào `master`.
+Five features each, on a dedicated branch. Nobody commits directly to `master`.
 
 ### Member 1 — Authentication & User
-**Nhánh:** `feature/m1-auth-user`
+**Branch:** `feature/m1-auth-user`
 
-| # | Chức năng | Service | Trạng thái |
+| # | Feature | Service | Status |
 |---|---|---|---|
-| 1 | Login | `IAuthService.LoginAsync` | ✅ đã cài đặt |
-| 2 | Logout | `ICurrentUserContext.Clear` | ✅ đã cài đặt |
-| 3 | Profile | `IUserService.GetProfileAsync` / `UpdateProfileAsync` | 🔲 interface sẵn sàng |
-| 4 | Change Password | `IAuthService.ChangePasswordAsync` | ✅ đã cài đặt |
-| 5 | User Management | `IUserService` (list, tạo, khóa, reset mật khẩu) | 🔲 interface sẵn sàng |
+| 1 | Login | `IAuthService.LoginAsync` | Implemented |
+| 2 | Logout | `ICurrentUserContext.Clear` | Implemented |
+| 3 | Profile | `IUserService.GetProfileAsync` / `UpdateProfileAsync` | Interface ready |
+| 4 | Change Password | `IAuthService.ChangePasswordAsync` | Implemented |
+| 5 | User Management | `IUserService` (list, create, lock, reset password) | Interface ready |
 
-**View cần viết:** `LoginView`, `ProfileView`, `ChangePasswordView`, `UserManagementView`
+**Views to build:** `LoginView`, `ProfileView`, `ChangePasswordView`, `UserManagementView`
 
 ---
 
-### Member 2 — Catalog Admin (phần GHI)
-**Nhánh:** `feature/m2-catalog-admin`
+### Member 2 — Catalog Admin (the WRITE side)
+**Branch:** `feature/m2-catalog-admin`
 
-| # | Chức năng | Service |
+| # | Feature | Service |
 |---|---|---|
 | 1 | Manage Major | `ICatalogAdminService.CreateMajorAsync` / `UpdateMajorAsync` / `DeactivateMajorAsync` |
 | 2 | Manage Semester | `CreateSemesterAsync` / `UpdateSemesterAsync` / `SetCurrentSemesterAsync` |
@@ -48,18 +48,18 @@ Mỗi người **5 chức năng**, làm trên **nhánh riêng**, không ai commi
 | 4 | Assign Subject to Major | `AssignCourseToMajorAsync` / `RemoveCourseFromMajorAsync` |
 | 5 | Curriculum Management | `UpdateCurriculumItemAsync` + `SyncMajorRequiredCreditsAsync` |
 
-**View cần viết:** `MajorAdminView`, `SemesterAdminView`, `SubjectAdminView`, `CurriculumAdminView`
+**Views to build:** `MajorAdminView`, `SemesterAdminView`, `SubjectAdminView`, `CurriculumAdminView`
 
-> ⚠️ Sau mỗi lần thêm/bớt môn khỏi khung chương trình **phải gọi `SyncMajorRequiredCreditsAsync`**.
-> `Major.RequiredCredits` lệch với tổng tín chỉ khung sẽ làm sai % tiến độ tốt nghiệp của
-> **mọi** sinh viên ngành đó.
+> **Call `SyncMajorRequiredCreditsAsync` after every add or remove from a curriculum.**
+> If `Major.RequiredCredits` drifts away from the curriculum total, the graduation
+> percentage is wrong for **every** student in that major.
 
 ---
 
-### Member 3 — Catalog & Progress (phần ĐỌC)
-**Nhánh:** `feature/m3-catalog-progress`
+### Member 3 — Catalog & Progress (the READ side)
+**Branch:** `feature/m3-catalog-progress`
 
-| # | Chức năng | Service |
+| # | Feature | Service |
 |---|---|---|
 | 1 | Select Major | `ICourseService.GetMajorsAsync` |
 | 2 | View Subjects | `ICourseService.SearchAsync` |
@@ -67,129 +67,132 @@ Mỗi người **5 chức năng**, làm trên **nhánh riêng**, không ai commi
 | 4 | Subject Detail | `ICourseService.GetByIdAsync` + `IPrerequisiteService.GetPrerequisiteTreeAsync` |
 | 5 | Curriculum Progress | `IGraduationService.GetProgressAsync` |
 
-**View cần viết:** `MajorSelectView`, `SubjectListView`, `SemesterListView`, `SubjectDetailView`, `CurriculumProgressView`
+**Views to build:** `MajorSelectView`, `SubjectListView`, `SemesterListView`, `SubjectDetailView`, `CurriculumProgressView`
 
-> Member 2 và Member 3 làm trên **cùng vùng dữ liệu nhưng khác file**: M2 giữ phần ghi
-> (`ICatalogAdminService`), M3 giữ phần đọc (`ICourseService`). Tách vậy để hai người
-> gần như không đụng nhau khi merge.
+> Members 2 and 3 work on the **same data but different files**: M2 owns the write side
+> (`ICatalogAdminService`), M3 owns the read side (`ICourseService`). That split is what
+> keeps them out of each other's merges.
 
 ---
 
 ### Member 4 — Grade & GPA
-**Nhánh:** `feature/m4-grade-gpa`
+**Branch:** `feature/m4-grade-gpa`
 
-| # | Chức năng | Service |
+| # | Feature | Service |
 |---|---|---|
 | 1 | View Grades | `IGradeService.GetGradesAsync` |
 | 2 | Manage Grades | `IGradeService.UpsertGradeAsync` |
 | 3 | GPA Calculator | `IGpaService.GetCumulativeGpaAsync` / `GetGpaSummaryAsync` |
 | 4 | Transcript | `IGradeService.GetTranscriptAsync` |
-| 5 | Statistics | `IAnalyticsService` (biểu đồ LiveCharts2) |
+| 5 | Statistics | `IAnalyticsService` (LiveCharts2 charts) |
 
-**View cần viết:** `GradeListView`, `GradeEntryView`, `GpaCalculatorView`, `TranscriptView`, `StatisticsView`
+**Views to build:** `GradeListView`, `GradeEntryView`, `GpaCalculatorView`, `TranscriptView`, `StatisticsView`
 
-> ⚠️ **`IGpaService` là service nhiều người phụ thuộc nhất** — Member 3 cần nó cho
-> Curriculum Progress. Hãy giao bản chạy được **sớm nhất trong nhóm**.
+> **`IGpaService` is the most depended-on service in the project** — Member 3 needs it for
+> Curriculum Progress. Ship a working version **first, before anything else**.
 >
-> Trong lúc chờ, Member 3 cứ code trên interface + một class `FakeGpaService` trả số cứng.
+> While waiting, Member 3 should code against the interface with a `FakeGpaService`
+> returning fixed numbers.
 
 ---
 
 ### Member 5 — Materials
-**Nhánh:** `feature/m5-materials`
+**Branch:** `feature/m5-materials`
 
-| # | Chức năng | Service |
+| # | Feature | Service |
 |---|---|---|
 | 1 | View Materials | `IMaterialService.SearchAsync` / `GetByCourseAsync` |
-| 2 | Search Materials | `IMaterialService.SearchAsync` (lọc theo từ khóa, môn, nhóm) |
+| 2 | Search Materials | `IMaterialService.SearchAsync` (keyword, course, category) |
 | 3 | Upload | `IMaterialService.UploadAsync` |
 | 4 | Download | `IMaterialService.DownloadAsync` |
 | 5 | Manage Materials | `IMaterialService.UpdateAsync` / `DeactivateAsync` |
 
-**View cần viết:** `MaterialListView`, `MaterialUploadView`, `MaterialDetailView`
+**Views to build:** `MaterialListView`, `MaterialUploadView`, `MaterialDetailView`
 
-> ⚠️ Bảng tách làm đôi: `Material` (mô tả) và `MaterialFile` (nội dung nhị phân).
-> **Tuyệt đối không `Include(m => m.File)` trong truy vấn danh sách** — làm vậy là kéo
-> toàn bộ byte của mọi file về máy chỉ để hiển thị cái tên. Chỉ `DownloadAsync` mới
-> được đụng tới `MaterialFile`. Đã có test bảo vệ điều này.
+> The data is split across two tables: `Material` (metadata) and `MaterialFile` (bytes).
+> **Never `Include(m => m.File)` in a list query** — that drags the full contents of every
+> file across the wire just to render their names. Only `DownloadAsync` may touch
+> `MaterialFile`. There is a test enforcing this.
 
 ---
 
-## 3. Quy trình Git
+## 3. Git workflow
 
 ```
-master                    ← chỉ @Nlonggg merge vào
-  ├── feature/m1-auth-user
-  ├── feature/m2-catalog-admin
-  ├── feature/m3-catalog-progress
-  ├── feature/m4-grade-gpa
-  └── feature/m5-materials
+master                    <- only @Nlonggg merges into this
+  |-- feature/m1-auth-user
+  |-- feature/m2-catalog-admin
+  |-- feature/m3-catalog-progress
+  |-- feature/m4-grade-gpa
+  |-- feature/m5-materials
 ```
 
-### Hằng ngày
+### Day to day
 
 ```bash
 git checkout feature/m4-grade-gpa
-git pull --rebase origin master     # BẮT BUỘC mỗi sáng và trước mỗi PR
-# ... code ...
-dotnet format FAT.sln               # nếu không, CI sẽ chặn PR
+git pull --rebase origin master     # REQUIRED every morning and before every PR
+# ... write code ...
+dotnet format FAT.sln               # otherwise CI blocks the PR
 git add -A
-git commit -m "feat: them man hinh nhap diem"
+git commit -m "feat: add grade entry screen"
 git push
 ```
 
-### Commit message
+### Commit messages
 
 ```
-<type>: <mô tả ngắn>
+<type>: <short description>
 ```
 `feat` · `fix` · `refactor` · `docs` · `test` · `chore`
 
-### Khi xong một nhóm chức năng
+### When a group of features is done
 
-1. `git pull --rebase origin master` và xử lý hết conflict **trên nhánh của mình**
-2. Mở PR vào `master`, điền đầy đủ template
-3. Chờ CI xanh (3 job: Build & Test, Code Format, Database Scripts)
-4. @LucFr1746 review
-5. @Nlonggg merge bằng **Squash and merge**
+1. `git pull --rebase origin master` and resolve every conflict **on your own branch**
+2. Open a PR into `master` and fill in the template
+3. Wait for CI to go green (3 jobs: Build & Test, Code Format, Database Scripts)
+4. @LucFr1746 reviews
+5. @Nlonggg merges with **Squash and merge**
 
-> Xử lý conflict trên nhánh của mình trước khi mở PR, chứ đừng đẩy conflict sang
-> cho người merge. Người merge không biết ý đồ code của bạn nên rất dễ chọn nhầm.
+> Resolve conflicts on your own branch before opening the PR rather than handing them to
+> whoever merges. The person merging does not know what your code was meant to do, so it
+> is very easy for them to pick the wrong side.
 
 ---
 
-## 4. Quy tắc chống conflict
+## 4. Conflict-avoidance rules
 
-Ba vùng dưới đây là nơi 5 người dễ đụng nhau nhất. Kiến trúc đã được thiết kế để tránh:
+These three areas are where five people collide most often. The architecture is designed
+to keep them apart:
 
-| Vùng | Cách tránh |
+| Area | How it is avoided |
 |---|---|
-| Đăng ký DI | Mỗi module có file riêng `SAT.App/Startup/<Module>Registration.cs`. **Không sửa `App.xaml.cs`.** |
-| Menu sidebar | Sinh từ `NavigationItem` do mỗi module tự đăng ký. **Không sửa `MainWindow.xaml`.** |
-| View / ViewModel | Mỗi người một thư mục riêng `Views/<Module>/`, `ViewModels/<Module>/` |
+| DI registration | Each module gets its own `FAT.App/Startup/<Module>Registration.cs`. **Do not edit `App.xaml.cs`.** |
+| Sidebar menu | Built from the `NavigationItem` entries each module registers. **Do not edit `MainWindow.xaml`.** |
+| Views / ViewModels | Each person owns their own `Views/<Module>/` and `ViewModels/<Module>/` folder |
 
-### Vùng ĐÓNG BĂNG — muốn sửa phải báo cả nhóm
+### FROZEN areas — tell the team before changing these
 
-- `db/*.sql` — sửa xong phải báo mọi người chạy lại `.\db\setup-db.ps1`
-- `src/SAT.Domain/Entities/` — entity phải luôn khớp với schema SQL
-- `src/SAT.Services/Abstractions/` — đổi interface là gãy code người khác
-- `src/SAT.Data/SatDbContext.cs`
-- `Directory.Packages.props` — thêm package thì thêm version ở đây, **không** ghi version trong `.csproj`
+- `db/*.sql` — after changing, everyone must re-run `.\db\setup-db.ps1`
+- `src/FAT.Domain/Entities/` — entities must always match the SQL schema
+- `src/FAT.Services/Abstractions/` — changing an interface breaks other people's code
+- `src/FAT.Data/FatDbContext.cs`
+- `Directory.Packages.props` — add package versions here, **never** in a `.csproj`
 
 ---
 
 ## 5. CI/CD
 
-Không có deploy. Chỉ kiểm tra tự động và đóng gói.
+There is no deployment. Only automated checks and packaging.
 
-| Workflow | Khi nào chạy | Làm gì |
+| Workflow | Trigger | What it does |
 |---|---|---|
-| **CI** | Mọi push, mọi PR | Build + test (Windows), kiểm tra `dotnet format`, dựng lại DB trên SQL Server thật rồi chạy 2 lần để kiểm tra idempotent |
-| **Package** | Chạy tay, hoặc đẩy tag `v*` | Đóng gói app thành 1 file `.zip` chạy được, kèm script DB và README |
+| **CI** | Every push, every PR | Build + test (Windows), verify `dotnet format`, rebuild the database on a real SQL Server and run the scripts twice to prove idempotency |
+| **Package** | Manual, or a `v*` tag | Produces a runnable `.zip` with the database scripts and a README |
 
-Lấy gói: tab **Actions** → **Package** → **Run workflow** → tải ở mục **Artifacts**.
+To get a package: **Actions** tab → **Package** → **Run workflow** → download from **Artifacts**.
 
-> Test tích hợp cần SQL Server nên **tự bỏ qua** khi chạy trên CI Windows
-> (`SkippableFact`). Đổi lại, job **Database Scripts** dựng SQL Server thật trên
-> Linux để kiểm tra script — vì dự án không dùng EF Migrations, đây là lưới an
-> toàn duy nhất cho thay đổi schema.
+> Integration tests need SQL Server, so they **skip themselves** on the Windows CI runner
+> (`SkippableFact`). To compensate, the **Database Scripts** job stands up a real SQL Server
+> on Linux and exercises the scripts — since the project does not use EF Migrations, that
+> is the only safety net for schema changes.

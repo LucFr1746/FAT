@@ -1,25 +1,26 @@
 <Project>
 
   <!--
-    Central Package Management - pin version ở ĐÚNG MỘT chỗ.
-    Lý do: 5 người chạy song song, nếu mỗi csproj tự ghi version thì restore
-    trên mỗi máy ra một bộ dll khác nhau => bug "máy tao chạy được" kinh điển.
+    Central Package Management - every version pinned in exactly ONE place.
+    Why: with five people working in parallel, letting each .csproj carry its
+    own version means restore produces a different set of DLLs on every machine.
+    That is the classic "works on my machine" bug.
 
-    Chỉ TV1 (Lead) được sửa file này.
+    Owned by the team lead.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
-  <ItemGroup Label="Data / EF Core (giữ nguyên dòng 8.x cho net8.0)">
+  <ItemGroup Label="Data / EF Core (stay on the 8.x line for net8.0)">
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.29" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.29" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.29" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.29" />
   </ItemGroup>
 
-  <ItemGroup Label="Hosting / DI / Config">
+  <ItemGroup Label="Hosting / DI / Configuration">
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="8.0.1" />
@@ -28,31 +29,31 @@
   <ItemGroup Label="UI (WPF)">
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="MaterialDesignThemes" Version="5.3.2" />
-    <!-- LiveCharts2 đã ra bản STABLE 2.0.5 - không cần prerelease nữa. -->
     <PackageVersion Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
   </ItemGroup>
 
-  <ItemGroup Label="Bảo mật">
-    <!-- Hash mật khẩu. TUYỆT ĐỐI không tự viết crypto. -->
+  <ItemGroup Label="Security">
+    <!-- Password hashing. Never hand-roll cryptography. -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />
   </ItemGroup>
 
-  <ItemGroup Label="Test">
+  <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <!--
-      Cho phep test TU BO QUA khi khong ket noi duoc SQL Server, thay vi bao do.
-      Nho vay may chua chay setup-db.ps1 van chay duoc bo test don vi.
-    -->
-    <PackageVersion Include="Xunit.SkippableFact" Version="1.4.13" />
-    <!--
-      FluentAssertions PHẢI giữ ở 6.x.
-      Từ 7.0 trở đi package đổi sang giấy phép Xceed thương mại (có phí cho
-      dự án không phải OSS). 6.12.2 là bản cuối còn Apache-2.0.
+      FluentAssertions MUST stay on 6.x.
+      From 7.0 onward the package moved to a commercial Xceed licence that is
+      not free for non-OSS projects. 6.12.2 is the last Apache-2.0 release.
     -->
     <PackageVersion Include="FluentAssertions" Version="6.12.2" />
+    <!--
+      Lets a test SKIP itself when SQL Server is unreachable instead of failing.
+      That keeps the unit tests runnable on a machine that has not run
+      setup-db.ps1 yet, and on CI runners with no database.
+    -->
+    <PackageVersion Include="Xunit.SkippableFact" Version="1.4.13" />
   </ItemGroup>
 
 </Project>
