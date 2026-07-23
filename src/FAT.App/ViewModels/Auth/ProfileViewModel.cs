@@ -1,0 +1,148 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using FAT.App.Navigation;
+using FAT.Services.Abstractions;
+using FAT.Services.Dtos;
+
+namespace FAT.App.ViewModels.Auth;
+
+/// <summary>
+/// ViewModel for the Student Profile screen.
+/// Supports Edit Mode toggling and dropdown selection for Majors & Semesters.
+/// </summary>
+public partial class ProfileViewModel : ViewModelBase, INavigationAware
+{
+    private readonly IUserService _userService;
+    private readonly ICurrentUserContext _currentUserContext;
+
+    [ObservableProperty]
+    private StudentProfileDto? _profile;
+
+    [ObservableProperty]
+    private string _studentCode = string.Empty;
+
+    [ObservableProperty]
+    private string _fullName = string.Empty;
+
+    [ObservableProperty]
+    private string? _email = string.Empty;
+
+    [ObservableProperty]
+    private DateTime? _dateOfBirth;
+
+    [ObservableProperty]
+    private string _selectedSemester = "Kỳ 5";
+
+    [ObservableProperty]
+    private string _selectedMajor = "Software Engineering";
+
+    [ObservableProperty]
+    private string _username = string.Empty;
+
+    [ObservableProperty]
+    private bool _isEditMode;
+
+    [ObservableProperty]
+    private string? _statusMessage;
+
+    public List<string> Semesters { get; } = new()
+    {
+        "Kỳ 1",
+        "Kỳ 2",
+        "Kỳ 3",
+        "Kỳ 4",
+        "Kỳ 5",
+        "Kỳ 6",
+        "Kỳ 7",
+        "Kỳ 8",
+        "Kỳ 9"
+    };
+
+    public List<string> Majors { get; } = new()
+    {
+        "Software Engineering",
+        "Information Assurance",
+        "Artificial Intelligence",
+        "Information Systems",
+        "Graphic Design",
+        "Digital Marketing",
+        "International Business",
+        "Hotel Management",
+        "Multimedia Management"
+    };
+
+    public ProfileViewModel(IUserService userService, ICurrentUserContext currentUserContext)
+    {
+        _userService = userService;
+        _currentUserContext = currentUserContext;
+        Title = "Hồ Sơ Cá Nhân - FAT System";
+    }
+
+    public async Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
+    {
+        IsEditMode = false;
+        await LoadProfileAsync(cancellationToken);
+    }
+
+    [RelayCommand]
+    private async Task LoadProfileAsync(CancellationToken cancellationToken = default)
+    {
+        if (_currentUserContext.StudentId is not int studentId)
+        {
+            ErrorMessage = "Không tìm thấy hồ sơ sinh viên tương ứng với tài khoản này.";
+            return;
+        }
+
+        await RunBusyAsync(async () =>
+        {
+            Profile = await _userService.GetProfileAsync(studentId, cancellationToken);
+            if (Profile != null)
+            {
+                StudentCode = Profile.StudentCode;
+                FullName = Profile.FullName;
+                Email = Profile.Email;
+                DateOfBirth = Profile.DateOfBirth ?? new DateTime(2003, 1, 1);
+                SelectedMajor = string.IsNullOrWhiteSpace(Profile.MajorName) ? "Software Engineering" : Profile.MajorName;
+                Username = Profile.Username;
+                SelectedSemester = Profile.CurrentSemester ?? "Kỳ 5";
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void EnableEditMode()
+    {
+        IsEditMode = true;
+        StatusMessage = null;
+        ErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private async Task CancelEditAsync()
+    {
+        IsEditMode = false;
+        StatusMessage = null;
+        ErrorMessage = null;
+        await LoadProfileAsync();
+    }
+
+    [RelayCommand]
+    private async Task SaveProfileAsync()
+    {
+        if (_currentUserContext.StudentId is not int studentId)
+        {
+            ErrorMessage = "Không tìm thấy hồ sơ sinh viên.";
+            return;
+        }
+
+        await RunBusyAsync(async () =>
+        {
+            StatusMessage = null;
+            ErrorMessage = null;
+            await _userService.UpdateProfileAsync(studentId, FullName, Email, DateOfBirth, SelectedSemester);
+            StatusMessage = "Đã lưu hồ sơ thành công!";
+            IsEditMode = false; // Switch back to "Chỉnh sửa hồ sơ" mode
+            await LoadProfileAsync();
+        });
+    }
+}

@@ -13,7 +13,7 @@ public interface IUserService
 {
     // ----- Profile -----
     Task<StudentProfileDto?> GetProfileAsync(int studentId, CancellationToken cancellationToken = default);
-    Task UpdateProfileAsync(int studentId, string fullName, string? email, DateTime? dateOfBirth, CancellationToken cancellationToken = default);
+    Task UpdateProfileAsync(int studentId, string fullName, string? email, DateTime? dateOfBirth, string? currentSemester = null, CancellationToken cancellationToken = default);
 
     // ----- User Management (Admin only) -----
     Task<IReadOnlyList<UserDto>> GetUsersAsync(string? keyword = null, CancellationToken cancellationToken = default);

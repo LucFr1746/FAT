@@ -18,10 +18,12 @@ public static class ServicesServiceCollectionExtensions
         // Singleton: the application has exactly one signed-in session.
         services.AddSingleton<ICurrentUserContext, CurrentUserContext>();
 
-        // Scoped, because it depends on FatDbContext (also scoped). Registering
-        // it as a singleton would pin one DbContext open for the lifetime of the
-        // application - leaking memory and serving stale cached data.
+        // Scoped services
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
+
+        // Google OAuth Service
+        services.AddSingleton<IGoogleOAuthService, GoogleOAuthService>();
 
         return services;
     }

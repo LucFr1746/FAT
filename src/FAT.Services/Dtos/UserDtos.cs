@@ -29,7 +29,8 @@ public sealed record StudentProfileDto(
     string MajorCode,
     string MajorName,
     StudentStatus Status,
-    string Username);
+    string Username,
+    string? CurrentSemester = "Kỳ 5");
 
 /// <summary>A degree programme.</summary>
 public sealed record MajorDto(

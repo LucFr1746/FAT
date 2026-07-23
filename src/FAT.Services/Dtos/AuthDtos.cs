@@ -27,4 +27,33 @@ public sealed record CurrentUserInfo(
     // StudentId is null for Admin accounts, which have no student profile.
     int? StudentId,
     string? StudentCode,
-    string? FullName);
+    string? FullName,
+    string? AvatarUrl = null);
+
+/// <summary>Information retrieved from Google OAuth2 UserInfo API.</summary>
+public sealed record GoogleUserInfoDto(
+    string GoogleId,
+    string Email,
+    string FullName,
+    string? PictureUrl);
+
+/// <summary>Data Transfer Object for registering a student profile.</summary>
+public sealed record RegisterRequestDto(
+    string StudentCode,
+    string FullName,
+    string Email,
+    string? Faculty,
+    int MajorId,
+    string? Phone,
+    string? Password,
+    string? ConfirmPassword,
+    bool AcceptTerms,
+    string? GoogleId = null,
+    string? AvatarUrl = null);
+
+/// <summary>Result of Google OAuth loopback process.</summary>
+public sealed record GoogleOAuthResult(
+    bool IsSuccess,
+    GoogleUserInfoDto? UserInfo,
+    string? ErrorMessage);
+
