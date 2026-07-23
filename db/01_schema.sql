@@ -111,6 +111,7 @@ CREATE TABLE dbo.Student
     DateOfBirth    DATE          NULL,
     EnrollmentDate DATE          NOT NULL,
     MajorId        INT           NOT NULL,
+    CurrentSemester NVARCHAR(20) NULL,
     -- Active | Suspended | Graduated | DroppedOut
     Status         NVARCHAR(20)  NOT NULL CONSTRAINT DF_Student_Status DEFAULT (N'Active'),
     CONSTRAINT PK_Student        PRIMARY KEY (StudentId),

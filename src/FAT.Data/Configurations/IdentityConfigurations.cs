@@ -61,6 +61,8 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(x => x.StudentCode).HasMaxLength(20).IsRequired();
         builder.Property(x => x.FullName).HasMaxLength(150).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(150);
+        builder.Property(x => x.CurrentSemester).HasMaxLength(20);
+        builder.Ignore(x => x.Campus);
 
         // The columns are DATE (no time part). Without saying so explicitly EF
         // sends datetime2, and date comparisons drift once a time component

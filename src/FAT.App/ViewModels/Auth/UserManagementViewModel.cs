@@ -25,7 +25,33 @@ public partial class UserManagementViewModel : ViewModelBase, INavigationAware
     private UserDto? _selectedUser;
 
     [ObservableProperty]
+    private bool _isResetModalOpen;
+
+    [ObservableProperty]
+    private UserDto? _resetTargetUser;
+
+    [ObservableProperty]
+    private string _newPassword = string.Empty;
+
+    [ObservableProperty]
+    private string _confirmNewPassword = string.Empty;
+
+    [ObservableProperty]
+    private bool _isPasswordVisible;
+
+    [ObservableProperty]
+    private string? _modalErrorMessage;
+
+    public bool HasModalError => !string.IsNullOrWhiteSpace(ModalErrorMessage);
+
+    partial void OnModalErrorMessageChanged(string? value) => OnPropertyChanged(nameof(HasModalError));
+
+    [ObservableProperty]
     private string? _statusMessage;
+
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+
+    partial void OnStatusMessageChanged(string? value) => OnPropertyChanged(nameof(HasStatusMessage));
 
     public UserManagementViewModel(IUserService userService, ICurrentUserContext currentUserContext)
     {
@@ -45,7 +71,11 @@ public partial class UserManagementViewModel : ViewModelBase, INavigationAware
         await RunBusyAsync(async () =>
         {
             var list = await _userService.GetUsersAsync(SearchKeyword, cancellationToken);
-            Users = new ObservableCollection<UserDto>(list);
+            Users.Clear();
+            foreach (var item in list)
+            {
+                Users.Add(item);
+            }
         });
     }
 
@@ -55,28 +85,114 @@ public partial class UserManagementViewModel : ViewModelBase, INavigationAware
         var target = user ?? SelectedUser;
         if (target == null) return;
 
+        if (CurrentUserContext.User != null && target.UserId == CurrentUserContext.User.UserId)
+        {
+            StatusMessage = null;
+            ErrorMessage = "Bạn không thể tự khóa tài khoản Admin đang đăng nhập.";
+            return;
+        }
+
+        var actionText = target.IsActive ? "khóa" : "mở khóa";
+        var confirmResult = System.Windows.MessageBox.Show(
+            $"Bạn có chắc chắn muốn {actionText} tài khoản '{target.Username}' không?",
+            "Xác nhận thay đổi trạng thái",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+
+        if (confirmResult != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         await RunBusyAsync(async () =>
         {
             StatusMessage = null;
+            ErrorMessage = null;
             var newStatus = !target.IsActive;
             await _userService.SetActiveAsync(target.UserId, newStatus);
-            StatusMessage = $"Đã {(newStatus ? "Mở khóa" : "Khóa")} tài khoản '{target.Username}'.";
-            await LoadUsersAsync();
+
+            var index = Users.IndexOf(target);
+            var updatedUser = target with { IsActive = newStatus };
+            if (index >= 0)
+            {
+                Users[index] = updatedUser;
+            }
+
+            StatusMessage = $"Đã {(newStatus ? "Mở khóa" : "Khóa")} tài khoản '{target.Username}' thành công.";
         });
     }
 
     [RelayCommand]
-    private async Task ResetPasswordAsync(UserDto? user)
+    private void OpenResetPasswordModal(UserDto? user)
     {
         var target = user ?? SelectedUser;
         if (target == null) return;
 
+        ResetTargetUser = target;
+        NewPassword = string.Empty;
+        ConfirmNewPassword = string.Empty;
+        IsPasswordVisible = false;
+        ModalErrorMessage = null;
+        IsResetModalOpen = true;
+    }
+
+    [RelayCommand]
+    private void CloseResetPasswordModal()
+    {
+        IsResetModalOpen = false;
+        ResetTargetUser = null;
+        NewPassword = string.Empty;
+        ConfirmNewPassword = string.Empty;
+        ModalErrorMessage = null;
+    }
+
+    [RelayCommand]
+    private async Task ConfirmResetPasswordAsync()
+    {
+        ModalErrorMessage = null;
+
+        if (ResetTargetUser == null)
+        {
+            ModalErrorMessage = "* Không tìm thấy tài khoản cần đặt lại mật khẩu.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NewPassword))
+        {
+            ModalErrorMessage = "* Vui lòng nhập mật khẩu mới.";
+            return;
+        }
+
+        if (NewPassword.Length < 8)
+        {
+            ModalErrorMessage = "* Mật khẩu mới phải có tối thiểu 8 ký tự.";
+            return;
+        }
+
+        if (NewPassword != ConfirmNewPassword)
+        {
+            ModalErrorMessage = "* Mật khẩu mới và xác nhận mật khẩu không trùng khớp.";
+            return;
+        }
+
+        var confirmResult = System.Windows.MessageBox.Show(
+            $"Bạn có chắc chắn muốn lưu mật khẩu mới cho tài khoản '{ResetTargetUser.Username}' ({ResetTargetUser.FullName}) vào cơ sở dữ liệu không?",
+            "Xác Nhận Cập Nhật Mật Khẩu",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Question);
+
+        if (confirmResult != System.Windows.MessageBoxResult.Yes)
+        {
+            return;
+        }
+
         await RunBusyAsync(async () =>
         {
             StatusMessage = null;
-            const string defaultPassword = "User@123456";
-            await _userService.ResetPasswordAsync(target.UserId, defaultPassword);
-            StatusMessage = $"Đã đặt lại mật khẩu cho '{target.Username}' thành '{defaultPassword}'.";
+            ErrorMessage = null;
+            await _userService.ResetPasswordAsync(ResetTargetUser.UserId, NewPassword);
+            StatusMessage = $"Đã cập nhật mật khẩu mới cho tài khoản '{ResetTargetUser.Username}' thành công vào cơ sở dữ liệu.";
+            IsResetModalOpen = false;
         });
     }
 }

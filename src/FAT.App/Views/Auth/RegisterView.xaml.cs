@@ -15,7 +15,21 @@ public partial class RegisterView : UserControl
     {
         if (DataContext is RegisterViewModel vm && sender is PasswordBox pb)
         {
-            vm.Password = pb.Password;
+            if (vm.Password != pb.Password)
+            {
+                vm.Password = pb.Password;
+            }
+        }
+    }
+
+    private void TxtPasswordPlain_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (DataContext is RegisterViewModel vm && sender is TextBox tb)
+        {
+            if (TxtPassword.Password != tb.Text)
+            {
+                TxtPassword.Password = tb.Text;
+            }
         }
     }
 
@@ -23,7 +37,21 @@ public partial class RegisterView : UserControl
     {
         if (DataContext is RegisterViewModel vm && sender is PasswordBox pb)
         {
-            vm.ConfirmPassword = pb.Password;
+            if (vm.ConfirmPassword != pb.Password)
+            {
+                vm.ConfirmPassword = pb.Password;
+            }
+        }
+    }
+
+    private void TxtConfirmPasswordPlain_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (DataContext is RegisterViewModel vm && sender is TextBox tb)
+        {
+            if (TxtConfirmPassword.Password != tb.Text)
+            {
+                TxtConfirmPassword.Password = tb.Text;
+            }
         }
     }
 }

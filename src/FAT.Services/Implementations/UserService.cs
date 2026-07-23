@@ -44,11 +44,12 @@ public class UserService : IUserService
             MajorName: student.Major?.MajorName ?? string.Empty,
             Status: student.Status,
             Username: student.User?.Username ?? student.StudentCode,
-            CurrentSemester: "Kỳ 5"
+            CurrentSemester: string.IsNullOrWhiteSpace(student.CurrentSemester) ? "Kỳ 5" : student.CurrentSemester,
+            Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus
         );
     }
 
-    public async Task UpdateProfileAsync(int studentId, string fullName, string? email, DateTime? dateOfBirth, string? currentSemester = null, CancellationToken cancellationToken = default)
+    public async Task UpdateProfileAsync(int studentId, string fullName, string? email, DateTime? dateOfBirth, string? currentSemester = null, string? selectedMajor = null, string? campus = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(fullName))
         {
@@ -65,6 +66,25 @@ public class UserService : IUserService
         student.Email = email?.Trim();
         student.DateOfBirth = dateOfBirth;
 
+        if (!string.IsNullOrWhiteSpace(currentSemester))
+        {
+            student.CurrentSemester = currentSemester.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(campus))
+        {
+            student.Campus = campus.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedMajor))
+        {
+            var major = await _db.Majors.FirstOrDefaultAsync(m => m.MajorName == selectedMajor.Trim() || m.MajorCode == selectedMajor.Trim(), cancellationToken);
+            if (major != null)
+            {
+                student.MajorId = major.MajorId;
+            }
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
     }
 
@@ -73,14 +93,17 @@ public class UserService : IUserService
         var query = _db.Users
             .Include(u => u.Role)
             .Include(u => u.Student)
+                .ThenInclude(s => s!.Major)
             .AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var k = keyword.Trim().ToLower();
             query = query.Where(u => u.Username.ToLower().Contains(k)
+                                  || (u.Role != null && u.Role.RoleName.ToLower().Contains(k))
                                   || (u.Student != null && u.Student.FullName.ToLower().Contains(k))
-                                  || (u.Student != null && u.Student.StudentCode.ToLower().Contains(k)));
+                                  || (u.Student != null && u.Student.StudentCode.ToLower().Contains(k))
+                                  || (u.Student != null && u.Student.Major != null && u.Student.Major.MajorName.ToLower().Contains(k)));
         }
 
         var users = await query
@@ -93,7 +116,8 @@ public class UserService : IUserService
                 u.LastLoginAt,
                 u.CreatedAt,
                 u.Student != null ? u.Student.StudentCode : null,
-                u.Student != null ? u.Student.FullName : u.Username
+                u.Student != null ? u.Student.FullName : u.Username,
+                u.Student != null && u.Student.Major != null ? u.Student.Major.MajorName : "N/A"
             ))
             .ToListAsync(cancellationToken);
 

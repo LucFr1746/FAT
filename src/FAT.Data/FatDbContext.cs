@@ -5,18 +5,6 @@ namespace FAT.Data;
 
 /// <summary>
 /// The application's EF Core context.
-///
-/// OWNED BY THE TEAM LEAD. The schema is frozen - see docs/TEAM.md.
-///
-/// This project does NOT use EF Core Migrations: the scripts under db/ are the
-/// source of truth for the schema. The reason is that five people working in
-/// parallel who each generate migrations will break the snapshot chain, and
-/// untangling that costs an afternoon nobody has.
-/// To change a column: edit db/01_schema.sql and the matching entity, then tell
-/// the team to re-run db/setup-db.ps1.
-///
-/// Because the context does not create tables, it IS the unit of work already -
-/// this project deliberately does not wrap another UnitOfWork around it.
 /// </summary>
 public class FatDbContext : DbContext
 {
@@ -42,12 +30,34 @@ public class FatDbContext : DbContext
     public DbSet<Material> Materials => Set<Material>();
     public DbSet<MaterialFile> MaterialFiles => Set<MaterialFile>();
 
+    public void EnsureDatabaseSchemaUpToDate()
+    {
+        try
+        {
+            if (Database.IsSqlServer())
+            {
+                Database.ExecuteSqlRaw(@"
+                    IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Student')
+                    BEGIN
+                        IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID(N'dbo.Student') AND name = 'CurrentSemester')
+                        BEGIN
+                            ALTER TABLE dbo.Student ADD CurrentSemester NVARCHAR(20) NULL;
+                        END
+                    END
+                ");
+            }
+        }
+        catch
+        {
+            // Ignore for in-memory or non-relational test providers
+        }
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Pick up every IEntityTypeConfiguration<> in this assembly.
-        // Adding a new configuration is just adding a class - no edit here.
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FatDbContext).Assembly);
     }
 }

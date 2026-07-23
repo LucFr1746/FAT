@@ -25,11 +25,21 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     [ObservableProperty]
     private ViewModelBase? _currentTabViewModel;
 
+    public bool IsHomeTab => CurrentTabViewModel is null;
+
+    partial void OnCurrentTabViewModelChanged(ViewModelBase? value)
+    {
+        OnPropertyChanged(nameof(IsHomeTab));
+    }
+
     [ObservableProperty]
     private CurrentUserInfo? _currentUser;
 
     [ObservableProperty]
     private bool _isAdmin;
+
+    [ObservableProperty]
+    private bool _isStudent;
 
     [ObservableProperty]
     private bool _isProfileMenuOpen;
@@ -48,15 +58,16 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
         {
             CurrentUser = CurrentUserContext.User;
             IsAdmin = CurrentUserContext.IsAdmin;
+            IsStudent = CurrentUserContext.IsAuthenticated && !CurrentUserContext.IsAdmin;
         };
     }
 
-    public Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
+    public async Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
     {
         CurrentUser = CurrentUserContext.User;
         IsAdmin = CurrentUserContext.IsAdmin;
-        SwitchTab("Home");
-        return Task.CompletedTask;
+        IsStudent = CurrentUserContext.IsAuthenticated && !CurrentUserContext.IsAdmin;
+        await SwitchTabAsync("Home");
     }
 
     [RelayCommand]
@@ -66,33 +77,41 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     }
 
     [RelayCommand]
-    private void SwitchTab(string tabName)
+    private async Task SwitchTabAsync(string tabName)
     {
         ActiveTab = tabName;
         IsProfileMenuOpen = false; // Close profile menu dropdown on tab switch
 
-        switch (tabName)
+        try
         {
-            case "Profile":
-                var profileVm = _serviceProvider.GetRequiredService<ProfileViewModel>();
-                CurrentTabViewModel = profileVm;
-                _ = profileVm.OnNavigatedToAsync(null);
-                break;
+            switch (tabName)
+            {
+                case "Profile":
+                    if (IsAdmin) break; // Admin does not view/edit student profile
+                    var profileVm = _serviceProvider.GetRequiredService<ProfileViewModel>();
+                    CurrentTabViewModel = profileVm;
+                    await profileVm.OnNavigatedToAsync(null);
+                    break;
 
-            case "ChangePassword":
-                CurrentTabViewModel = _serviceProvider.GetRequiredService<ChangePasswordViewModel>();
-                break;
+                case "ChangePassword":
+                    CurrentTabViewModel = _serviceProvider.GetRequiredService<ChangePasswordViewModel>();
+                    break;
 
-            case "UserManagement":
-                var userMgmtVm = _serviceProvider.GetRequiredService<UserManagementViewModel>();
-                CurrentTabViewModel = userMgmtVm;
-                _ = userMgmtVm.OnNavigatedToAsync(null);
-                break;
+                case "UserManagement":
+                    var userMgmtVm = _serviceProvider.GetRequiredService<UserManagementViewModel>();
+                    CurrentTabViewModel = userMgmtVm;
+                    await userMgmtVm.OnNavigatedToAsync(null);
+                    break;
 
-            case "Home":
-            default:
-                CurrentTabViewModel = null; // Show Home Dashboard Cards
-                break;
+                case "Home":
+                default:
+                    CurrentTabViewModel = null; // Show Home Dashboard Cards
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error switching tab to {tabName}: {ex}");
         }
     }
 

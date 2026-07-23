@@ -6,6 +6,7 @@ namespace FAT.App.ViewModels.Auth;
 
 /// <summary>
 /// ViewModel for the Change Password screen.
+/// Supports Show Password toggle and formatted inline error messages.
 /// </summary>
 public partial class ChangePasswordViewModel : ViewModelBase
 {
@@ -22,7 +23,14 @@ public partial class ChangePasswordViewModel : ViewModelBase
     private string _confirmNewPassword = string.Empty;
 
     [ObservableProperty]
+    private bool _isPasswordVisible;
+
+    [ObservableProperty]
     private string? _statusMessage;
+
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+
+    partial void OnStatusMessageChanged(string? value) => OnPropertyChanged(nameof(HasStatusMessage));
 
     public ChangePasswordViewModel(IAuthService authService, ICurrentUserContext currentUserContext)
     {
@@ -39,25 +47,25 @@ public partial class ChangePasswordViewModel : ViewModelBase
 
         if (string.IsNullOrWhiteSpace(CurrentPassword))
         {
-            ErrorMessage = "Vui lòng nhập mật khẩu hiện tại.";
+            ErrorMessage = "* Vui lòng nhập mật khẩu hiện tại.";
             return;
         }
 
         if (string.IsNullOrWhiteSpace(NewPassword) || NewPassword.Length < 8)
         {
-            ErrorMessage = "Mật khẩu mới phải có tối thiểu 8 ký tự.";
+            ErrorMessage = "* Mật khẩu mới phải có tối thiểu 8 ký tự.";
             return;
         }
 
         if (NewPassword != ConfirmNewPassword)
         {
-            ErrorMessage = "Xác nhận mật khẩu mới không trùng khớp.";
+            ErrorMessage = "* Mật khẩu mới và xác nhận mật khẩu không trùng khớp.";
             return;
         }
 
         if (_currentUserContext.User?.UserId is not int userId)
         {
-            ErrorMessage = "Không xác định được phiên làm việc.";
+            ErrorMessage = "* Không xác định được phiên làm việc.";
             return;
         }
 
@@ -66,11 +74,11 @@ public partial class ChangePasswordViewModel : ViewModelBase
             var success = await _authService.ChangePasswordAsync(userId, CurrentPassword, NewPassword);
             if (!success)
             {
-                ErrorMessage = "Mật khẩu hiện tại không chính xác.";
+                ErrorMessage = "* Mật khẩu hiện tại không chính xác.";
                 return;
             }
 
-            StatusMessage = "Đổi mật khẩu thành công!";
+            StatusMessage = "Cài đặt mật khẩu mới thành công";
             CurrentPassword = string.Empty;
             NewPassword = string.Empty;
             ConfirmNewPassword = string.Empty;

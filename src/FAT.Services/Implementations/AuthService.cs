@@ -11,20 +11,13 @@ public class AuthService : IAuthService
 {
     /// <summary>
     /// Decoy hash used when no account matches the username.
-    ///
-    /// Returning immediately for a missing account would make "wrong username"
-    /// noticeably faster than "wrong password", since BCrypt is deliberately
-    /// slow. Timing that difference is enough to enumerate valid usernames.
-    /// Verifying against a decoy keeps both paths equally expensive.
     /// </summary>
     private const string DecoyHash = "$2a$11$JJQiWDIKwyl.f89GLxktb.lx2BSbc.XhflOzX9V993TDFW0fQsAzW";
 
     /// <summary>
     /// One message for EVERY failed sign-in.
-    /// It deliberately does not distinguish a bad username from a bad password,
-    /// because distinguishing them confirms which accounts exist.
     /// </summary>
-    private const string InvalidCredentialsMessage = "Incorrect username or password.";
+    private const string InvalidCredentialsMessage = "Sai tên đăng nhập hoặc mật khẩu.";
 
     private readonly FatDbContext _db;
 
@@ -34,15 +27,17 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            return LoginResult.Failure("Please enter both a username and a password.");
+            return LoginResult.Failure("Vui lòng nhập đầy đủ Tên đăng nhập / Email và Mật khẩu.");
         }
 
-        var normalized = username.Trim();
+        var normalized = username.Trim().ToLowerInvariant();
 
+        // Support login by Username (StudentCode) or Email
         var user = await _db.Users
             .Include(u => u.Role)
             .Include(u => u.Student)
-            .SingleOrDefaultAsync(u => u.Username == normalized, cancellationToken);
+            .SingleOrDefaultAsync(u => u.Username.ToLower() == normalized 
+                                   || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalized), cancellationToken);
 
         if (user is null)
         {
@@ -50,17 +45,14 @@ public class AuthService : IAuthService
             return LoginResult.Failure(InvalidCredentialsMessage);
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+        if (string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
             return LoginResult.Failure(InvalidCredentialsMessage);
         }
 
-        // The IsActive check comes AFTER password verification on purpose:
-        // checking it first would disclose that an account exists to someone
-        // who does not know its password.
         if (!user.IsActive)
         {
-            return LoginResult.Failure("This account is locked. Please contact an administrator.");
+            return LoginResult.Failure("Tài khoản này đang bị khóa. Vui lòng liên hệ Quản trị viên.");
         }
 
         user.LastLoginAt = DateTime.UtcNow;
@@ -91,27 +83,27 @@ public class AuthService : IAuthService
         var user = await _db.Users
             .Include(u => u.Role)
             .Include(u => u.Student)
-            .FirstOrDefaultAsync(u => u.GoogleId == googleUser.GoogleId || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalizedEmail), cancellationToken);
+            .FirstOrDefaultAsync(u => (u.GoogleId != null && u.GoogleId == googleUser.GoogleId)
+                                   || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalizedEmail), cancellationToken);
 
         if (user is null)
         {
-            // Account not found - return specific message for UI auto-registration trigger
             return LoginResult.Failure("ACCOUNT_NOT_FOUND");
         }
 
         if (!user.IsActive)
         {
-            return LoginResult.Failure("Tài khoản này hiện đang bị khóa. Vui lòng liên hệ Quản trị viên.");
+            return LoginResult.Failure("Tài khoản này đang bị khóa. Vui lòng liên hệ Quản trị viên.");
         }
 
-        // Update GoogleId and AvatarUrl if newly linked
-        if (string.IsNullOrEmpty(user.GoogleId) || user.AvatarUrl != googleUser.PictureUrl)
+        if (string.IsNullOrEmpty(user.GoogleId))
         {
             user.GoogleId = googleUser.GoogleId;
-            if (!string.IsNullOrEmpty(googleUser.PictureUrl))
-            {
-                user.AvatarUrl = googleUser.PictureUrl;
-            }
+        }
+
+        if (!string.IsNullOrEmpty(googleUser.PictureUrl))
+        {
+            user.AvatarUrl = googleUser.PictureUrl;
         }
 
         user.LastLoginAt = DateTime.UtcNow;
@@ -191,7 +183,7 @@ public class AuthService : IAuthService
         var studentRole = await _db.Roles.FirstOrDefaultAsync(r => r.RoleName == RoleNames.Student, cancellationToken)
                          ?? await _db.Roles.FirstAsync(cancellationToken);
 
-        // Create AppUser
+        // Create AppUser & hash password with BCrypt
         var newUser = new Domain.Entities.AppUser
         {
             Username = normalizedStudentCode,
@@ -220,6 +212,7 @@ public class AuthService : IAuthService
             Email = normalizedEmail,
             EnrollmentDate = DateTime.Today,
             MajorId = majorId,
+            CurrentSemester = "Kỳ 1",
             Status = Domain.Enums.StudentStatus.Active
         };
 
@@ -241,7 +234,7 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
         {
-            throw new ArgumentException("The new password must be at least 8 characters long.", nameof(newPassword));
+            throw new ArgumentException("Mật khẩu mới phải có tối thiểu 8 ký tự.", nameof(newPassword));
         }
 
         var user = await _db.Users.SingleOrDefaultAsync(u => u.UserId == userId, cancellationToken);
@@ -255,4 +248,3 @@ public class AuthService : IAuthService
         return true;
     }
 }
-

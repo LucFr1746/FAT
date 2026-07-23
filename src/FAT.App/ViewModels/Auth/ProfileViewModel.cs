@@ -14,6 +14,7 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
 {
     private readonly IUserService _userService;
     private readonly ICurrentUserContext _currentUserContext;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private StudentProfileDto? _profile;
@@ -37,6 +38,9 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
     private string _selectedMajor = "Software Engineering";
 
     [ObservableProperty]
+    private string _selectedCampus = "Hồ Chí Minh";
+
+    [ObservableProperty]
     private string _username = string.Empty;
 
     [ObservableProperty]
@@ -44,6 +48,10 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
 
     [ObservableProperty]
     private string? _statusMessage;
+
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+
+    partial void OnStatusMessageChanged(string? value) => OnPropertyChanged(nameof(HasStatusMessage));
 
     public List<string> Semesters { get; } = new()
     {
@@ -60,22 +68,30 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
 
     public List<string> Majors { get; } = new()
     {
-        "Software Engineering",
-        "Information Assurance",
-        "Artificial Intelligence",
-        "Information Systems",
-        "Graphic Design",
-        "Digital Marketing",
-        "International Business",
-        "Hotel Management",
-        "Multimedia Management"
+        "Software Engineering"
     };
 
-    public ProfileViewModel(IUserService userService, ICurrentUserContext currentUserContext)
+    public List<string> Campuses { get; } = new()
+    {
+        "Hồ Chí Minh",
+        "Hà Nội",
+        "Quy Nhơn",
+        "Đà Nẵng",
+        "Cần Thơ"
+    };
+
+    public ProfileViewModel(IUserService userService, ICurrentUserContext currentUserContext, INavigationService navigationService)
     {
         _userService = userService;
         _currentUserContext = currentUserContext;
+        _navigationService = navigationService;
         Title = "Hồ Sơ Cá Nhân - FAT System";
+    }
+
+    [RelayCommand]
+    private async Task NavigateToHomeAsync()
+    {
+        await _navigationService.NavigateToAsync<DashboardViewModel>();
     }
 
     public async Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
@@ -87,6 +103,12 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
     [RelayCommand]
     private async Task LoadProfileAsync(CancellationToken cancellationToken = default)
     {
+        if (_currentUserContext.IsAdmin)
+        {
+            ErrorMessage = "Tài khoản Quản trị viên (Admin) không sử dụng hồ sơ sinh viên.";
+            return;
+        }
+
         if (_currentUserContext.StudentId is not int studentId)
         {
             ErrorMessage = "Không tìm thấy hồ sơ sinh viên tương ứng với tài khoản này.";
@@ -105,6 +127,7 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
                 SelectedMajor = string.IsNullOrWhiteSpace(Profile.MajorName) ? "Software Engineering" : Profile.MajorName;
                 Username = Profile.Username;
                 SelectedSemester = Profile.CurrentSemester ?? "Kỳ 5";
+                SelectedCampus = string.IsNullOrWhiteSpace(Profile.Campus) ? "Hồ Chí Minh" : Profile.Campus;
             }
         });
     }
@@ -139,10 +162,9 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
         {
             StatusMessage = null;
             ErrorMessage = null;
-            await _userService.UpdateProfileAsync(studentId, FullName, Email, DateOfBirth, SelectedSemester);
-            StatusMessage = "Đã lưu hồ sơ thành công!";
+            await _userService.UpdateProfileAsync(studentId, FullName, Email, DateOfBirth, SelectedSemester, SelectedMajor, SelectedCampus);
             IsEditMode = false; // Switch back to "Chỉnh sửa hồ sơ" mode
-            await LoadProfileAsync();
+            StatusMessage = "Lưu hồ sơ thành công";
         });
     }
 }

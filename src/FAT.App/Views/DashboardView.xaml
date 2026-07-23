@@ -9,6 +9,7 @@
 
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" xmlns:converters="clr-namespace:FAT.App.Converters"/>
 
         <!-- Header Tab Button Style -->
         <Style x:Key="NavTabButtonStyle" TargetType="Button">
@@ -190,19 +191,29 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- Menu Item 1: Chỉnh sửa hồ sơ -->
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                <!-- Menu Item 1: Chỉnh sửa hồ sơ (Hiển thị CHỈ KHI là Student) -->
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Style="{StaticResource PopupMenuItemButtonStyle}"
+                                        Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="👤" Margin="0,0,10,0"/>
                                         <TextBlock Text="Chỉnh Sửa Hồ Sơ"/>
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Menu Item 2: Chỉnh sửa tài khoản (Đổi mật khẩu) -->
+                                <!-- Menu Item 2: Quản lý tài khoản (Hiển thị CHỈ KHI là Admin) -->
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Style="{StaticResource PopupMenuItemButtonStyle}"
+                                        Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🛡️" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Quản Lý Tài Khoản"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Menu Item 3: Thay đổi mật khẩu -->
                                 <Button Command="{Binding SwitchTabCommand}" CommandParameter="ChangePassword" Style="{StaticResource PopupMenuItemButtonStyle}">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="🔑" Margin="0,0,10,0"/>
-                                        <TextBlock Text="Chỉnh Sửa Tài Khoản (Mật khẩu)"/>
+                                        <TextBlock Text="Thay Đổi Mật Khẩu"/>
                                     </StackPanel>
                                 </Button>
 
@@ -225,20 +236,12 @@
         <!-- MAIN BODY CONTENT AREA -->
         <Grid Grid.Row="1">
             <!-- Dynamic Sub-Content (Profile, ChangePassword, UserManagement) -->
-            <ContentControl Content="{Binding CurrentTabViewModel}"/>
+            <ContentControl Content="{Binding CurrentTabViewModel}"
+                            Visibility="{Binding IsHomeTab, Converter={StaticResource InverseBoolToVisConverter}}"/>
 
-            <!-- Default Home Dashboard Content (Shown when CurrentTabViewModel is Null) -->
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ScrollViewer.Style>
-                    <Style TargetType="ScrollViewer">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding CurrentTabViewModel}" Value="{x:Null}">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </ScrollViewer.Style>
+            <!-- Default Home Dashboard Content (Shown when IsHomeTab is True) -->
+            <ScrollViewer VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding IsHomeTab, Converter={StaticResource BoolToVisConverter}}">
 
                 <StackPanel Margin="28">
                     <!-- Hero Banner Card -->
@@ -260,8 +263,16 @@
                                 <TextBlock Text="Theo dõi điểm rèn luyện, đăng ký sự kiện ngoại khóa và cập nhật hồ sơ cá nhân nhanh chóng." FontSize="14" Foreground="#7C6E65" Margin="0,0,0,24"/>
 
                                 <StackPanel Orientation="Horizontal">
-                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Style="{StaticResource NavTabButtonStyle}" Background="#FEC868" Foreground="#473C33" BorderThickness="0" Padding="22,12">
+                                    <!-- Student Action Button -->
+                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Style="{StaticResource NavTabButtonStyle}" Background="#FEC868" Foreground="#473C33" BorderThickness="0" Padding="22,12"
+                                            Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}">
                                         <TextBlock Text="Xem Hồ Sơ Cá Nhân ➔" FontWeight="ExtraBold" FontSize="14"/>
+                                    </Button>
+
+                                    <!-- Admin Action Button -->
+                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Style="{StaticResource NavTabButtonStyle}" Background="#FEC868" Foreground="#473C33" BorderThickness="0" Padding="22,12"
+                                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                                        <TextBlock Text="Truy Cập Quản Lý Tài Khoản ➔" FontWeight="ExtraBold" FontSize="14"/>
                                     </Button>
                                 </StackPanel>
                             </StackPanel>
@@ -280,8 +291,9 @@
                     <TextBlock Text="Tính Năng Nổi Bật System" FontSize="18" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,18"/>
 
                     <UniformGrid Columns="3">
-                        <!-- Card 1: Profile -->
-                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="0,0,12,16">
+                        <!-- Card 1: Profile (Student Only) -->
+                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="0,0,12,16"
+                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}">
                             <Border.Effect>
                                 <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
                             </Border.Effect>

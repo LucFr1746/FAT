@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:views="clr-namespace:FAT.App.Views"
              mc:Ignorable="d" 
              d:DesignHeight="720" d:DesignWidth="900">
 
@@ -38,17 +39,6 @@
             </Setter>
         </Style>
 
-        <!-- Modern DatePicker Style -->
-        <Style x:Key="ModernDatePickerStyle" TargetType="DatePicker">
-            <Setter Property="Background" Value="#FAF6EE"/>
-            <Setter Property="Foreground" Value="#473C33"/>
-            <Setter Property="BorderBrush" Value="#E5DDCB"/>
-            <Setter Property="BorderThickness" Value="1.5"/>
-            <Setter Property="MinHeight" Value="48"/>
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="12,4"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-        </Style>
 
         <!-- Modern ComboBox Style -->
         <Style x:Key="ModernComboBoxStyle" TargetType="ComboBox">
@@ -62,19 +52,19 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
-        <!-- Action Warm Gold Button Style -->
+        <!-- Action Warm Gold Button Style with Generous Horizontal Padding -->
         <Style x:Key="PrimaryButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#FEC868"/>
             <Setter Property="Foreground" Value="#473C33"/>
             <Setter Property="FontWeight" Value="ExtraBold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="MinHeight" Value="48"/>
-            <Setter Property="Padding" Value="24,12"/>
+            <Setter Property="Padding" Value="28,12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="14">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="14" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -87,7 +77,7 @@
             </Setter>
         </Style>
 
-        <!-- Cancel Button Style -->
+        <!-- Cancel Button Style with Generous Horizontal Padding -->
         <Style x:Key="CancelButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#FFFFFF"/>
             <Setter Property="Foreground" Value="#473C33"/>
@@ -96,12 +86,12 @@
             <Setter Property="FontWeight" Value="Bold"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="MinHeight" Value="48"/>
-            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Padding" Value="24,12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="14">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="14" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -123,20 +113,35 @@
                 </Border.Effect>
 
                 <StackPanel>
-                    <!-- Header Title -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                        <Border Width="40" Height="40" CornerRadius="20" Background="#FAF6EE" Margin="0,0,12,0">
-                            <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="HỒ SƠ CÁ NHÂN SINH VIÊN" FontSize="22" FontWeight="ExtraBold" Foreground="#473C33"/>
-                            <TextBlock Text="Cập nhật thông tin học tập và lý lịch cá nhân" FontSize="12" Foreground="#7C6E65"/>
+                    <!-- Header Title & Back to Home Button -->
+                    <Grid Margin="0,0,0,24">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Border Width="40" Height="40" CornerRadius="20" Background="#FAF6EE" Margin="0,0,12,0">
+                                <TextBlock Text="👤" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="HỒ SƠ CÁ NHÂN SINH VIÊN" FontSize="22" FontWeight="ExtraBold" Foreground="#473C33"/>
+                                <TextBlock Text="Cập nhật thông tin học tập và lý lịch cá nhân" FontSize="12" Foreground="#7C6E65"/>
+                            </StackPanel>
                         </StackPanel>
-                    </StackPanel>
+
+                        <!-- Back to Home Button -->
+                        <Button Grid.Column="1"
+                                Command="{Binding DataContext.SwitchTabCommand, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type views:DashboardView}}}"
+                                CommandParameter="Home"
+                                Content="🏠 Quay Lại Trang Chủ"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                MinHeight="40" Padding="18,10" FontSize="13" VerticalAlignment="Center"/>
+                    </Grid>
 
                     <!-- Success Status Message -->
                     <Border Background="#F4F8EB" BorderBrush="#ABC270" BorderThickness="1.5" CornerRadius="12" Padding="14" Margin="0,0,0,20"
-                            Visibility="{Binding StatusMessage, Converter={StaticResource BoolToVisConverter}}">
+                            Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVisConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="✅ " FontSize="14" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding StatusMessage}" Foreground="#4B601C" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
@@ -166,9 +171,9 @@
                             <TextBlock Text="Họ và Tên Sinh viên 🔒 (Không thể sửa)" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
                             <TextBox Text="{Binding FullName}" IsReadOnly="True" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,20"/>
 
-                            <!-- Ngày tháng năm sinh (DatePicker format dd/MM/yyyy) -->
-                            <TextBlock Text="Ngày tháng năm sinh *" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
-                            <DatePicker SelectedDate="{Binding DateOfBirth, Mode=TwoWay}" IsEnabled="{Binding IsEditMode}" Style="{StaticResource ModernDatePickerStyle}" Margin="0,0,0,20"/>
+                            <!-- Campus hiện tại đang học (Dropdown ComboBox) -->
+                            <TextBlock Text="Campus hiện tại đang học *" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
+                            <ComboBox ItemsSource="{Binding Campuses}" SelectedItem="{Binding SelectedCampus}" IsEnabled="{Binding IsEditMode}" Style="{StaticResource ModernComboBoxStyle}" Margin="0,0,0,20"/>
                         </StackPanel>
 
                         <!-- Right Column -->
