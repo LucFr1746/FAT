@@ -42,27 +42,46 @@ internal static class MajorCreditCalculator
         Func<Task<IReadOnlyList<int>>> getAffectedMajorIds,
         CancellationToken cancellationToken = default)
     {
-        // The in-memory provider used by the unit tests has no transactions;
-        // asking for one there would throw rather than protect anything.
-        var useTransaction = db.Database.IsRelational();
-        await using var transaction = useTransaction
-            ? await db.Database.BeginTransactionAsync(cancellationToken)
-            : null;
+        // Runs through the configured execution strategy
+        // (SqlServerRetryingExecutionStrategy, see
+        // DataServiceCollectionExtensions) rather than opening the transaction
+        // directly: EF Core throws immediately - on every call, not only when a
+        // retry actually happens - if BeginTransactionAsync is called while a
+        // retrying strategy is configured, because a retry has to be able to
+        // redo BeginTransaction itself.
+        //
+        // applyChange is usually a plain ChangeTracker.Add and is NOT
+        // idempotent, so a retried attempt could double-stage it. That only
+        // matters on an actual transient failure (rare - deadlock, dropped
+        // connection), which is an acceptable trade-off against the
+        // alternative of every single call failing outright.
+        var strategy = db.Database.CreateExecutionStrategy();
 
-        await applyChange();
-        await db.SaveChangesAsync(cancellationToken);
-
-        foreach (var majorId in await getAffectedMajorIds())
+        await strategy.ExecuteAsync(async () =>
         {
-            await SyncAsync(db, majorId, cancellationToken);
-        }
+            // The in-memory provider used by the unit tests has no
+            // transactions; asking for one there would throw rather than
+            // protect anything.
+            var useTransaction = db.Database.IsRelational();
+            await using var transaction = useTransaction
+                ? await db.Database.BeginTransactionAsync(cancellationToken)
+                : null;
 
-        await db.SaveChangesAsync(cancellationToken);
+            await applyChange();
+            await db.SaveChangesAsync(cancellationToken);
 
-        if (transaction is not null)
-        {
-            await transaction.CommitAsync(cancellationToken);
-        }
+            foreach (var majorId in await getAffectedMajorIds())
+            {
+                await SyncAsync(db, majorId, cancellationToken);
+            }
+
+            await db.SaveChangesAsync(cancellationToken);
+
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+        });
     }
 
     /// <summary>
