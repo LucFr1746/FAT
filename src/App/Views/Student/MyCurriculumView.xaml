@@ -34,50 +34,80 @@
                         HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="180" />
             </Grid>
 
-            <!-- Major + term pickers -->
+            <!-- Major + term pickers & Search -->
             <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,14">
                 <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300" />
-                        <ColumnDefinition Width="180" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0">
-                        <TextBlock Text="Ngành đào tạo" Style="{StaticResource FieldLabelStyle}" />
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300" />
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ngành đào tạo" Style="{StaticResource FieldLabelStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding Majors}"
+                                          SelectedItem="{Binding SelectedMajor}" DisplayMemberPath="MajorName"
+                                          Style="{StaticResource CatalogComboBoxStyle}" />
+                                <Button Grid.Column="1" Content="Chọn" Command="{Binding ChangeMajorCommand}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                            <TextBlock Text="Kỳ hiện tại" Style="{StaticResource FieldLabelStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding TermNumbers}"
+                                          SelectedItem="{Binding SelectedTermNo}"
+                                          Style="{StaticResource CatalogComboBoxStyle}" />
+                                <Button Grid.Column="1" Content="Xem" Command="{Binding ChangeTermCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Search input -->
+                        <StackPanel Grid.Column="2" Margin="20,0,0,0">
+                            <TextBlock Text="Tìm kiếm môn học" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CatalogSearchBoxStyle}" Height="38" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Curriculum Progress Component -->
+                    <Border Grid.Row="1" Background="#FAF8F5" CornerRadius="12" Padding="14,10" Margin="0,14,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0" ItemsSource="{Binding Majors}"
-                                      SelectedItem="{Binding SelectedMajor}" DisplayMemberPath="MajorName"
-                                      Style="{StaticResource CatalogComboBoxStyle}" />
-                            <Button Grid.Column="1" Content="Chọn" Command="{Binding ChangeMajorCommand}"
-                                    Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
-                        </Grid>
-                    </StackPanel>
 
-                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                        <TextBlock Text="Kỳ hiện tại" Style="{StaticResource FieldLabelStyle}" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ComboBox Grid.Column="0" ItemsSource="{Binding TermNumbers}"
-                                      SelectedItem="{Binding SelectedTermNo}"
-                                      Style="{StaticResource CatalogComboBoxStyle}" />
-                            <Button Grid.Column="1" Content="Xem" Command="{Binding ChangeTermCommand}"
-                                    Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" />
-                        </Grid>
-                    </StackPanel>
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📊 Tiến độ toàn khóa:" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" FontSize="13" />
+                                <TextBlock Text="{Binding ProgressText}" Margin="8,0,0,0" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+                            </StackPanel>
 
-                    <StackPanel Grid.Column="2" Margin="20,18,0,0"
-                                Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}">
-                        <ProgressBar IsIndeterminate="True" Height="6" Width="180"
-                                     HorizontalAlignment="Left" Foreground="{StaticResource PrimaryBrush}" />
-                    </StackPanel>
+                            <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" 
+                                         Height="10" Margin="16,0" Foreground="{StaticResource PrimaryBrush}" Background="#E5DDCB"/>
+
+                            <TextBlock Grid.Column="2" Text="{Binding ProgressPercentage, StringFormat='{}{0:0.#}%'}" 
+                                       FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" FontSize="14" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Border>
 
@@ -106,7 +136,7 @@
             <!-- Subject cards -->
             <Grid Grid.Row="3">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Subjects}">
+                    <ItemsControl ItemsSource="{Binding FilteredSubjects}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel Orientation="Horizontal" />
@@ -166,6 +196,11 @@
                                                     Background="{StaticResource InfoBackgroundBrush}">
                                                 <TextBlock Text="● Đang học" FontSize="11" FontWeight="Bold"
                                                            Foreground="{StaticResource TextBrush}" />
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsUncompleted, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="○ Chưa học" FontSize="11" FontWeight="Bold"
+                                                           Foreground="#8C7E72" />
                                             </Border>
                                             <Border Style="{StaticResource ChipBorderStyle}"
                                                     Visibility="{Binding IsRetake, Converter={StaticResource BoolToVis}}"
@@ -230,6 +265,10 @@
                             <Run Text="{Binding SubjectDetail.Subject.Credits, Mode=OneWay}" />
                             <Run Text="tín chỉ · Tính GPA:" />
                             <Run Text="{Binding SubjectDetail.Subject.GpaDisplay, Mode=OneWay}" />
+                            <Run Text=" · Ngành: " />
+                            <Run Text="{Binding SelectedMajor.MajorCode, Mode=OneWay}" />
+                            <Run Text=" · Kỳ " />
+                            <Run Text="{Binding SelectedTermNo, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
 

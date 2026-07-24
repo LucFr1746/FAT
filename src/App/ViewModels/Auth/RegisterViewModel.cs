@@ -143,7 +143,14 @@ public partial class RegisterViewModel : ViewModelBase, INavigationAware
             }
 
             _currentUserContext.SetUser(result.User);
-            await _navigationService.NavigateToAsync<DashboardViewModel>();
+            if (!result.User.IsAdmin && !result.User.IsProfileCompleted)
+            {
+                await _navigationService.NavigateToAsync<AcademicProfileSetupViewModel>();
+            }
+            else
+            {
+                await _navigationService.NavigateToAsync<DashboardViewModel>();
+            }
         });
     }
 

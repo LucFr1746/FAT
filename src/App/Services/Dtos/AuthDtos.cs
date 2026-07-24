@@ -28,7 +28,8 @@ public sealed record CurrentUserInfo(
     int? StudentId,
     string? StudentCode,
     string? FullName,
-    string? AvatarUrl = null);
+    string? AvatarUrl = null,
+    bool IsProfileCompleted = false);
 
 /// <summary>Information retrieved from Google OAuth2 UserInfo API.</summary>
 public sealed record GoogleUserInfoDto(

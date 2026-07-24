@@ -32,7 +32,8 @@ public sealed record StudentProfileDto(
     StudentStatus Status,
     string Username,
     string? CurrentSemester = "Kỳ 5",
-    string? Campus = "Hồ Chí Minh");
+    string? Campus = "Đà Nẵng",
+    bool IsProfileCompleted = false);
 
 /// <summary>A degree programme.</summary>
 public sealed record MajorDto(

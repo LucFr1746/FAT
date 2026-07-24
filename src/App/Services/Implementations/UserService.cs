@@ -45,7 +45,8 @@ public class UserService : IUserService
             Status: student.Status,
             Username: student.User?.Username ?? student.StudentCode,
             CurrentSemester: string.IsNullOrWhiteSpace(student.CurrentSemester) ? "Kỳ 5" : student.CurrentSemester,
-            Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus
+            Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus,
+            IsProfileCompleted: student.IsProfileCompleted
         );
     }
 
@@ -79,6 +80,22 @@ public class UserService : IUserService
                 student.MajorId = major.MajorId;
             }
         }
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task CompleteAcademicProfileAsync(int studentId, int majorId, int currentTermNo, CancellationToken cancellationToken = default)
+    {
+        var student = await _db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken)
+            ?? throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
+
+        var major = await _db.Majors.FirstOrDefaultAsync(m => m.MajorId == majorId, cancellationToken)
+            ?? throw new InvalidOperationException("Ngành học được chọn không tồn tại.");
+
+        student.MajorId = major.MajorId;
+        student.CurrentTermNo = currentTermNo;
+        student.CurrentSemester = CatalogRules.GetTermName(currentTermNo);
+        student.IsProfileCompleted = true;
 
         await _db.SaveChangesAsync(cancellationToken);
     }

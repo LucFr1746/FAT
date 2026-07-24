@@ -67,6 +67,7 @@ public partial class App : Application
                 // Auth ViewModels
                 services.AddTransient<ViewModels.Auth.LoginViewModel>();
                 services.AddTransient<ViewModels.Auth.RegisterViewModel>();
+                services.AddTransient<ViewModels.Auth.AcademicProfileSetupViewModel>();
                 services.AddTransient<ViewModels.Auth.ProfileViewModel>();
                 services.AddTransient<ViewModels.Auth.ChangePasswordViewModel>();
                 services.AddTransient<ViewModels.Auth.UserManagementViewModel>();
@@ -114,6 +115,10 @@ public partial class App : Application
                 // Applies any schema change a teammate's database has not seen
                 // yet. Idempotent and never destructive - see SchemaUpgrader.
                 db.EnsureDatabaseSchemaUpToDate();
+
+                // Automatically seeds curriculum data from db/data/csv if DB is unseeded
+                await DataSeeder.SeedCurriculumIfEmptyAsync(db);
+
                 return true;
             }
 

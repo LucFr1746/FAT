@@ -72,7 +72,15 @@ public partial class LoginViewModel : ViewModelBase
 
             // Set session user
             _currentUserContext.SetUser(result.User);
-            await _navigationService.NavigateToAsync<DashboardViewModel>();
+
+            if (!result.User.IsAdmin && !result.User.IsProfileCompleted)
+            {
+                await _navigationService.NavigateToAsync<AcademicProfileSetupViewModel>();
+            }
+            else
+            {
+                await _navigationService.NavigateToAsync<DashboardViewModel>();
+            }
         });
     }
 
@@ -97,7 +105,15 @@ public partial class LoginViewModel : ViewModelBase
             {
                 CredentialStorage.SaveCredentials(oauthResult.UserInfo.Email, string.Empty, isGoogleLogin: true);
                 _currentUserContext.SetUser(loginResult.User);
-                await _navigationService.NavigateToAsync<DashboardViewModel>();
+
+                if (!loginResult.User.IsAdmin && !loginResult.User.IsProfileCompleted)
+                {
+                    await _navigationService.NavigateToAsync<AcademicProfileSetupViewModel>();
+                }
+                else
+                {
+                    await _navigationService.NavigateToAsync<DashboardViewModel>();
+                }
                 return;
             }
 

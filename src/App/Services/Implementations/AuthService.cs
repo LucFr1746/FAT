@@ -68,7 +68,8 @@ public class AuthService : IAuthService
             StudentId: user.Student?.StudentId,
             StudentCode: user.Student?.StudentCode,
             FullName: user.Student?.FullName ?? user.Username,
-            AvatarUrl: user.AvatarUrl));
+            AvatarUrl: user.AvatarUrl,
+            IsProfileCompleted: user.Student?.IsProfileCompleted ?? false));
     }
 
     public async Task<LoginResult> LoginWithGoogleAsync(GoogleUserInfoDto googleUser, CancellationToken cancellationToken = default)
@@ -119,7 +120,8 @@ public class AuthService : IAuthService
             StudentId: user.Student?.StudentId,
             StudentCode: user.Student?.StudentCode,
             FullName: user.Student?.FullName ?? user.Username,
-            AvatarUrl: user.AvatarUrl));
+            AvatarUrl: user.AvatarUrl,
+            IsProfileCompleted: user.Student?.IsProfileCompleted ?? false));
     }
 
     public async Task<LoginResult> RegisterStudentAsync(RegisterRequestDto dto, CancellationToken cancellationToken = default)
@@ -230,7 +232,8 @@ public class AuthService : IAuthService
             StudentId: newStudent.StudentId,
             StudentCode: newStudent.StudentCode,
             FullName: newStudent.FullName,
-            AvatarUrl: newUser.AvatarUrl));
+            AvatarUrl: newUser.AvatarUrl,
+            IsProfileCompleted: newStudent.IsProfileCompleted));
     }
 
     public async Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default)

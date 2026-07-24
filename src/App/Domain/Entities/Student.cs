@@ -29,6 +29,9 @@ public class Student
     /// <summary>Display form of <see cref="CurrentTermNo"/>, e.g. "Kỳ 5".</summary>
     public string? CurrentSemester { get; set; }
 
+    /// <summary>True once the student has completed their initial academic profile setup.</summary>
+    public bool IsProfileCompleted { get; set; }
+
     [NotMapped]
     public string? Campus { get; set; } = "Hồ Chí Minh";
 

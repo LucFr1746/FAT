@@ -70,10 +70,39 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             })
             .ToListAsync(cancellationToken);
 
+        // Compute overall major progress
+        var majorCourses = await _db.CurriculumItems
+            .AsNoTracking()
+            .Where(ci => ci.MajorId == student.MajorId && ci.Course!.IsActive)
+            .Select(ci => new { ci.CourseId, ci.Course!.Credits })
+            .ToListAsync(cancellationToken);
+
+        var totalSubjects = majorCourses.Count;
+        var totalCredits = majorCourses.Sum(c => c.Credits);
+
+        var passedEnrollments = await _db.Enrollments
+            .AsNoTracking()
+            .Where(e => e.StudentId == studentId && e.Status == EnrollmentStatus.Passed)
+            .Select(e => new { e.CourseId, e.Course!.Credits })
+            .ToListAsync(cancellationToken);
+
+        var completedSubjects = passedEnrollments.Select(e => e.CourseId).Distinct().Count();
+        var completedCredits = passedEnrollments.Sum(e => e.Credits);
+        var progressPercentage = totalCredits > 0
+            ? Math.Round((double)completedCredits / totalCredits * 100, 1)
+            : 0.0;
+
+        var progress = new CurriculumProgressDto(
+            CompletedSubjects: completedSubjects,
+            TotalSubjects: totalSubjects,
+            CompletedCredits: completedCredits,
+            TotalCredits: totalCredits,
+            ProgressPercentage: progressPercentage);
+
         if (items.Count == 0)
         {
             return new StudentTermCurriculumDto(
-                student.MajorId, student.MajorCode, student.MajorName, termNo, termName, [], 0, []);
+                student.MajorId, student.MajorCode, student.MajorName, termNo, termName, [], 0, [], progress);
         }
 
         var courseIds = items.Select(i => i.CourseId).ToList();
@@ -131,7 +160,8 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             termName,
             visible,
             hiddenCodes.Count,
-            hiddenCodes);
+            hiddenCodes,
+            progress);
     }
 
     public async Task<StudentSubjectDetailDto?> GetSubjectDetailAsync(

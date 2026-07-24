@@ -88,7 +88,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
         : $"{Curriculum.HiddenByPrerequisiteCount} môn đang được ẩn do chưa đạt môn tiên quyết: " +
           string.Join(", ", Curriculum.HiddenSubjectCodes);
 
-    public bool IsEmpty => !IsBusy && Subjects.Count == 0 && !HasError;
+    public bool IsEmpty => !IsBusy && FilteredSubjects.Count == 0 && !HasError;
 
     public MyCurriculumViewModel(
         IStudentCurriculumService studentCurriculum,
@@ -132,6 +132,48 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
         await LoadCurriculumAsync(cancellationToken);
     }
 
+    [ObservableProperty]
+    private CurriculumProgressDto? _progress;
+
+    public string ProgressText => Progress == null
+        ? "0 / 0 môn (0 / 0 tín chỉ)"
+        : $"{Progress.CompletedSubjects} / {Progress.TotalSubjects} môn ({Progress.CompletedCredits} / {Progress.TotalCredits} tín chỉ)";
+
+    public double ProgressPercentage => Progress?.ProgressPercentage ?? 0.0;
+
+    [ObservableProperty]
+    private string _searchKeyword = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<StudentSubjectDto> _filteredSubjects = [];
+
+    partial void OnProgressChanged(CurriculumProgressDto? value)
+    {
+        OnPropertyChanged(nameof(ProgressText));
+        OnPropertyChanged(nameof(ProgressPercentage));
+    }
+
+    partial void OnSearchKeywordChanged(string value)
+    {
+        FilterSubjects();
+    }
+
+    private void FilterSubjects()
+    {
+        FilteredSubjects.Clear();
+        var query = SearchKeyword?.Trim();
+        foreach (var s in Subjects)
+        {
+            if (string.IsNullOrWhiteSpace(query) ||
+                s.CourseCode.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                s.CourseName.Contains(query, StringComparison.OrdinalIgnoreCase))
+            {
+                FilteredSubjects.Add(s);
+            }
+        }
+        OnPropertyChanged(nameof(IsEmpty));
+    }
+
     /// <summary>
     /// Loads the kỳ the student is currently in.
     ///
@@ -156,6 +198,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
                 studentId, SelectedTermNo, cancellationToken);
 
             Curriculum = curriculum;
+            Progress = curriculum.Progress;
             SelectedMajor = Majors.FirstOrDefault(m => m.MajorId == curriculum.MajorId);
 
             Subjects.Clear();
@@ -163,6 +206,8 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
             {
                 Subjects.Add(subject);
             }
+
+            FilterSubjects();
 
             OnPropertyChanged(nameof(HasHiddenSubjects));
             OnPropertyChanged(nameof(HiddenSubjectsMessage));

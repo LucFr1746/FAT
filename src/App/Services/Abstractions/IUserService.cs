@@ -14,6 +14,7 @@ public interface IUserService
     // ----- Profile -----
     Task<StudentProfileDto?> GetProfileAsync(int studentId, CancellationToken cancellationToken = default);
     Task UpdateProfileAsync(int studentId, string fullName, string? email, DateTime? dateOfBirth, string? currentSemester = null, string? selectedMajor = null, string? campus = null, CancellationToken cancellationToken = default);
+    Task CompleteAcademicProfileAsync(int studentId, int majorId, int currentTermNo, CancellationToken cancellationToken = default);
 
     // ----- User Management (Admin only) -----
     Task<IReadOnlyList<UserDto>> GetUsersAsync(string? keyword = null, CancellationToken cancellationToken = default);

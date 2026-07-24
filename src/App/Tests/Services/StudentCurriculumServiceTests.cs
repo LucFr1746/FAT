@@ -433,4 +433,29 @@ public class StudentCurriculumServiceTests
 
         detail.Should().BeNull();
     }
+
+    [Fact]
+    public async Task GetTermCurriculumAsync_calculates_curriculum_progress_correctly()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor("SE");
+        var student = db.AddStudent(major.MajorId);
+        var course1 = db.AddCourse("PRF192");
+        var course2 = db.AddCourse("PRO192");
+        db.AddCurriculumItem(major.MajorId, course1.CourseId, 1);
+        db.AddCurriculumItem(major.MajorId, course2.CourseId, 2);
+
+        var semester = db.AddSemester("SP24", 1);
+        db.AddEnrollment(student.StudentId, course1.CourseId, semester.SemesterId, EnrollmentStatus.Passed, 8.5m);
+
+        var result = await CreateService(db, student.StudentId)
+            .GetTermCurriculumAsync(student.StudentId, termNo: 1);
+
+        result.Progress.Should().NotBeNull();
+        result.Progress.CompletedSubjects.Should().Be(1);
+        result.Progress.TotalSubjects.Should().Be(2);
+        result.Progress.CompletedCredits.Should().Be(course1.Credits);
+        result.Progress.TotalCredits.Should().Be(course1.Credits + course2.Credits);
+        result.Progress.ProgressPercentage.Should().Be(50.0);
+    }
 }

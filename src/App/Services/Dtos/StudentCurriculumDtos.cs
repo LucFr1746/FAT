@@ -25,11 +25,20 @@ public sealed record StudentSubjectDto(
     public bool IsPassed => MyStatus == EnrollmentStatus.Passed;
     public bool IsFailed => MyStatus == EnrollmentStatus.Failed;
     public bool IsStudying => MyStatus == EnrollmentStatus.Studying;
+    public bool IsUncompleted => !IsPassed && !IsFailed && !IsStudying;
     public bool IsRetake => MyAttemptCount > 1;
 
     /// <summary>"Có"/"Không", matching the wording FLM uses.</summary>
     public string GpaDisplay => CountsTowardGpa ? "Có" : "Không";
 }
+
+/// <summary>Summary of curriculum progress for a student.</summary>
+public sealed record CurriculumProgressDto(
+    int CompletedSubjects,
+    int TotalSubjects,
+    int CompletedCredits,
+    int TotalCredits,
+    double ProgressPercentage);
 
 /// <summary>
 /// The subjects of one kỳ that a student may actually take.
@@ -47,9 +56,10 @@ public sealed record StudentTermCurriculumDto(
     string TermName,
     IReadOnlyList<StudentSubjectDto> Subjects,
     int HiddenByPrerequisiteCount,
-    IReadOnlyList<string> HiddenSubjectCodes)
+    IReadOnlyList<string> HiddenSubjectCodes,
+    CurriculumProgressDto Progress)
 {
-    public int TotalCredits => Subjects.Sum(s => s.Credits);
+    public int TermCredits => Subjects.Sum(s => s.Credits);
     public bool HasHiddenSubjects => HiddenByPrerequisiteCount > 0;
 }
 

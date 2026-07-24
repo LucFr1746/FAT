@@ -102,4 +102,25 @@ public class AuthServiceTests
         Assert.NotNull(savedStudent);
         Assert.Equal("test.student@fpt.edu.vn", savedStudent.Email);
     }
+
+    [Fact]
+    public async Task CompleteAcademicProfileAsync_UpdatesProfileAndSetsCompletedFlag()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var userService = new UserService(db);
+        var dto = new RegisterRequestDto("SE180001", "Trần Văn A", "a.tran@fpt.edu.vn", "SE", 1, "0912345678", "Password@123", "Password@123", true, null, null);
+        var authService = new AuthService(db);
+        var regResult = await authService.RegisterStudentAsync(dto);
+
+        // Act
+        await userService.CompleteAcademicProfileAsync(regResult.User!.StudentId!.Value, majorId: 1, currentTermNo: 3);
+
+        // Assert
+        var profile = await userService.GetProfileAsync(regResult.User.StudentId.Value);
+        Assert.NotNull(profile);
+        Assert.True(profile.IsProfileCompleted);
+        Assert.Equal(1, profile.MajorId);
+        Assert.Equal("Kỳ 3", profile.CurrentSemester);
+    }
 }

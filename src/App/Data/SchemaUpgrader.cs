@@ -78,6 +78,13 @@ public static class SchemaUpgrader
                 ALTER TABLE dbo.Student ADD CurrentTermNo INT NULL;
             """),
 
+        ("Student.IsProfileCompleted", """
+            IF OBJECT_ID(N'dbo.Student', N'U') IS NOT NULL
+               AND COL_LENGTH(N'dbo.Student', N'IsProfileCompleted') IS NULL
+                ALTER TABLE dbo.Student ADD IsProfileCompleted BIT NOT NULL
+                    CONSTRAINT DF_Student_IsProfileCompleted DEFAULT (0);
+            """),
+
         ("Major.Description", """
             IF OBJECT_ID(N'dbo.Major', N'U') IS NOT NULL
                AND COL_LENGTH(N'dbo.Major', N'Description') IS NULL

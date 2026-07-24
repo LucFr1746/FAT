@@ -118,6 +118,7 @@ CREATE TABLE dbo.Student
     -- binds to the string - keeps working.
     CurrentTermNo   INT          NULL,
     CurrentSemester NVARCHAR(100) NULL,
+    IsProfileCompleted BIT       NOT NULL CONSTRAINT DF_Student_IsProfileCompleted DEFAULT (0),
     -- Active | Suspended | Graduated | DroppedOut
     Status         NVARCHAR(20)  NOT NULL CONSTRAINT DF_Student_Status DEFAULT (N'Active'),
     CONSTRAINT PK_Student        PRIMARY KEY (StudentId),
