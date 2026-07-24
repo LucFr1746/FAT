@@ -1,0 +1,20 @@
+<Window x:Class="App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="FAT - FPT Academic Tracker"
+        Height="800" Width="1280"
+        WindowStartupLocation="CenterScreen"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="Arial">
+
+    <!--
+        Placeholder shell. The navigation rail and the ContentControl host are
+        added in the shell work item; each module then contributes its own
+        NavigationItem entries rather than editing this file.
+    -->
+    <!-- Main Content Host for ViewModel-First Navigation -->
+    <Grid Background="#FFFFFF">
+        <ContentControl Content="{Binding NavigationService.CurrentViewModel}"/>
+    </Grid>
+</Window>

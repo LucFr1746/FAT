@@ -3,13 +3,13 @@
    01_schema.sql : creates the database and every table.
 
    THIS FILE IS THE SOURCE OF TRUTH for the schema - the project does NOT use
-   EF Core Migrations. The entities under FAT.Domain/Entities must match these
+   EF Core Migrations. The entities under Domain/Entities must match these
    tables one for one. Changing a column here means changing the entity too,
    and telling the team to re-run the setup script.
 
-   The script DROPS AND RECREATES the FAT database, so running it any number of
+   The script DROPS AND RECREATES the FAT_DB database, so running it any number of
    times always produces the same result (it is idempotent). Everything
-   currently stored in FAT is lost.
+   currently stored in FAT_DB is lost.
 
    Run: .\db\setup-db.ps1        (recommended)
    or : open this file in SSMS, press F5, then run 02_ and 03_.
@@ -24,21 +24,21 @@ USE master;
 GO
 
 /* Kick every open connection before dropping, otherwise DROP blocks forever
-   because someone still has the app open or a query tab pointed at FAT. */
-IF DB_ID(N'FAT') IS NOT NULL
+   because someone still has the app open or a query tab pointed at FAT_DB. */
+IF DB_ID(N'FAT_DB') IS NOT NULL
 BEGIN
-    ALTER DATABASE FAT SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-    DROP DATABASE FAT;
+    ALTER DATABASE FAT_DB SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE FAT_DB;
 END
 GO
 
-CREATE DATABASE FAT;
+CREATE DATABASE FAT_DB;
 GO
 
-ALTER DATABASE FAT SET RECOVERY SIMPLE;
+ALTER DATABASE FAT_DB SET RECOVERY SIMPLE;
 GO
 
-USE FAT;
+USE FAT_DB;
 GO
 
 /* =============================================================================
@@ -109,6 +109,8 @@ CREATE TABLE dbo.Student
     StudentCode    NVARCHAR(20)  NOT NULL,
     FullName       NVARCHAR(150) NOT NULL,
     Email          NVARCHAR(150) NULL,
+    Phone          NVARCHAR(20)  NULL,
+    ClassName      NVARCHAR(50)  NULL,
     DateOfBirth    DATE          NULL,
     EnrollmentDate DATE          NOT NULL,
     MajorId        INT           NOT NULL,
@@ -117,7 +119,8 @@ CREATE TABLE dbo.Student
     -- of the same fact ("Kỳ 5"), kept in sync so the Profile screen - which
     -- binds to the string - keeps working.
     CurrentTermNo   INT          NULL,
-    CurrentSemester NVARCHAR(20) NULL,
+    CurrentSemester NVARCHAR(100) NULL,
+    IsProfileCompleted BIT       NOT NULL CONSTRAINT DF_Student_IsProfileCompleted DEFAULT (0),
     -- Active | Suspended | Graduated | DroppedOut
     Status         NVARCHAR(20)  NOT NULL CONSTRAINT DF_Student_Status DEFAULT (N'Active'),
     CONSTRAINT PK_Student        PRIMARY KEY (StudentId),
@@ -635,5 +638,5 @@ GO
 CREATE UNIQUE INDEX IX_AppUser_GoogleId ON dbo.AppUser (GoogleId) WHERE GoogleId IS NOT NULL;
 GO
 
-PRINT '[01_schema] OK - created database FAT with 21 tables.';
+PRINT '[01_schema] OK - created DATABASE FAT_DB with 21 tables.';
 GO

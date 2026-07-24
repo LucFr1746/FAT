@@ -1,0 +1,83 @@
+<Application x:Class="App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <!--
+        StartupUri is deliberately absent: the first window is created through
+        the DI container in App.xaml.cs so that it receives its dependencies.
+    -->
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light"
+                                             PrimaryColor="DeepPurple"
+                                             SecondaryColor="Teal" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+                <!--
+                    Shared styling for the catalog admin and student curriculum
+                    screens. Merged here so the eight of them do not each carry
+                    their own copy of the same 150 lines of brushes and templates.
+                -->
+                <ResourceDictionary Source="Styles/CatalogStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Global Converters -->
+            <converters:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" xmlns:converters="clr-namespace:App.Converters"/>
+
+            <!-- ViewModel to View Mappings -->
+            <DataTemplate DataType="{x:Type vmAuth:LoginViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:LoginView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmAuth:RegisterViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:RegisterView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vmAuth:AcademicProfileSetupViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:AcademicProfileSetupView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vmAuth:ProfileViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:ProfileView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmAuth:ChangePasswordViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:ChangePasswordView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmAuth:UserManagementViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:UserManagementView/>
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type vm:DashboardViewModel}" xmlns:vm="clr-namespace:App.ViewModels" xmlns:v="clr-namespace:App.Views">
+                <v:DashboardView/>
+            </DataTemplate>
+
+            <!-- Catalog administration (Admin only) -->
+            <DataTemplate DataType="{x:Type vmCat:MajorAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:MajorAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:TermAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:TermAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:SemesterAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:SemesterAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:SubjectAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:SubjectAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:CurriculumAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:CurriculumAdminView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmCat:FlmImportViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
+                <vCat:FlmImportView/>
+            </DataTemplate>
+
+            <!-- Student curriculum & prediction -->
+            <DataTemplate DataType="{x:Type vmStu:MyCurriculumViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
+                <vStu:MyCurriculumView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmStu:GpaPredictionViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
+                <vStu:GpaPredictionView/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
+
