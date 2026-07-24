@@ -3,7 +3,7 @@ namespace FAT.Services.Import;
 /// <summary>
 /// Turns an FLM export on disk into a <see cref="FlmDataSet"/>.
 ///
-/// Two implementations exist - the workbook and the CSV folder - and the import
+/// Two implementations exist - the workbook and the JSON folder - and the import
 /// service never knows which one it got. Adding a third source later means
 /// adding one class here and nothing else.
 /// </summary>

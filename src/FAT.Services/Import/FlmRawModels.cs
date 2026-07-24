@@ -3,7 +3,7 @@ namespace FAT.Services.Import;
 /// <summary>
 /// The FLM export, normalised into one shape.
 ///
-/// Both the .xlsx reader and the .csv reader produce THIS, so everything
+/// Both the .xlsx reader and the .json reader produce THIS, so everything
 /// downstream - validation, the prerequisite parser, the upsert logic - is
 /// written once and is identical whichever source the administrator picked.
 /// </summary>
@@ -21,7 +21,7 @@ public sealed record FlmDataSet(
         Curricula.Count + Subjects.Count + Assessments.Count + Materials.Count + Schedules.Count;
 }
 
-/// <summary>One degree programme - a sheet in the workbook, a row in curricula.csv.</summary>
+/// <summary>One degree programme - a sheet in the workbook, a row in curricula.json.</summary>
 public sealed record FlmCurriculumRow(string MajorCode, string? MajorName);
 
 /// <summary>

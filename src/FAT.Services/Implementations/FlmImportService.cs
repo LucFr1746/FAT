@@ -22,7 +22,7 @@ public sealed partial class FlmImportService : IFlmImportService
     private readonly IReadOnlyList<IFlmDataReader> _readers;
 
     public FlmImportService(FatDbContext db, ICurrentUserContext currentUser)
-        : this(db, currentUser, [new XlsxFlmDataReader(), new CsvFlmDataReader()])
+        : this(db, currentUser, [new XlsxFlmDataReader(), new JsonFlmDataReader()])
     {
     }
 
@@ -175,7 +175,7 @@ public sealed partial class FlmImportService : IFlmImportService
         return _readers.FirstOrDefault(r => r.CanRead(path))
             ?? throw new NotSupportedException(
                 $"Không hỗ trợ nguồn dữ liệu '{path}'. " +
-                "Hãy chọn tệp .xlsx hoặc thư mục chứa các tệp .csv (subjects.csv, assessments.csv, ...).");
+                "Hãy chọn tệp .xlsx hoặc thư mục chứa các tệp .json (subjects.json, assessments.json, ...).");
     }
 
     /// <summary>

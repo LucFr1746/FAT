@@ -9,7 +9,7 @@ using FAT.Services.Dtos;
 namespace FAT.App.ViewModels.Catalog;
 
 /// <summary>
-/// Imports the FLM catalog from the Excel workbook or the CSV folder.
+/// Imports the FLM catalog from the Excel workbook or the JSON folder.
 ///
 /// The screen insists on a PREVIEW before the import: this touches the entire
 /// catalog and there is no undo, so the administrator sees what is about to
@@ -115,20 +115,20 @@ public partial class FlmImportViewModel : ViewModelBase, INavigationAware
     }
 
     /// <summary>
-    /// Picks the CSV folder.
+    /// Picks the JSON folder.
     ///
     /// OpenFileDialog rather than a folder browser: WPF has no built-in folder
-    /// picker, and the CSV reader accepts any .csv inside the folder anyway, so
+    /// picker, and the JSON reader accepts any .json inside the folder anyway, so
     /// selecting one file is equivalent and needs no extra dependency.
     /// </summary>
     [RelayCommand]
-    private void BrowseCsvFolder()
+    private void BrowseJsonFolder()
     {
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "Chọn một tệp CSV bất kỳ trong thư mục dữ liệu",
-            Filter = "CSV (*.csv)|*.csv",
-            InitialDirectory = Path.Combine(AppContext.BaseDirectory, "Data", "csv")
+            Title = "Chọn một tệp JSON bất kỳ trong thư mục dữ liệu",
+            Filter = "JSON (*.json)|*.json",
+            InitialDirectory = Path.Combine(AppContext.BaseDirectory, "Data", "json")
         };
 
         if (dialog.ShowDialog() == true)
@@ -143,7 +143,7 @@ public partial class FlmImportViewModel : ViewModelBase, INavigationAware
     {
         if (string.IsNullOrWhiteSpace(FilePath))
         {
-            ErrorMessage = "Hãy chọn tệp Excel hoặc thư mục CSV trước.";
+            ErrorMessage = "Hãy chọn tệp Excel hoặc thư mục JSON trước.";
             return;
         }
 
