@@ -56,17 +56,17 @@ jobs:
 
           "version=$version"                  | Out-File $env:GITHUB_OUTPUT -Append
           "selfContained=$sc"                 | Out-File $env:GITHUB_OUTPUT -Append
-          "packageName=FAT-v$version-win-x64" | Out-File $env:GITHUB_OUTPUT -Append
+          "packageName=App-v$version-win-x64" | Out-File $env:GITHUB_OUTPUT -Append
           Write-Host "Version = $version, self-contained = $sc"
 
       - name: Restore
-        run: dotnet restore FAT.sln
+        run: dotnet restore Project.sln
 
       - name: Build & Test
         # Never package code that has not passed its tests.
         run: |
-          dotnet build FAT.sln --configuration Release --no-restore
-          dotnet test FAT.sln --configuration Release --no-build
+          dotnet build Project.sln --configuration Release --no-restore
+          dotnet test Project.sln --configuration Release --no-build
 
       - name: Publish
         shell: pwsh
@@ -76,7 +76,7 @@ jobs:
           # extracts itself into a temp folder on every launch - slow to start
           # and frequently flagged by antivirus. A plain folder, zipped, is far
           # more reliable.
-          dotnet publish src/FAT.App/FAT.App.csproj `
+          dotnet publish src/App/App.csproj `
             --configuration Release `
             --runtime win-x64 `
             --self-contained ${{ steps.info.outputs.selfContained }} `
@@ -89,7 +89,7 @@ jobs:
         shell: pwsh
         run: |
           # A package without the database scripts is useless to the recipient:
-          # the app needs the FAT database to exist before anyone can sign in.
+          # the app needs the FAT_DB database to exist before anyone can sign in.
           New-Item -ItemType Directory -Force -Path publish/app/db | Out-Null
           Copy-Item db/*.sql, db/setup-db.ps1 -Destination publish/app/db/
 
@@ -103,7 +103,7 @@ jobs:
           }
 
           $lines = @(
-              'FAT - FPT Academic Tracker',
+              'Academic Tracker Project',
               '==========================',
               'Version: ${{ steps.info.outputs.version }}',
               '',
@@ -120,7 +120,7 @@ jobs:
               '   (If your SQL Server is not the default instance:',
               '       .\db\setup-db.ps1 -Server ".\SQLEXPRESS")',
               '',
-              '2. Start FAT.App.exe',
+              '2. Start App.exe',
               '',
               '3. Sign in with one of these accounts:',
               '       admin      / Admin@123',
@@ -132,11 +132,11 @@ jobs:
               '-------------------',
               "The app connects to 'localhost' by default. If your SQL Server is",
               'elsewhere, edit the connection string in appsettings.json next to',
-              'FAT.App.exe.',
+              'App.exe.',
               '',
               'WARNING',
               '-------',
-              'setup-db.ps1 DROPS AND RECREATES the FAT database.',
+              'setup-db.ps1 DROPS AND RECREATES the FAT_DB database.',
               'Any data you entered will be lost.'
           )
 
@@ -157,9 +157,9 @@ jobs:
       - name: Smoke-test the package
         shell: pwsh
         run: |
-          $exe = "publish/app/FAT.App.exe"
+          $exe = "publish/app/App.exe"
           if (-not (Test-Path $exe)) {
-              Write-Host "::error::FAT.App.exe is missing from the package."
+              Write-Host "::error::App.exe is missing from the package."
               exit 1
           }
 

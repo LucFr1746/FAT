@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-    Rebuilds the FAT database from scratch.
+    Rebuilds the FAT_DB database from scratch.
 
 .DESCRIPTION
     Runs 01_schema.sql, then 02_seed_master.sql, then 03_seed_demo.sql.
     The script STOPS at the first error (sqlcmd -b) instead of carrying on and
     leaving behind a half-built database that is painful to diagnose.
 
-    WARNING: this DROPS the existing FAT database. Any data you entered is lost.
+    WARNING: this DROPS the existing FAT_DB database. Any data you entered is lost.
 
 .PARAMETER Server
     SQL Server instance name. Defaults to 'localhost' (the default instance).
@@ -63,7 +63,7 @@ $scripts = @(
 )
 
 Write-Host ""
-Write-Host "Rebuilding the FAT database on '$Server'..." -ForegroundColor Cyan
+Write-Host "Rebuilding the FAT_DB database on '$Server'..." -ForegroundColor Cyan
 Write-Host ""
 
 foreach ($file in $scripts) {
@@ -97,7 +97,7 @@ SELECT CONCAT(
     (SELECT COUNT(*) FROM dbo.Grade),      '|',
     (SELECT COUNT(*) FROM dbo.Material));
 "@
-$counts = (& sqlcmd @commonArgs -d FAT -h -1 -W -Q $verifyQuery | Select-Object -First 1) -split '\|'
+$counts = (& sqlcmd @commonArgs -d FAT_DB -h -1 -W -Q $verifyQuery | Select-Object -First 1) -split '\|'
 
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green
@@ -116,6 +116,6 @@ Write-Host ""
 
 if ($Server -ne 'localhost') {
     Write-Host "You are using the non-default instance '$Server'. Remember to create" -ForegroundColor Yellow
-    Write-Host "src\FAT.App\appsettings.Local.json to override the connection string." -ForegroundColor Yellow
+    Write-Host "src\App\appsettings.Local.json to override the connection string." -ForegroundColor Yellow
     Write-Host ""
 }

@@ -23,7 +23,7 @@ env:
 jobs:
   build-and-test:
     name: Build & Test
-    # Windows is MANDATORY: FAT.App is WPF (net8.0-windows), which cannot be
+    # Windows is MANDATORY: App is WPF (net8.0-windows), which cannot be
     # built on Linux.
     runs-on: windows-latest
     timeout-minutes: 20
@@ -48,10 +48,10 @@ jobs:
           restore-keys: nuget-${{ runner.os }}-
 
       - name: Restore
-        run: dotnet restore FAT.sln
+        run: dotnet restore Project.sln
 
       - name: Build
-        run: dotnet build FAT.sln --configuration Release --no-restore
+        run: dotnet build Project.sln --configuration Release --no-restore
 
       # Integration tests need SQL Server. GitHub's Windows runners do not have
       # one, so those tests SKIP themselves (see SkippableFact in
@@ -59,7 +59,7 @@ jobs:
       # part that actually goes wrong - still run in full.
       - name: Test
         run: >
-          dotnet test FAT.sln
+          dotnet test Project.sln
           --configuration Release
           --no-build
           --logger "trx;LogFileName=test-results.trx"
@@ -90,20 +90,20 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore FAT.sln
+        run: dotnet restore Project.sln
 
       # Blocks purely cosmetic diffs at the pull request. Without this step a PR
       # mixes real changes with whatever the author's IDE reformatted, which
       # makes the reviewer's job much harder.
       - name: Verify formatting
-        run: dotnet format FAT.sln --verify-no-changes --verbosity diagnostic
+        run: dotnet format Project.sln --verify-no-changes --verbosity diagnostic
 
       - name: How to fix a formatting failure
         if: failure()
         run: |
           Write-Host "::error::Code does not match the agreed formatting."
           Write-Host "Run this locally and commit the result:"
-          Write-Host "    dotnet format FAT.sln"
+          Write-Host "    dotnet format Project.sln"
         shell: pwsh
 
   database:
@@ -167,7 +167,7 @@ jobs:
           set -euo pipefail
           CID='${{ job.services.mssql.id }}'
           docker exec "$CID" /opt/mssql-tools18/bin/sqlcmd \
-            -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -d FAT -h -1 -W \
+            -S localhost -U sa -P 'YourStrong@Passw0rd' -C -b -d FAT_DB -h -1 -W \
             -Q "SET NOCOUNT ON;
                 DECLARE @c INT = (SELECT COUNT(*) FROM dbo.Course);
                 DECLARE @s INT = (SELECT COUNT(*) FROM dbo.Student);
