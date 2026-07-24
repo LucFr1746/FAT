@@ -62,6 +62,8 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(x => x.StudentCode).HasMaxLength(20).IsRequired();
         builder.Property(x => x.FullName).HasMaxLength(150).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(150);
+        builder.Property(x => x.Phone).HasMaxLength(20);
+        builder.Property(x => x.ClassName).HasMaxLength(50);
         builder.Property(x => x.CurrentSemester).HasMaxLength(100);
         builder.Ignore(x => x.Campus);
 

@@ -14,6 +14,8 @@ public class Student
     public DateTime? DateOfBirth { get; set; }
     public DateTime EnrollmentDate { get; set; }
     public int MajorId { get; set; }
+    public string? Phone { get; set; }
+    public string? ClassName { get; set; }
 
     /// <summary>
     /// Which kỳ the student is in right now - the term the curriculum screen

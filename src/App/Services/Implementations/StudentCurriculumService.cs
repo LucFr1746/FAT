@@ -36,9 +36,20 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
         var student = await _db.Students
             .AsNoTracking()
             .Where(s => s.StudentId == studentId)
-            .Select(s => new { s.MajorId, s.Major!.MajorCode, s.Major.MajorName })
+            .Select(s => new
+            {
+                s.MajorId,
+                s.CurrentTermNo,
+                MajorCode = s.Major != null ? s.Major.MajorCode : "",
+                MajorName = s.Major != null ? s.Major.MajorName : ""
+            })
             .FirstOrDefaultAsync(cancellationToken)
             ?? throw new InvalidOperationException($"Không tìm thấy sinh viên có mã định danh {studentId}.");
+
+        if (termNo <= 0)
+        {
+            termNo = student.CurrentTermNo ?? 1;
+        }
 
         var termName = await _db.Terms
             .AsNoTracking()
@@ -48,33 +59,33 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
 
         var items = await _db.CurriculumItems
             .AsNoTracking()
-            .Where(ci => ci.MajorId == student.MajorId && ci.TermNo == termNo && ci.Course!.IsActive)
+            .Where(ci => ci.MajorId == student.MajorId && ci.TermNo == termNo && (ci.Course == null || ci.Course.IsActive))
             .OrderBy(ci => ci.DisplayOrder)
-            .ThenBy(ci => ci.Course!.CourseCode)
+            .ThenBy(ci => ci.Course != null ? ci.Course.CourseCode : "")
             .Select(ci => new
             {
                 ci.CourseId,
-                ci.Course!.CourseCode,
-                ci.Course.CourseName,
-                ci.Course.Credits,
-                ci.Course.CountsTowardGpa,
-                ci.Course.Description,
-                ci.Course.PrerequisiteText,
+                CourseCode = ci.Course != null ? ci.Course.CourseCode : "",
+                CourseName = ci.Course != null ? ci.Course.CourseName : "",
+                Credits = ci.Course != null ? ci.Course.Credits : 0,
+                CountsTowardGpa = ci.Course != null && ci.Course.CountsTowardGpa,
+                Description = ci.Course != null ? ci.Course.Description : null,
+                PrerequisiteText = ci.Course != null ? ci.Course.PrerequisiteText : null,
                 ci.TermNo,
                 ci.IsMandatory,
-                MaterialCount = ci.Course.SubjectMaterials.Count(m => m.IsActive),
-                AssessmentCount = ci.Course.Assessments.Count,
-                PrerequisiteCodes = ci.Course.Prerequisites
-                    .Select(p => p.RequiredCourse!.CourseCode)
-                    .ToList()
+                MaterialCount = ci.Course != null ? ci.Course.SubjectMaterials.Count(m => m.IsActive) : 0,
+                AssessmentCount = ci.Course != null ? ci.Course.Assessments.Count : 0,
+                PrerequisiteCodes = ci.Course != null
+                    ? ci.Course.Prerequisites.Select(p => p.RequiredCourse != null ? p.RequiredCourse.CourseCode : "").ToList()
+                    : new List<string>()
             })
             .ToListAsync(cancellationToken);
 
         // Compute overall major progress
         var majorCourses = await _db.CurriculumItems
             .AsNoTracking()
-            .Where(ci => ci.MajorId == student.MajorId && ci.Course!.IsActive)
-            .Select(ci => new { ci.CourseId, ci.Course!.Credits })
+            .Where(ci => ci.MajorId == student.MajorId && (ci.Course == null || ci.Course.IsActive))
+            .Select(ci => new { ci.CourseId, Credits = ci.Course != null ? ci.Course.Credits : 0 })
             .ToListAsync(cancellationToken);
 
         var totalSubjects = majorCourses.Count;
@@ -83,7 +94,7 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
         var passedEnrollments = await _db.Enrollments
             .AsNoTracking()
             .Where(e => e.StudentId == studentId && e.Status == EnrollmentStatus.Passed)
-            .Select(e => new { e.CourseId, e.Course!.Credits })
+            .Select(e => new { e.CourseId, Credits = e.Course != null ? e.Course.Credits : 0 })
             .ToListAsync(cancellationToken);
 
         var completedSubjects = passedEnrollments.Select(e => e.CourseId).Distinct().Count();

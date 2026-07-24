@@ -24,6 +24,8 @@ public sealed record StudentProfileDto(
     string StudentCode,
     string FullName,
     string? Email,
+    string? Phone,
+    string? ClassName,
     DateTime? DateOfBirth,
     DateTime EnrollmentDate,
     int MajorId,

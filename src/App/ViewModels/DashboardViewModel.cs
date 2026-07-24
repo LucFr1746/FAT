@@ -69,6 +69,13 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
         CurrentUser = CurrentUserContext.User;
         IsAdmin = CurrentUserContext.IsAdmin;
         IsStudent = CurrentUserContext.IsAuthenticated && !CurrentUserContext.IsAdmin;
+
+        if (IsStudent && CurrentUser != null && !CurrentUser.IsProfileCompleted)
+        {
+            await _navigationService.NavigateToAsync<AcademicProfileSetupViewModel>();
+            return;
+        }
+
         await SwitchTabAsync("Home");
     }
 

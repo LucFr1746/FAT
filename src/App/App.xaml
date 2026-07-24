@@ -32,6 +32,10 @@
                 <vAuth:RegisterView/>
             </DataTemplate>
 
+            <DataTemplate DataType="{x:Type vmAuth:AcademicProfileSetupViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
+                <vAuth:AcademicProfileSetupView/>
+            </DataTemplate>
+
             <DataTemplate DataType="{x:Type vmAuth:ProfileViewModel}" xmlns:vmAuth="clr-namespace:App.ViewModels.Auth" xmlns:vAuth="clr-namespace:App.Views.Auth">
                 <vAuth:ProfileView/>
             </DataTemplate>

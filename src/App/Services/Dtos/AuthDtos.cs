@@ -41,14 +41,14 @@ public sealed record GoogleUserInfoDto(
 /// <summary>Data Transfer Object for registering a student profile.</summary>
 public sealed record RegisterRequestDto(
     string StudentCode,
-    string FullName,
-    string Email,
-    string? Faculty,
-    int MajorId,
-    string? Phone,
     string? Password,
     string? ConfirmPassword,
-    bool AcceptTerms,
+    bool AcceptTerms = true,
+    string? FullName = null,
+    string? Email = null,
+    string? Faculty = null,
+    int MajorId = 1,
+    string? Phone = null,
     string? GoogleId = null,
     string? AvatarUrl = null);
 

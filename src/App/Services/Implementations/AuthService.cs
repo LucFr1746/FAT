@@ -27,16 +27,17 @@ public class AuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
         {
-            return LoginResult.Failure("Vui lòng nhập đầy đủ Tên đăng nhập / Email và Mật khẩu.");
+            return LoginResult.Failure("Vui lòng nhập đầy đủ MSSV và Mật khẩu.");
         }
 
         var normalized = username.Trim().ToLowerInvariant();
 
-        // Support login by Username (StudentCode) or Email
+        // Support login by Username (MSSV / StudentCode)
         var user = await _db.Users
             .Include(u => u.Role)
             .Include(u => u.Student)
             .SingleOrDefaultAsync(u => u.Username.ToLower() == normalized
+                                   || (u.Student != null && u.Student.StudentCode.ToLower() == normalized)
                                    || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalized), cancellationToken);
 
         if (user is null)
@@ -136,16 +137,6 @@ public class AuthService : IAuthService
             return LoginResult.Failure("Vui lòng nhập Mã số sinh viên.");
         }
 
-        if (string.IsNullOrWhiteSpace(dto.FullName))
-        {
-            return LoginResult.Failure("Vui lòng nhập Họ và tên.");
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.Email))
-        {
-            return LoginResult.Failure("Vui lòng cung cấp Email.");
-        }
-
         if (!dto.AcceptTerms)
         {
             return LoginResult.Failure("Bạn phải đồng ý với các điều khoản dịch vụ để tiếp tục.");
@@ -165,20 +156,24 @@ public class AuthService : IAuthService
         }
 
         var normalizedStudentCode = dto.StudentCode.Trim().ToUpperInvariant();
-        var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
 
-        // Check unique StudentCode
-        var codeExists = await _db.Students.AnyAsync(s => s.StudentCode == normalizedStudentCode, cancellationToken);
+        // Check unique StudentCode / MSSV
+        var codeExists = await _db.Students.AnyAsync(s => s.StudentCode == normalizedStudentCode, cancellationToken)
+                      || await _db.Users.AnyAsync(u => u.Username == normalizedStudentCode, cancellationToken);
         if (codeExists)
         {
             return LoginResult.Failure($"Mã sinh viên '{normalizedStudentCode}' đã tồn tại trong hệ thống.");
         }
 
-        // Check unique Email
-        var emailExists = await _db.Students.AnyAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail, cancellationToken);
-        if (emailExists)
+        // Check unique Email if provided
+        if (!string.IsNullOrWhiteSpace(dto.Email))
         {
-            return LoginResult.Failure($"Email '{dto.Email}' đã được đăng ký cho một sinh viên khác.");
+            var normalizedEmail = dto.Email.Trim().ToLowerInvariant();
+            var emailExists = await _db.Students.AnyAsync(s => s.Email != null && s.Email.ToLower() == normalizedEmail, cancellationToken);
+            if (emailExists)
+            {
+                return LoginResult.Failure($"Email '{dto.Email}' đã được đăng ký cho một sinh viên khác.");
+            }
         }
 
         // Fetch Student Role
@@ -208,16 +203,21 @@ public class AuthService : IAuthService
             majorId = 1;
         }
 
+        var studentName = !string.IsNullOrWhiteSpace(dto.FullName) ? dto.FullName.Trim() : normalizedStudentCode;
+        var studentEmail = !string.IsNullOrWhiteSpace(dto.Email) ? dto.Email.Trim().ToLowerInvariant() : null;
+
         // Create Student Profile
         var newStudent = new Domain.Entities.Student
         {
             UserId = newUser.UserId,
             StudentCode = normalizedStudentCode,
-            FullName = dto.FullName.Trim(),
-            Email = normalizedEmail,
+            FullName = studentName,
+            Email = studentEmail,
+            Phone = dto.Phone,
             EnrollmentDate = DateTime.Today,
             MajorId = majorId,
             CurrentSemester = "Kỳ 1",
+            IsProfileCompleted = false,
             Status = Domain.Enums.StudentStatus.Active
         };
 

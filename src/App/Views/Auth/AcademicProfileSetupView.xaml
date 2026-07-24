@@ -44,7 +44,7 @@
             <Setter Property="Foreground" Value="#473C33"/>
             <Setter Property="BorderBrush" Value="#E5DDCB"/>
             <Setter Property="BorderThickness" Value="1.5"/>
-            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="Padding" Value="18,0,18,0"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Template">
@@ -54,7 +54,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}" 
                                 BorderThickness="{TemplateBinding BorderThickness}" 
                                 CornerRadius="12">
-                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" VerticalAlignment="Center"/>
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" Margin="18,0,18,0" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsFocused" Value="True">
@@ -107,34 +107,41 @@
                     </Border>
 
                     <!-- Student Code (Read Only) -->
-                    <StackPanel Margin="0,0,0,18">
-                        <TextBlock Text="MÃ SỐ SINH VIÊN" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="MÃ SỐ SINH VIÊN (MSSV)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
                         <TextBox Text="{Binding StudentCode, Mode=OneWay}" Style="{StaticResource FormTextBoxStyle}" IsReadOnly="True" Background="#F5F2EC"/>
                     </StackPanel>
 
-                    <!-- Full Name (Read Only) -->
-                    <StackPanel Margin="0,0,0,18">
-                        <TextBlock Text="HỌ VÀ TÊN" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
-                        <TextBox Text="{Binding FullName, Mode=OneWay}" Style="{StaticResource FormTextBoxStyle}" IsReadOnly="True" Background="#F5F2EC"/>
+                    <!-- Full Name -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="HỌ VÀ TÊN (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding FullName, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBoxStyle}"/>
+                    </StackPanel>
+
+                    <!-- Email -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="EMAIL (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBoxStyle}"/>
+                    </StackPanel>
+
+                    <!-- Phone Number -->
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="SỐ ĐIỆN THOẠI (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                        <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource FormTextBoxStyle}"/>
                     </StackPanel>
 
                     <!-- Major Selection -->
-                    <StackPanel Margin="0,0,0,18">
+                    <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="NGÀNH ĐÀO TẠO (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
                         <ComboBox ItemsSource="{Binding Majors}" SelectedItem="{Binding SelectedMajor}" DisplayMemberPath="MajorName" 
                                   Height="44" Style="{StaticResource CatalogComboBoxStyle}"/>
                     </StackPanel>
 
-                    <!-- Current Semester Selection -->
-                    <StackPanel Margin="0,0,0,28">
-                        <TextBlock Text="KỲ HỌC HIỆN TẠI (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
-                        <ComboBox ItemsSource="{Binding TermNumbers}" SelectedItem="{Binding SelectedTermNo}" Height="44" Style="{StaticResource CatalogComboBoxStyle}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding StringFormat='Kỳ {0}'}"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
+                    <!-- Class Name Dropdown -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="LỚP HỌC (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding ClassOptions}" SelectedItem="{Binding SelectedClassName}" 
+                                  Height="44" Style="{StaticResource CatalogComboBoxStyle}"/>
                     </StackPanel>
 
                     <!-- Submit Button -->

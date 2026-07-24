@@ -38,6 +38,21 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        AppDomain.CurrentDomain.UnhandledException += (s, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            var logMsg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [UNHANDLED DOMAIN EXCEPTION] {ex}\n";
+            try { File.AppendAllText("app_crash.log", logMsg); } catch { }
+        };
+
+        DispatcherUnhandledException += (s, args) =>
+        {
+            var ex = args.Exception;
+            var logMsg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [DISPATCHER UNHANDLED EXCEPTION] {ex}\n";
+            try { File.AppendAllText("app_crash.log", logMsg); } catch { }
+            args.Handled = true; // Prevent process termination without re-entrant dialog loop!
+        };
+
         _host = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(config =>
             {

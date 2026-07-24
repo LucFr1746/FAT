@@ -105,27 +105,40 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
     {
         await RunBusyAsync(async () =>
         {
-            var majors = await _courseService.GetMajorsAsync(cancellationToken);
-            Majors.Clear();
-            foreach (var major in majors)
+            try
             {
-                Majors.Add(major);
+                var majors = await _courseService.GetMajorsAsync(cancellationToken);
+                Majors.Clear();
+                foreach (var major in majors)
+                {
+                    Majors.Add(major);
+                }
+
+                var semesters = await _courseService.GetSemestersAsync(cancellationToken);
+                Semesters.Clear();
+                foreach (var semester in semesters)
+                {
+                    Semesters.Add(semester);
+                }
+
+                // Defaults to the current semester, which is where a retake belongs.
+                SelectedRetakeSemester = Semesters.FirstOrDefault(s => s.IsCurrent) ?? Semesters.LastOrDefault();
+
+                TermNumbers.Clear();
+                for (var termNo = CatalogRules.MinTermNo; termNo <= 9; termNo++)
+                {
+                    TermNumbers.Add(termNo);
+                }
+
+                if (SelectedTermNo <= 0)
+                {
+                    SelectedTermNo = 1;
+                }
             }
-
-            var semesters = await _courseService.GetSemestersAsync(cancellationToken);
-            Semesters.Clear();
-            foreach (var semester in semesters)
+            catch (Exception ex)
             {
-                Semesters.Add(semester);
-            }
-
-            // Defaults to the current semester, which is where a retake belongs.
-            SelectedRetakeSemester = Semesters.FirstOrDefault(s => s.IsCurrent) ?? Semesters.LastOrDefault();
-
-            TermNumbers.Clear();
-            for (var termNo = CatalogRules.MinTermNo; termNo <= 9; termNo++)
-            {
-                TermNumbers.Add(termNo);
+                System.Diagnostics.Debug.WriteLine($"[MyCurriculumViewModel OnNavigatedToAsync error] {ex}");
+                ErrorMessage = $"Lỗi khởi tạo màn hình chương trình học: {ex.Message}";
             }
         });
 
@@ -192,25 +205,33 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
 
         await RunBusyAsync(async () =>
         {
-            StatusMessage = null;
-
-            var curriculum = await _studentCurriculum.GetTermCurriculumAsync(
-                studentId, SelectedTermNo, cancellationToken);
-
-            Curriculum = curriculum;
-            Progress = curriculum.Progress;
-            SelectedMajor = Majors.FirstOrDefault(m => m.MajorId == curriculum.MajorId);
-
-            Subjects.Clear();
-            foreach (var subject in curriculum.Subjects)
+            try
             {
-                Subjects.Add(subject);
+                StatusMessage = null;
+
+                var curriculum = await _studentCurriculum.GetTermCurriculumAsync(
+                    studentId, SelectedTermNo, cancellationToken);
+
+                Curriculum = curriculum;
+                Progress = curriculum.Progress;
+                SelectedMajor = Majors.FirstOrDefault(m => m.MajorId == curriculum.MajorId);
+
+                Subjects.Clear();
+                foreach (var subject in curriculum.Subjects)
+                {
+                    Subjects.Add(subject);
+                }
+
+                FilterSubjects();
+
+                OnPropertyChanged(nameof(HasHiddenSubjects));
+                OnPropertyChanged(nameof(HiddenSubjectsMessage));
             }
-
-            FilterSubjects();
-
-            OnPropertyChanged(nameof(HasHiddenSubjects));
-            OnPropertyChanged(nameof(HiddenSubjectsMessage));
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MyCurriculumViewModel LoadCurriculumAsync error] {ex}");
+                ErrorMessage = $"Không thể tải chương trình học: {ex.Message}";
+            }
         });
 
         OnPropertyChanged(nameof(IsEmpty));

@@ -37,6 +37,8 @@ public class UserService : IUserService
             StudentCode: student.StudentCode,
             FullName: student.FullName,
             Email: student.Email,
+            Phone: student.Phone,
+            ClassName: student.ClassName,
             DateOfBirth: student.DateOfBirth,
             EnrollmentDate: student.EnrollmentDate,
             MajorId: student.MajorId,
@@ -84,15 +86,39 @@ public class UserService : IUserService
         await _db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task CompleteAcademicProfileAsync(int studentId, int majorId, int currentTermNo, CancellationToken cancellationToken = default)
+    public async Task CompleteAcademicProfileAsync(int studentId, string fullName, string email, string phone, int majorId, string className, int currentTermNo = 1, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            throw new ArgumentException("Họ và tên không được để trống.", nameof(fullName));
+        }
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email không được để trống.", nameof(email));
+        }
+
+        if (string.IsNullOrWhiteSpace(phone))
+        {
+            throw new ArgumentException("Số điện thoại không được để trống.", nameof(phone));
+        }
+
+        if (string.IsNullOrWhiteSpace(className))
+        {
+            throw new ArgumentException("Lớp học không được để trống.", nameof(className));
+        }
+
         var student = await _db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken)
             ?? throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
 
         var major = await _db.Majors.FirstOrDefaultAsync(m => m.MajorId == majorId, cancellationToken)
             ?? throw new InvalidOperationException("Ngành học được chọn không tồn tại.");
 
+        student.FullName = fullName.Trim();
+        student.Email = email.Trim().ToLowerInvariant();
+        student.Phone = phone.Trim();
         student.MajorId = major.MajorId;
+        student.ClassName = className.Trim();
         student.CurrentTermNo = currentTermNo;
         student.CurrentSemester = CatalogRules.GetTermName(currentTermNo);
         student.IsProfileCompleted = true;

@@ -108,14 +108,11 @@ public partial class RegisterViewModel : ViewModelBase, INavigationAware
         {
             var dto = new RegisterRequestDto(
                 StudentCode: StudentCode.Trim().ToUpperInvariant(),
-                FullName: FullName.Trim(),
-                Email: Email.Trim().ToLowerInvariant(),
-                Faculty: SelectedMajor,
-                MajorId: MajorId,
-                Phone: Phone,
                 Password: Password,
                 ConfirmPassword: ConfirmPassword,
                 AcceptTerms: AcceptTerms,
+                FullName: FullName?.Trim(),
+                Email: Email?.Trim(),
                 GoogleId: GoogleId,
                 AvatarUrl: AvatarUrl
             );
@@ -167,36 +164,6 @@ public partial class RegisterViewModel : ViewModelBase, INavigationAware
         if (string.IsNullOrWhiteSpace(StudentCode))
         {
             ErrorMessage = "* Vui lòng nhập Mã số Sinh viên (VD: SE170000).";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(FullName))
-        {
-            ErrorMessage = "* Vui lòng nhập Họ và tên đầy đủ.";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(Email))
-        {
-            ErrorMessage = "* Vui lòng nhập Email (Tài khoản).";
-            return false;
-        }
-
-        if (!Regex.IsMatch(Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-        {
-            ErrorMessage = "* Định dạng Email không hợp lệ (VD: student@fpt.edu.vn).";
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(SelectedMajor))
-        {
-            ErrorMessage = "* Vui lòng chọn Ngành học.";
-            return false;
-        }
-
-        if (!string.IsNullOrWhiteSpace(Phone) && !Regex.IsMatch(Phone, @"^(0|\+84)[3|5|7|8|9][0-9]{8}$"))
-        {
-            ErrorMessage = "* Số điện thoại không hợp lệ (Định dạng SĐT Việt Nam 10 chữ số).";
             return false;
         }
 

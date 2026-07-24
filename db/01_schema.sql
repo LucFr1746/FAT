@@ -109,6 +109,8 @@ CREATE TABLE dbo.Student
     StudentCode    NVARCHAR(20)  NOT NULL,
     FullName       NVARCHAR(150) NOT NULL,
     Email          NVARCHAR(150) NULL,
+    Phone          NVARCHAR(20)  NULL,
+    ClassName      NVARCHAR(50)  NULL,
     DateOfBirth    DATE          NULL,
     EnrollmentDate DATE          NOT NULL,
     MajorId        INT           NOT NULL,

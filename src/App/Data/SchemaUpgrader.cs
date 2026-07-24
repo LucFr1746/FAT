@@ -85,6 +85,18 @@ public static class SchemaUpgrader
                     CONSTRAINT DF_Student_IsProfileCompleted DEFAULT (0);
             """),
 
+        ("Student.Phone", """
+            IF OBJECT_ID(N'dbo.Student', N'U') IS NOT NULL
+               AND COL_LENGTH(N'dbo.Student', N'Phone') IS NULL
+                ALTER TABLE dbo.Student ADD Phone NVARCHAR(20) NULL;
+            """),
+
+        ("Student.ClassName", """
+            IF OBJECT_ID(N'dbo.Student', N'U') IS NOT NULL
+               AND COL_LENGTH(N'dbo.Student', N'ClassName') IS NULL
+                ALTER TABLE dbo.Student ADD ClassName NVARCHAR(50) NULL;
+            """),
+
         ("Major.Description", """
             IF OBJECT_ID(N'dbo.Major', N'U') IS NOT NULL
                AND COL_LENGTH(N'dbo.Major', N'Description') IS NULL

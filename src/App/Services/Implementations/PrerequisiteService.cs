@@ -123,8 +123,8 @@ public sealed class PrerequisiteService : IPrerequisiteService
                 p.RequiredCourseId,
                 p.GroupNo,
                 p.Type,
-                Code = p.RequiredCourse!.CourseCode,
-                Name = p.RequiredCourse.CourseName
+                Code = p.RequiredCourse != null ? p.RequiredCourse.CourseCode : "",
+                Name = p.RequiredCourse != null ? p.RequiredCourse.CourseName : ""
             })
             .ToListAsync(cancellationToken);
 

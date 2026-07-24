@@ -199,8 +199,8 @@
                             <Rectangle Grid.Column="2" Height="1" Fill="#E5DDCB"/>
                         </Grid>
 
-                        <!-- Username / Email Input -->
-                        <TextBlock Text="Tên đăng nhập / Email" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
+                        <!-- MSSV Input -->
+                        <TextBlock Text="MSSV (Mã số sinh viên)" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
                         <TextBox Text="{Binding Username, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,18"/>
 
                         <!-- Password Input Container (Masked PasswordBox or Unmasked Plaintext TextBox) -->

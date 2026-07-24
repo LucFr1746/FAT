@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using App.ViewModels;
+using Services.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Navigation;
@@ -7,10 +8,12 @@ namespace App.Navigation;
 /// <summary>
 /// Implementation of ViewModel-first navigation service for WPF.
 /// Resolves ViewModels dynamically via IServiceProvider.
+/// Enforces mandatory profile setup access control guard for students.
 /// </summary>
 public partial class NavigationService : ObservableObject, INavigationService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ICurrentUserContext _currentUserContext;
     private readonly Stack<(Type ViewModelType, object? Parameter)> _history = new();
 
     [ObservableProperty]
@@ -20,9 +23,10 @@ public partial class NavigationService : ObservableObject, INavigationService
 
     public bool CanGoBack => _history.Count > 0;
 
-    public NavigationService(IServiceProvider serviceProvider)
+    public NavigationService(IServiceProvider serviceProvider, ICurrentUserContext currentUserContext)
     {
         _serviceProvider = serviceProvider;
+        _currentUserContext = currentUserContext;
     }
 
     public async Task NavigateToAsync<TViewModel>(object? parameter = null) where TViewModel : ViewModelBase
@@ -32,6 +36,20 @@ public partial class NavigationService : ObservableObject, INavigationService
 
     public async Task NavigateToAsync(Type viewModelType, object? parameter = null)
     {
+        // Access Control Guard: Incomplete student profile cannot access protected pages
+        if (_currentUserContext.IsAuthenticated &&
+            !_currentUserContext.IsAdmin &&
+            _currentUserContext.User != null &&
+            !_currentUserContext.User.IsProfileCompleted)
+        {
+            if (viewModelType != typeof(ViewModels.Auth.AcademicProfileSetupViewModel) &&
+                viewModelType != typeof(ViewModels.Auth.LoginViewModel) &&
+                viewModelType != typeof(ViewModels.Auth.RegisterViewModel))
+            {
+                viewModelType = typeof(ViewModels.Auth.AcademicProfileSetupViewModel);
+            }
+        }
+
         if (CurrentViewModel != null && CurrentViewModel.GetType() != viewModelType)
         {
             _history.Push((CurrentViewModel.GetType(), null));

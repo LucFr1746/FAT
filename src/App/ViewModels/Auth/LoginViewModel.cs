@@ -54,7 +54,7 @@ public partial class LoginViewModel : ViewModelBase
     {
         if (string.IsNullOrWhiteSpace(Username) || string.IsNullOrWhiteSpace(Password))
         {
-            ErrorMessage = "Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu.";
+            ErrorMessage = "Vui lòng nhập đầy đủ MSSV và Mật khẩu.";
             return;
         }
 

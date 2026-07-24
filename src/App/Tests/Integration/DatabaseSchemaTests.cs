@@ -265,9 +265,23 @@ public class DatabaseSchemaTests : IDisposable
     {
         var db = RequireDb();
 
-        // Correct any DE prefix to SE prefix in database for student codes and usernames
-        await db.Database.ExecuteSqlRawAsync("UPDATE dbo.AppUser SET Username = REPLACE(Username, 'DE', 'SE') WHERE Username LIKE 'DE%'");
-        await db.Database.ExecuteSqlRawAsync("UPDATE dbo.Student SET StudentCode = REPLACE(StudentCode, 'DE', 'SE') WHERE StudentCode LIKE 'DE%'");
+        // Correct any DE prefix to SE prefix in database for student codes and usernames if target username does not already exist
+        await db.Database.ExecuteSqlRawAsync(@"
+            UPDATE u
+            SET Username = REPLACE(Username, 'DE', 'SE')
+            FROM dbo.AppUser u
+            WHERE u.Username LIKE 'DE%'
+              AND NOT EXISTS (
+                  SELECT 1 FROM dbo.AppUser u2 WHERE u2.Username = REPLACE(u.Username, 'DE', 'SE')
+              )");
+        await db.Database.ExecuteSqlRawAsync(@"
+            UPDATE s
+            SET StudentCode = REPLACE(StudentCode, 'DE', 'SE')
+            FROM dbo.Student s
+            WHERE s.StudentCode LIKE 'DE%'
+              AND NOT EXISTS (
+                  SELECT 1 FROM dbo.Student s2 WHERE s2.StudentCode = REPLACE(s.StudentCode, 'DE', 'SE')
+              )");
 
         var users = await db.Users.Include(u => u.Student).ThenInclude(s => s!.Major).ToListAsync();
         users.Should().NotBeEmpty();
