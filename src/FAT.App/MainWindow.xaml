@@ -1,13 +1,12 @@
 <Window x:Class="FAT.App.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="FAT - FPT Academic Tracker"
         Height="800" Width="1280"
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="{materialDesign:MaterialDesignFont}">
+        FontFamily="Arial">
 
     <!--
         Placeholder shell. The navigation rail and the ContentControl host are
