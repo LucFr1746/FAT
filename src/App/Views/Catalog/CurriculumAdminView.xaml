@@ -196,12 +196,13 @@
                         <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
                                   Style="{StaticResource CatalogDataGridStyle}"
                                   ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
-                                  CellStyle="{StaticResource CatalogCellStyle}">
+                                  CellStyle="{StaticResource CatalogCellStyle}"
+                                  HorizontalScrollBarVisibility="Auto">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Kỳ" Binding="{Binding TermNo}" Width="60" />
                                 <DataGridTextColumn Header="TT" Binding="{Binding DisplayOrder}" Width="55" />
                                 <DataGridTextColumn Header="Mã môn" Binding="{Binding CourseCode}" Width="110" />
-                                <DataGridTextColumn Header="Tên môn học" Binding="{Binding CourseName}" Width="*" />
+                                <DataGridTextColumn Header="Tên môn học" Binding="{Binding CourseName}" Width="*" MinWidth="200" />
                                 <DataGridTextColumn Header="TC" Binding="{Binding Credits}" Width="55" />
                                 <DataGridTemplateColumn Header="Thao tác" Width="230">
                                     <DataGridTemplateColumn.CellTemplate>

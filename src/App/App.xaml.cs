@@ -13,7 +13,7 @@ namespace App;
 /// <summary>
 /// Application entry point and composition root.
 ///
-/// OWNED BY THE TEAM LEAD - see docs/TEAM.md.
+/// OWNED BY THE CVerify team - see docs/TEAM.md.
 /// Module services are registered in App/Startup/&lt;Module&gt;Registration.cs,
 /// one file per member, so that nobody else needs to edit this file.
 /// </summary>

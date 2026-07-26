@@ -39,6 +39,14 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
     [ObservableProperty]
     private TermOption? _selectedTermFilter;
 
+    /// <summary>
+    /// CourseId -> "SE, IS" for the list's "Ngành Áp Dụng" column. Covers every
+    /// row that matched the current filter (not just the current page), so it
+    /// stays correct across paging without a query per page turn.
+    /// </summary>
+    [ObservableProperty]
+    private Dictionary<int, string> _majorCodesByCourseId = new();
+
     // ----- Subject editor -----
     [ObservableProperty]
     private bool _isEditorOpen;
@@ -120,7 +128,8 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
     }
 
     protected override async Task<IReadOnlyList<CourseDto>> LoadItemsAsync(CancellationToken cancellationToken)
-        => await _catalogAdmin.GetCoursesAsync(
+    {
+        var courses = await _catalogAdmin.GetCoursesAsync(
             new CourseFilter(
                 Keyword: SearchKeyword,
                 MajorId: SelectedMajorFilter?.MajorId,
@@ -129,6 +138,16 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
                 TermNo: SelectedTermFilter?.TermNo,
                 IsActive: ShowInactive ? null : true),
             cancellationToken);
+
+        var majorCodes = await _curriculumAdmin.GetMajorCodesByCourseIdsAsync(
+            courses.Select(c => c.CourseId).ToList(), cancellationToken);
+
+        MajorCodesByCourseId = courses.ToDictionary(
+            c => c.CourseId,
+            c => majorCodes.TryGetValue(c.CourseId, out var codes) ? string.Join(", ", codes) : "-");
+
+        return courses;
+    }
 
     protected override IReadOnlyList<CourseDto> ApplySort(IReadOnlyList<CourseDto> items)
     {

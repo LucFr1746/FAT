@@ -144,51 +144,79 @@
                 </StackPanel>
 
                 <!--
-                    Navigation tabs. Wrapped in a ScrollViewer because an Admin sees
-                    eight of them and a fixed StackPanel would push the last ones
-                    off the window on a smaller screen.
+                    Navigation tabs. Catalog-admin screens are grouped behind a
+                    single "Quản Lý Đào Tạo" dropdown instead of sitting inline:
+                    six-plus standalone buttons plus one more every time a module
+                    ships is what forces a horizontal scrollbar onto the bar.
                     Every tab is gated on role; DashboardViewModel.SwitchTabAsync
                     re-checks the same condition, since a hidden button is not
                     authorization.
                 -->
-                <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto"
-                              VerticalScrollBarVisibility="Disabled" HorizontalAlignment="Center"
-                              VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="Home" Content="🏠 Trang Chủ" Style="{StaticResource NavTabButtonStyle}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="Home" Content="🏠 Trang Chủ" Style="{StaticResource NavTabButtonStyle}"/>
 
-                        <!-- Student -->
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="MyCurriculum" Content="📖 Chương Trình Học"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="GpaPrediction" Content="📈 Dự Đoán GPA"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
+                    <!-- Student -->
+                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="MyCurriculum" Content="📖 Chương Trình Học"
+                            Style="{StaticResource NavTabButtonStyle}"
+                            Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
+                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="GpaPrediction" Content="📈 Dự Đoán GPA"
+                            Style="{StaticResource NavTabButtonStyle}"
+                            Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
 
-                        <!-- Admin -->
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="🛡️ Tài Khoản"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="MajorAdmin" Content="🎓 Ngành"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="TermAdmin" Content="📅 Kỳ Học"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="SemesterAdmin" Content="🗓️ Học Kỳ"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="SubjectAdmin" Content="📚 Môn Học"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="CurriculumAdmin" Content="🗂️ Chương Trình"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                        <Button Command="{Binding SwitchTabCommand}" CommandParameter="FlmImport" Content="⬇️ Import FLM"
-                                Style="{StaticResource NavTabButtonStyle}"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
-                    </StackPanel>
-                </ScrollViewer>
+                    <!-- Admin: catalog administration, grouped behind one dropdown -->
+                    <Button x:Name="CatalogMenuBtn" Command="{Binding ToggleCatalogMenuCommand}" Content="🗂️ Quản Lý Đào Tạo ▾"
+                            Style="{StaticResource NavTabButtonStyle}"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                    <Popup IsOpen="{Binding IsCatalogMenuOpen, Mode=TwoWay}" StaysOpen="False" PlacementTarget="{Binding ElementName=CatalogMenuBtn}" Placement="Bottom" PopupAnimation="Slide" AllowsTransparency="True">
+                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="16" Width="240" Margin="0,8,0,0" Padding="8">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="8" BlurRadius="24" Opacity="0.12"/>
+                            </Border.Effect>
+                            <StackPanel>
+                                <!-- Group 1: khung đào tạo -->
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="SemesterAdmin" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗓️" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Kỳ Học"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="MajorAdmin" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🎓" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Ngành"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Rectangle Height="1" Fill="#E5DDCB" Margin="4,6"/>
+
+                                <!-- Group 2: nội dung chương trình -->
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="SubjectAdmin" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="📚" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Môn Học"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="CurriculumAdmin" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="🗂️" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Chương Trình"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="FlmImport" Style="{StaticResource PopupMenuItemButtonStyle}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="⬇️" Margin="0,0,10,0"/>
+                                        <TextBlock Text="Import FLM"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <!-- Admin: account management stays top-level -->
+                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="🛡️ Tài Khoản"
+                            Style="{StaticResource NavTabButtonStyle}"
+                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
+                </StackPanel>
 
                 <!-- User Profile Clickable Badge -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -298,7 +326,10 @@
                                     <TextBlock Text="ĐẠI HỌC FPT • HỆ THỐNG RÈN LUYỆN SINH VIÊN" Foreground="#473C33" FontWeight="ExtraBold" FontSize="12"/>
                                 </Border>
                                 <TextBlock Text="Chào Mừng Bạn Quay Trở Lại Hệ Thống FAT!" FontSize="28" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,10"/>
-                                <TextBlock Text="Theo dõi điểm rèn luyện, đăng ký sự kiện ngoại khóa và cập nhật hồ sơ cá nhân nhanh chóng." FontSize="14" Foreground="#7C6E65" Margin="0,0,0,24"/>
+                                <TextBlock Text="Theo dõi điểm rèn luyện, đăng ký sự kiện ngoại khóa và cập nhật hồ sơ cá nhân nhanh chóng." FontSize="14" Foreground="#7C6E65" Margin="0,0,0,24" TextWrapping="Wrap"
+                                           Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
+                                <TextBlock Text="Hệ thống quản lý đào tạo học thuật. Cập nhật chương trình khung, điều phối kỳ học và quản lý danh mục môn học." FontSize="14" Foreground="#7C6E65" Margin="0,0,0,24" TextWrapping="Wrap"
+                                           Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
 
                                 <StackPanel Orientation="Horizontal">
                                     <!-- Student Action Button -->
@@ -325,63 +356,101 @@
                         </Grid>
                     </Border>
 
-                    <!-- Feature Cards Section -->
-                    <TextBlock Text="Tính Năng Nổi Bật System" FontSize="18" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,18"/>
-
-                    <UniformGrid Columns="3">
-                        <!-- Card 1: Profile (Student Only) -->
-                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="0,0,12,16"
-                                Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
-                                        <TextBlock Text="👤" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Hồ Sơ Sinh Viên" FontSize="17" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                    <!-- Feature Cards Section (Student) -->
+                    <StackPanel Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}">
+                        <TextBlock Text="Tính Năng Nổi Bật" FontSize="18" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,18"/>
+                        <UniformGrid Columns="2">
+                            <!-- Card 1: Profile -->
+                            <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="0,0,12,16">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
+                                            <TextBlock Text="👤" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Hồ Sơ Sinh Viên" FontSize="17" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Xem thông tin mã số sinh viên, ngành học và cập nhật địa chỉ liên hệ." FontSize="13" Foreground="#7C6E65" Margin="0,4,0,16" TextWrapping="Wrap"/>
+                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Content="Chi Tiết ➔" Background="Transparent" Foreground="#473C33" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Left" Padding="0" BorderThickness="0" Cursor="Hand"/>
                                 </StackPanel>
-                                <TextBlock Text="Xem thông tin mã số sinh viên, ngành học và cập nhật địa chỉ liên hệ." FontSize="13" Foreground="#7C6E65" Margin="0,4,0,16" TextWrapping="Wrap"/>
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Profile" Content="Chi Tiết ➔" Background="Transparent" Foreground="#473C33" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Left" Padding="0" BorderThickness="0" Cursor="Hand"/>
-                            </StackPanel>
-                        </Border>
+                            </Border>
 
-                        <!-- Card 2: Security -->
-                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="6,0,6,16">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
-                                        <TextBlock Text="🔑" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Đổi Mật Khẩu" FontSize="17" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                            <!-- Card 2: Security -->
+                            <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="12,0,0,16">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
+                                            <TextBlock Text="🔑" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Đổi Mật Khẩu" FontSize="17" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="Bảo mật tài khoản cá nhân, thay đổi mật khẩu định kỳ an toàn." FontSize="13" Foreground="#7C6E65" Margin="0,4,0,16" TextWrapping="Wrap"/>
+                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="ChangePassword" Content="Đổi Mật Khẩu ➔" Background="Transparent" Foreground="#473C33" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Left" Padding="0" BorderThickness="0" Cursor="Hand"/>
                                 </StackPanel>
-                                <TextBlock Text="Bảo mật tài khoản cá nhân, thay đổi mật khẩu định kỳ an toàn." FontSize="13" Foreground="#7C6E65" Margin="0,4,0,16" TextWrapping="Wrap"/>
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="ChangePassword" Content="Đổi Mật Khẩu ➔" Background="Transparent" Foreground="#473C33" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Left" Padding="0" BorderThickness="0" Cursor="Hand"/>
-                            </StackPanel>
-                        </Border>
+                            </Border>
+                        </UniformGrid>
+                    </StackPanel>
 
-                        <!-- Card 3: Admin User Management (Visible ONLY for Admin Role) -->
-                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="12,0,0,16"
-                                Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
-                            <Border.Effect>
-                                <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
-                            </Border.Effect>
-                            <StackPanel>
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                    <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
-                                        <TextBlock Text="🛡️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="Quản Lý Tài Khoản" FontSize="17" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                    <!-- Dashboard KPIs / Quick Actions (Admin) -->
+                    <StackPanel Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}">
+                        <TextBlock Text="Thông Số Dashboard" FontSize="18" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,18"/>
+                        <UniformGrid Columns="3">
+                            <!-- KPI 1: Current semester -->
+                            <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="0,0,12,16">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
+                                            <TextBlock Text="🗓️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Kỳ Học Hiện Tại" FontSize="15" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding CurrentSemesterLabel}" FontSize="18" FontWeight="ExtraBold" Foreground="#473C33" TextWrapping="Wrap"/>
                                 </StackPanel>
-                                <TextBlock Text="Tìm kiếm tài khoản, xem danh sách sinh viên, khóa/mở khóa tài khoản." FontSize="13" Foreground="#7C6E65" Margin="0,4,0,16" TextWrapping="Wrap"/>
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="Truy Cập ➔" Background="Transparent" Foreground="#473C33" FontWeight="ExtraBold" FontSize="13" HorizontalAlignment="Left" Padding="0" BorderThickness="0" Cursor="Hand"/>
-                            </StackPanel>
-                        </Border>
-                    </UniformGrid>
+                            </Border>
+
+                            <!-- KPI 2: Subject count -->
+                            <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="6,0,6,16">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
+                                            <TextBlock Text="📚" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Tổng Số Môn Học" FontSize="15" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding TotalSubjectCount}" FontSize="28" FontWeight="ExtraBold" Foreground="#473C33"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- KPI 3: Quick create -->
+                            <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5" CornerRadius="20" Padding="24" Margin="12,0,0,16">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="4" BlurRadius="16" Opacity="0.05"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Border Width="38" Height="38" CornerRadius="12" Background="#FAF6EE" Margin="0,0,10,0">
+                                            <TextBlock Text="➕" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <TextBlock Text="Tác Vụ Nhanh" FontSize="15" FontWeight="ExtraBold" Foreground="#473C33" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="SubjectAdmin" Content="+ Thêm Môn Học Mới"
+                                            Style="{StaticResource NavTabButtonStyle}" Background="#FEC868" Foreground="#473C33" BorderThickness="0"
+                                            HorizontalAlignment="Left" Margin="0"/>
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

@@ -11,11 +11,19 @@
     <IsTestProject>true</IsTestProject>
     <StartupObject>App.App</StartupObject>
     <GenerateProgramFile>false</GenerateProgramFile>
+    <ApplicationIcon>AppIcon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <ApplicationDefinition Remove="App.xaml" />
     <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Embedded as a WPF resource too, so MainWindow.xaml's Icon="AppIcon.ico"
+         (the runtime title-bar/taskbar icon) can resolve it via pack URI - the
+         ApplicationIcon property above only sets the .exe file's Win32 icon. -->
+    <Resource Include="AppIcon.ico" />
   </ItemGroup>
 
   <ItemGroup>

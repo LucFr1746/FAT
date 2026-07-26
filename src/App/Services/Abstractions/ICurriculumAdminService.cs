@@ -63,4 +63,12 @@ public interface ICurriculumAdminService
 
     /// <summary>Renders a programme's curriculum as CSV, ready to save to disk.</summary>
     Task<string> ExportToCsvAsync(int majorId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Which majors teach each of the given subjects, for the subject list's
+    /// "Ngành Áp Dụng" column. Batched by design: one query for a whole page of
+    /// subjects instead of one round trip per row.
+    /// </summary>
+    Task<IReadOnlyDictionary<int, IReadOnlyList<string>>> GetMajorCodesByCourseIdsAsync(
+        IReadOnlyList<int> courseIds, CancellationToken cancellationToken = default);
 }

@@ -54,9 +54,6 @@
             <DataTemplate DataType="{x:Type vmCat:MajorAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
                 <vCat:MajorAdminView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vmCat:TermAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
-                <vCat:TermAdminView/>
-            </DataTemplate>
             <DataTemplate DataType="{x:Type vmCat:SemesterAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
                 <vCat:SemesterAdminView/>
             </DataTemplate>

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -33,4 +34,56 @@ public sealed class CountToVisibilityConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         => throw new NotSupportedException("CountToVisibilityConverter is one-way.");
+}
+
+/// <summary>
+/// Splits a free-text prerequisite description ("PRO192, MAD101" or
+/// "MGT101 or MKG101") into individual course-code tags for pill rendering.
+///
+/// The subject list stores this as one string - see Course.PrerequisiteText -
+/// so the tag split happens on display rather than in the data model.
+/// </summary>
+public sealed class PrerequisiteTagsConverter : IValueConverter
+{
+    private static readonly char[] Separators = [',', ';', '/'];
+
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        var text = value as string;
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return Array.Empty<string>();
+        }
+
+        return text
+            .Replace(" or ", ",", StringComparison.OrdinalIgnoreCase)
+            .Replace(" and ", ",", StringComparison.OrdinalIgnoreCase)
+            .Split(Separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException("PrerequisiteTagsConverter is one-way.");
+}
+
+/// <summary>
+/// Looks up a course's major codes for the "Ngành Áp Dụng" column: values[0] is
+/// the row's CourseId, values[1] is SubjectAdminViewModel.MajorCodesByCourseId.
+///
+/// A MultiBinding rather than a plain converter because a DataGrid cell has no
+/// other way to reach a dictionary that lives on the ViewModel, not the row.
+/// </summary>
+public sealed class CourseMajorCodesConverter : IMultiValueConverter
+{
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (values is [int courseId, IDictionary<int, string> map] && map.TryGetValue(courseId, out var display))
+        {
+            return display;
+        }
+
+        return "-";
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
+        => throw new NotSupportedException("CourseMajorCodesConverter is one-way.");
 }

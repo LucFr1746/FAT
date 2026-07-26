@@ -22,7 +22,6 @@ public static class CatalogModuleRegistration
         // a screen never shares a change tracker with the one before it.
         services.AddScoped<ICurriculumAdminService, CurriculumAdminService>();
         services.AddScoped<ICatalogAdminService, CatalogAdminService>();
-        services.AddScoped<ITermService, TermService>();
         services.AddScoped<ISubjectMaterialService, SubjectMaterialService>();
         services.AddScoped<IGradeStructureService, GradeStructureService>();
         services.AddScoped<IAssessmentScheduleService, AssessmentScheduleService>();
@@ -47,7 +46,6 @@ public static class CatalogModuleRegistration
         // Transient: a screen must start from a clean state every time it is
         // opened, not from whatever the last visit left behind.
         services.AddTransient<MajorAdminViewModel>();
-        services.AddTransient<TermAdminViewModel>();
         services.AddTransient<SemesterAdminViewModel>();
         services.AddTransient<SubjectAdminViewModel>();
         services.AddTransient<CurriculumAdminViewModel>();
