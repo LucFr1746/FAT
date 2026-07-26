@@ -1,7 +1,7 @@
 using Data;
+using Microsoft.EntityFrameworkCore;
 using Services.Dtos;
 using Services.Implementations;
-using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace Tests;

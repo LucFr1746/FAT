@@ -1,7 +1,7 @@
 using Domain.Enums;
+using FluentAssertions;
 using Services.Implementations;
 using Tests.TestSupport;
-using FluentAssertions;
 
 namespace Tests.Services;
 

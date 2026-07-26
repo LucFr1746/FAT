@@ -1,6 +1,6 @@
+using FluentAssertions;
 using Services.Import;
 using Tests.TestSupport;
-using FluentAssertions;
 
 namespace Tests.Import;
 

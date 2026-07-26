@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
+using App.Navigation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using App.Navigation;
 using Domain.Constants;
 using Services.Abstractions;
 using Services.Dtos;

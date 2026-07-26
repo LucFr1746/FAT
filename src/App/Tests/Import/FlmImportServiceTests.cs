@@ -1,10 +1,10 @@
 using Data;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Services.Dtos;
 using Services.Implementations;
 using Services.Import;
 using Tests.TestSupport;
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 
 namespace Tests.Import;
 

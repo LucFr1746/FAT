@@ -2,9 +2,9 @@ using Data;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 

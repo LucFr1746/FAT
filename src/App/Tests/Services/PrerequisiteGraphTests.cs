@@ -1,5 +1,5 @@
-using Services.Implementations;
 using FluentAssertions;
+using Services.Implementations;
 
 namespace Tests.Services;
 

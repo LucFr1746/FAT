@@ -2,11 +2,11 @@ using System.IO;
 using System.Windows;
 using App.Startup;
 using Data;
-using Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Services;
 
 namespace App;
 

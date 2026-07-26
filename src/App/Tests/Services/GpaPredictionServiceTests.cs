@@ -1,10 +1,10 @@
 using Data;
 using Domain.Enums;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Services.Dtos;
 using Services.Implementations;
 using Tests.TestSupport;
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 
 namespace Tests.Services;
 

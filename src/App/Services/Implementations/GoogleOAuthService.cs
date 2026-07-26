@@ -7,10 +7,10 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Services.Abstractions;
-using Services.Dtos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Services.Abstractions;
+using Services.Dtos;
 
 namespace Services.Implementations;
 

@@ -3,9 +3,9 @@ using System.Text;
 using Data;
 using Domain.Constants;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 

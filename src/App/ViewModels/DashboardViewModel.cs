@@ -1,12 +1,12 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using App.Navigation;
 using App.ViewModels.Auth;
 using App.ViewModels.Catalog;
 using App.ViewModels.Student;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace App.ViewModels;
 

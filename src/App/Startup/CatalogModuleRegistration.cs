@@ -1,8 +1,8 @@
 using App.ViewModels.Catalog;
 using App.ViewModels.Student;
+using Microsoft.Extensions.DependencyInjection;
 using Services.Abstractions;
 using Services.Implementations;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Startup;
 
