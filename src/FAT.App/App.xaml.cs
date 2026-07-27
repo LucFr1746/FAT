@@ -46,10 +46,17 @@ public partial class App : Application
                 services.AddFatData(connectionString);
                 services.AddFatCoreServices();
 
-                // Module registrations go here, one line each:
-                //   services.AddAuthModule();
-                //   services.AddCatalogAdminModule();
-                //   ...
+                // Navigation & Container ViewModels
+                services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();
+                services.AddSingleton<ViewModels.MainWindowViewModel>();
+                services.AddTransient<ViewModels.DashboardViewModel>();
+
+                // Auth ViewModels
+                services.AddTransient<ViewModels.Auth.LoginViewModel>();
+                services.AddTransient<ViewModels.Auth.RegisterViewModel>();
+                services.AddTransient<ViewModels.Auth.ProfileViewModel>();
+                services.AddTransient<ViewModels.Auth.ChangePasswordViewModel>();
+                services.AddTransient<ViewModels.Auth.UserManagementViewModel>();
             })
             .Build();
 
@@ -61,7 +68,16 @@ public partial class App : Application
             return;
         }
 
-        var main = new MainWindow();
+        var navService = _host.Services.GetRequiredService<Navigation.INavigationService>();
+        var mainViewModel = _host.Services.GetRequiredService<ViewModels.MainWindowViewModel>();
+
+        // Initial navigation to LoginView
+        await navService.NavigateToAsync<ViewModels.Auth.LoginViewModel>();
+
+        var main = new MainWindow
+        {
+            DataContext = mainViewModel
+        };
         MainWindow = main;
         main.Show();
     }

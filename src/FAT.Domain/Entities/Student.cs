@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using FAT.Domain.Enums;
 
 namespace FAT.Domain.Entities;
@@ -13,6 +14,11 @@ public class Student
     public DateTime? DateOfBirth { get; set; }
     public DateTime EnrollmentDate { get; set; }
     public int MajorId { get; set; }
+    public string? CurrentSemester { get; set; }
+
+    [NotMapped]
+    public string? Campus { get; set; } = "Hồ Chí Minh";
+
     public StudentStatus Status { get; set; } = StudentStatus.Active;
 
     public AppUser? User { get; set; }

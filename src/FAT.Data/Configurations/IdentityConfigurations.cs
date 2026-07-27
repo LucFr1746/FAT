@@ -25,8 +25,11 @@ public class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         builder.ToTable("AppUser");
         builder.HasKey(x => x.UserId);
         builder.Property(x => x.Username).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired();
+        builder.Property(x => x.PasswordHash).HasMaxLength(255).IsRequired(false);
+        builder.Property(x => x.GoogleId).HasMaxLength(255);
+        builder.Property(x => x.AvatarUrl).HasMaxLength(1000);
         builder.HasIndex(x => x.Username).IsUnique();
+        builder.HasIndex(x => x.GoogleId).IsUnique();
 
         builder.HasOne(x => x.Role)
                .WithMany(r => r.Users)
@@ -58,6 +61,8 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(x => x.StudentCode).HasMaxLength(20).IsRequired();
         builder.Property(x => x.FullName).HasMaxLength(150).IsRequired();
         builder.Property(x => x.Email).HasMaxLength(150);
+        builder.Property(x => x.CurrentSemester).HasMaxLength(20);
+        builder.Ignore(x => x.Campus);
 
         // The columns are DATE (no time part). Without saying so explicitly EF
         // sends datetime2, and date comparisons drift once a time component

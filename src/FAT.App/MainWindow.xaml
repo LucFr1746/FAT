@@ -14,19 +14,8 @@
         added in the shell work item; each module then contributes its own
         NavigationItem entries rather than editing this file.
     -->
-    <Grid>
-        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-            <materialDesign:PackIcon Kind="School" Width="72" Height="72"
-                                     HorizontalAlignment="Center"
-                                     Foreground="{DynamicResource PrimaryHueMidBrush}" />
-            <TextBlock Text="FAT - FPT Academic Tracker"
-                       Margin="0,16,0,4"
-                       HorizontalAlignment="Center"
-                       Style="{StaticResource MaterialDesignHeadline5TextBlock}" />
-            <TextBlock Text="Database connection verified. Shell under construction."
-                       HorizontalAlignment="Center"
-                       Opacity="0.6"
-                       Style="{StaticResource MaterialDesignBody2TextBlock}" />
-        </StackPanel>
+    <!-- Main Content Host for ViewModel-First Navigation -->
+    <Grid Background="#FFFFFF">
+        <ContentControl Content="{Binding NavigationService.CurrentViewModel}"/>
     </Grid>
 </Window>

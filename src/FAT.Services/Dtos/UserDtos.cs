@@ -15,7 +15,8 @@ public sealed record UserDto(
     DateTime? LastLoginAt,
     DateTime CreatedAt,
     string? StudentCode,
-    string? FullName);
+    string? FullName,
+    string? MajorName = null);
 
 /// <summary>A student's own profile (the Profile screen).</summary>
 public sealed record StudentProfileDto(
@@ -29,7 +30,9 @@ public sealed record StudentProfileDto(
     string MajorCode,
     string MajorName,
     StudentStatus Status,
-    string Username);
+    string Username,
+    string? CurrentSemester = "Kỳ 5",
+    string? Campus = "Hồ Chí Minh");
 
 /// <summary>A degree programme.</summary>
 public sealed record MajorDto(

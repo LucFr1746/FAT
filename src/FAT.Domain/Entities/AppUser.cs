@@ -10,12 +10,15 @@ public class AppUser
     public string Username { get; set; } = string.Empty;
 
     /// <summary>
-    /// BCrypt hash. Only AuthService should ever touch this field; it must
+    /// BCrypt hash. Nullable for Google OAuth only accounts.
+    /// Only AuthService should ever touch this field; it must
     /// never reach a view model and never appear in a log.
     /// </summary>
-    public string PasswordHash { get; set; } = string.Empty;
+    public string? PasswordHash { get; set; }
 
     public int RoleId { get; set; }
+    public string? GoogleId { get; set; }
+    public string? AvatarUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -25,3 +28,4 @@ public class AppUser
     /// <summary>Null for Admin accounts, which have no student profile.</summary>
     public Student? Student { get; set; }
 }
+

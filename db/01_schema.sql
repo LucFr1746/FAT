@@ -16,6 +16,8 @@
    ============================================================================= */
 
 SET NOCOUNT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
 USE master;
@@ -62,9 +64,11 @@ CREATE TABLE dbo.AppUser
 (
     UserId       INT            IDENTITY(1,1) NOT NULL,
     Username     NVARCHAR(50)   NOT NULL,
-    -- BCrypt hash (60 characters). NEVER store a plaintext password.
-    PasswordHash NVARCHAR(255)  NOT NULL,
+    -- BCrypt hash (60 characters). NULLable for Google-only accounts.
+    PasswordHash NVARCHAR(255)  NULL,
     RoleId       INT            NOT NULL,
+    GoogleId     NVARCHAR(255)  NULL,
+    AvatarUrl    NVARCHAR(1000) NULL,
     IsActive     BIT            NOT NULL CONSTRAINT DF_AppUser_IsActive  DEFAULT (1),
     LastLoginAt  DATETIME2(0)   NULL,
     CreatedAt    DATETIME2(0)   NOT NULL CONSTRAINT DF_AppUser_CreatedAt DEFAULT (SYSUTCDATETIME()),
@@ -107,6 +111,7 @@ CREATE TABLE dbo.Student
     DateOfBirth    DATE          NULL,
     EnrollmentDate DATE          NOT NULL,
     MajorId        INT           NOT NULL,
+    CurrentSemester NVARCHAR(20) NULL,
     -- Active | Suspended | Graduated | DroppedOut
     Status         NVARCHAR(20)  NOT NULL CONSTRAINT DF_Student_Status DEFAULT (N'Active'),
     CONSTRAINT PK_Student        PRIMARY KEY (StudentId),
@@ -438,6 +443,13 @@ CREATE INDEX IX_AuditLog_CreatedAt          ON dbo.AuditLog (CreatedAt DESC);
 CREATE INDEX IX_Material_Course             ON dbo.Material (CourseId, IsActive) INCLUDE (Title, Category, FileSizeBytes);
 CREATE INDEX IX_Material_Title              ON dbo.Material (Title);
 CREATE INDEX IX_Material_Category           ON dbo.Material (Category);
+GO
+
+-- AppUser GoogleId lookup index
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
+GO
+CREATE UNIQUE INDEX IX_AppUser_GoogleId ON dbo.AppUser (GoogleId) WHERE GoogleId IS NOT NULL;
 GO
 
 PRINT '[01_schema] OK - created database FAT with 17 tables.';
