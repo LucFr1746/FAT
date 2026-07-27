@@ -217,14 +217,14 @@ public sealed class MaterialService : IMaterialService
     private static MaterialDto Project(Material m) => new(
         m.MaterialId,
         m.CourseId,
-        m.Course != null ? m.Course.CourseCode : null,
+        m.Course?.CourseCode,
         m.Title,
         m.Description,
         m.Category,
         m.FileName,
         m.ContentType,
         m.FileSizeBytes,
-        m.UploadedBy != null ? m.UploadedBy.Username : null,
+        m.UploadedBy?.Username,
         m.UploadedAt,
         m.DownloadCount);
 
