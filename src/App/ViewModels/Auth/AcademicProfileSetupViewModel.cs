@@ -44,6 +44,12 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
     private MajorDto? _selectedMajor;
 
     [ObservableProperty]
+    private ObservableCollection<string> _termOptions = new();
+
+    [ObservableProperty]
+    private string _selectedTermOption = "Kỳ 1";
+
+    [ObservableProperty]
     private ObservableCollection<int> _termNumbers = new();
 
     [ObservableProperty]
@@ -99,6 +105,11 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
                         {
                             SelectedClassName = existingProfile.ClassName;
                         }
+
+                        if (existingProfile.CurrentTermNo.HasValue && existingProfile.CurrentTermNo.Value >= 1 && existingProfile.CurrentTermNo.Value <= 9)
+                        {
+                            SelectedTermNo = existingProfile.CurrentTermNo.Value;
+                        }
                     }
                 }
             }
@@ -137,13 +148,21 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
             }
 
             TermNumbers.Clear();
-            for (int i = 0; i <= 9; i++)
+            TermOptions.Clear();
+            for (int i = 1; i <= 9; i++)
             {
                 TermNumbers.Add(i);
+                TermOptions.Add($"Kỳ {i}");
             }
-            SelectedTermNo = 1;
+
+            SelectedTermOption = $"Kỳ {SelectedTermNo}";
+            if (!TermOptions.Contains(SelectedTermOption))
+            {
+                SelectedTermOption = "Kỳ 1";
+            }
         });
     }
+
 
     [RelayCommand]
     private async Task SaveProfileAsync()
@@ -198,6 +217,14 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
             return;
         }
 
+        int termNo = 1;
+        if (!string.IsNullOrWhiteSpace(SelectedTermOption) && SelectedTermOption.StartsWith("Kỳ "))
+        {
+            int.TryParse(SelectedTermOption.Replace("Kỳ ", "").Trim(), out termNo);
+        }
+        if (termNo < 1 || termNo > 9) termNo = 1;
+        SelectedTermNo = termNo;
+
         await RunBusyAsync(async () =>
         {
             await _userService.CompleteAcademicProfileAsync(
@@ -215,6 +242,7 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
             {
                 _currentUserContext.SetUser(current with { IsProfileCompleted = true, FullName = FullName.Trim() });
             }
+
 
             // Proceed to main application dashboard
             await _navigationService.NavigateToAsync<DashboardViewModel>();

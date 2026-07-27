@@ -12,6 +12,7 @@
     <StartupObject>App.App</StartupObject>
     <GenerateProgramFile>false</GenerateProgramFile>
     <ApplicationIcon>AppIcon.ico</ApplicationIcon>
+    <UserSecretsId>f2aa701b-b855-4074-9267-db32f2ae3982</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -68,9 +69,7 @@
 
   <ItemGroup>
     <!-- FLM data export assets -->
-    <None Include="..\..\db\data\**\*.*"
-          Link="Data\%(RecursiveDir)%(Filename)%(Extension)"
-          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\db\data\**\*.*" Link="Data\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

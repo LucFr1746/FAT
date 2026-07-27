@@ -23,6 +23,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     private readonly INavigationService _navigationService;
     private readonly ICourseService _courseService;
     private readonly ICatalogAdminService _catalogAdminService;
+    private readonly IStudentCurriculumService _studentCurriculumService;
     public ICurrentUserContext CurrentUserContext { get; }
 
     [ObservableProperty]
@@ -62,18 +63,32 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     [ObservableProperty]
     private int _totalSubjectCount;
 
+    [ObservableProperty]
+    private StudentTermCurriculumDto? _currentTermCurriculum;
+
+    [ObservableProperty]
+    private string _studentCurrentTermTitle = "Kỳ Học Hiện Tại";
+
+    [ObservableProperty]
+    private string _termGpaDisplay = "--";
+
+    [ObservableProperty]
+    private string _termCreditsDisplay = "0 Tín chỉ";
+
     public DashboardViewModel(
         IServiceProvider serviceProvider,
         INavigationService navigationService,
         ICurrentUserContext currentUserContext,
         ICourseService courseService,
-        ICatalogAdminService catalogAdminService)
+        ICatalogAdminService catalogAdminService,
+        IStudentCurriculumService studentCurriculumService)
     {
         _serviceProvider = serviceProvider;
         _navigationService = navigationService;
         CurrentUserContext = currentUserContext;
         _courseService = courseService;
         _catalogAdminService = catalogAdminService;
+        _studentCurriculumService = studentCurriculumService;
         Title = "FAT System - FPT Academic & Conduct Tracker";
 
         CurrentUserContext.UserChanged += (s, e) =>
@@ -83,6 +98,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
             IsStudent = CurrentUserContext.IsAuthenticated && !CurrentUserContext.IsAdmin;
         };
     }
+
 
     public async Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
     {
@@ -281,6 +297,10 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     {
                         await LoadAdminSummaryAsync();
                     }
+                    else if (IsStudent && CurrentUser?.StudentId is int studentId)
+                    {
+                        await LoadStudentHomeDataAsync(studentId);
+                    }
                     break;
             }
         }
@@ -289,6 +309,53 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
             System.Diagnostics.Debug.WriteLine($"Error switching tab to {tabName}: {ex}");
         }
     }
+
+    /// <summary>
+    /// Loads the current term curriculum subjects, grades, and GPA for the student's Home Dashboard.
+    /// </summary>
+    private async Task LoadStudentHomeDataAsync(int studentId)
+    {
+        try
+        {
+            var userService = _serviceProvider.GetRequiredService<IUserService>();
+            var profile = await userService.GetProfileAsync(studentId);
+            int termNo = profile?.CurrentTermNo ?? 1;
+            if (termNo < 1 || termNo > 9) termNo = 1;
+
+            StudentCurrentTermTitle = $"Kỳ {termNo}";
+
+            var termCurriculum = await _studentCurriculumService.GetTermCurriculumAsync(studentId, termNo);
+            CurrentTermCurriculum = termCurriculum;
+
+            if (termCurriculum != null)
+            {
+                TermCreditsDisplay = $"{termCurriculum.TermCredits} Tín chỉ ({termCurriculum.Subjects.Count} môn)";
+
+                var gradedSubjects = termCurriculum.Subjects
+                    .Where(s => s.CountsTowardGpa && s.MyFinalScore.HasValue)
+                    .ToList();
+
+                if (gradedSubjects.Any())
+                {
+                    decimal totalWeighted = gradedSubjects.Sum(s => s.MyFinalScore!.Value * s.Credits);
+                    int totalCreds = gradedSubjects.Sum(s => s.Credits);
+                    decimal termGpa = totalCreds > 0 ? totalWeighted / totalCreds : 0m;
+                    TermGpaDisplay = $"{termGpa:F2} / 10";
+                }
+                else
+                {
+                    TermGpaDisplay = "Chưa có điểm";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading student home data: {ex}");
+            StudentCurrentTermTitle = "Kỳ 1";
+            TermGpaDisplay = "--";
+        }
+    }
+
 
     /// <summary>
     /// Populates the Home dashboard's KPI cards. Best-effort: a failure here

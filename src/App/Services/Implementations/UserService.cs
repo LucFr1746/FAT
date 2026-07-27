@@ -48,7 +48,8 @@ public class UserService : IUserService
             Username: student.User?.Username ?? student.StudentCode,
             CurrentSemester: string.IsNullOrWhiteSpace(student.CurrentSemester) ? "Kỳ 5" : student.CurrentSemester,
             Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus,
-            IsProfileCompleted: student.IsProfileCompleted
+            IsProfileCompleted: student.IsProfileCompleted,
+            CurrentTermNo: student.CurrentTermNo ?? 1
         );
     }
 
