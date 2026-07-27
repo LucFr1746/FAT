@@ -162,16 +162,26 @@ public class GoogleOAuthService : IGoogleOAuthService
             {
                 ["code"] = code,
                 ["client_id"] = clientId,
-                ["client_secret"] = clientSecret ?? string.Empty,
                 ["redirect_uri"] = redirectUri,
                 ["grant_type"] = "authorization_code"
             };
+
+            if (!string.IsNullOrWhiteSpace(clientSecret) && !clientSecret.Contains("YOUR_GOOGLE_CLIENT_SECRET"))
+            {
+                tokenRequestValues["client_secret"] = clientSecret;
+            }
 
             var tokenResponse = await _httpClient.PostAsync("https://oauth2.googleapis.com/token", new FormUrlEncodedContent(tokenRequestValues), cancellationToken);
             if (!tokenResponse.IsSuccessStatusCode)
             {
                 var errorBody = await tokenResponse.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogError("Token Exchange failed: {ErrorBody}", errorBody);
+
+                if (errorBody.Contains("invalid_client") || errorBody.Contains("client secret"))
+                {
+                    return new GoogleOAuthResult(false, null, "Lỗi Google OAuth: Client Secret không hợp lệ. Vui lòng kiểm tra lại ClientSecret trong appsettings.json.");
+                }
+
                 return new GoogleOAuthResult(false, null, "Lỗi khi trao đổi Token với Google Server.");
             }
 

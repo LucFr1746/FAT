@@ -14,5 +14,10 @@
 {
   "ConnectionStrings": {
     "AppDatabase": "Server=.\\SQLEXPRESS;Database=FAT_DB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=10"
+  },
+  "GoogleOAuth": {
+    "ClientId": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "ClientSecret": "YOUR_GOOGLE_CLIENT_SECRET"
   }
 }
+
