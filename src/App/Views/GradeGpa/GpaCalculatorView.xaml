@@ -1,0 +1,158 @@
+<UserControl x:Class="App.Views.GradeGpa.GpaCalculatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource SurfaceBrush}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,18">
+            <Button DockPanel.Dock="Right"
+                    Content="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource GhostButtonStyle}" />
+            <StackPanel>
+                <TextBlock Text="GPA Calculator" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Credit-weighted GPA on the repository's 10-point scale"
+                           Style="{StaticResource PageSubtitleStyle}" />
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1"
+                Style="{StaticResource ErrorBannerStyle}"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="{StaticResource DangerBrush}"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <ProgressBar Grid.Row="2"
+                     IsIndeterminate="True"
+                     Height="4"
+                     Margin="0,0,0,10"
+                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+
+        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.3*" />
+                        <ColumnDefinition Width="3*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Style="{StaticResource CardBorderStyle}"
+                            Margin="0,0,14,0">
+                        <StackPanel>
+                            <TextBlock Text="Cumulative GPA"
+                                       Style="{StaticResource FieldLabelStyle}" />
+                            <TextBlock Text="{Binding Summary.CumulativeGpa, StringFormat=N2, TargetNullValue=—}"
+                                       FontSize="46"
+                                       FontWeight="ExtraBold"
+                                       Foreground="{StaticResource PrimaryBrush}" />
+                            <TextBlock Text="{Binding Summary.ClassificationName, TargetNullValue='Not classified'}"
+                                       FontSize="17"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" />
+                            <ProgressBar Value="{Binding Credits.CompletionPercent}"
+                                         Maximum="100"
+                                         Height="12"
+                                         Margin="0,20,0,6" />
+                            <TextBlock Text="{Binding Credits.CompletionPercent, StringFormat='Program progress: {0:N1}%'}"
+                                       Style="{StaticResource PageSubtitleStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <UniformGrid Grid.Column="1" Columns="3">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,10">
+                            <StackPanel>
+                                <TextBlock Text="GPA credits" Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Statistics.GpaCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,10">
+                            <StackPanel>
+                                <TextBlock Text="Completed credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Credits.EarnedCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,10">
+                            <StackPanel>
+                                <TextBlock Text="Failed credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Statistics.FailedCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock Text="In-progress credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Credits.InProgressCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,10,0">
+                            <StackPanel>
+                                <TextBlock Text="Required credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Credits.RequiredCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Remaining credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding Credits.RemainingCredits}"
+                                           FontSize="25"
+                                           FontWeight="ExtraBold" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+                </Grid>
+
+                <TextBlock Text="GPA by semester" Style="{StaticResource SectionTitleStyle}" />
+                <DataGrid ItemsSource="{Binding Summary.BySemester}"
+                          Style="{StaticResource CatalogDataGridStyle}"
+                          ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                          CellStyle="{StaticResource CatalogCellStyle}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Semester"
+                                            Binding="{Binding SemesterCode}"
+                                            Width="*" />
+                        <DataGridTextColumn Header="GPA"
+                                            Binding="{Binding Gpa, StringFormat=N2, TargetNullValue=—}"
+                                            Width="150" />
+                        <DataGridTextColumn Header="Earned credits"
+                                            Binding="{Binding EarnedCredits}"
+                                            Width="180" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Text="No completed GPA-bearing courses are available yet."
+                           Style="{StaticResource PageSubtitleStyle}"
+                           HorizontalAlignment="Center"
+                           Margin="0,18,0,0"
+                           Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

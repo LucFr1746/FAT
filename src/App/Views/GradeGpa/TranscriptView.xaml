@@ -1,0 +1,146 @@
+<UserControl x:Class="App.Views.GradeGpa.TranscriptView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource SurfaceBrush}">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,18">
+            <Button DockPanel.Dock="Right"
+                    Content="Refresh"
+                    Command="{Binding RefreshCommand}"
+                    Style="{StaticResource GhostButtonStyle}" />
+            <StackPanel>
+                <TextBlock Text="Academic Transcript" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Style="{StaticResource PageSubtitleStyle}">
+                    <Run Text="{Binding Transcript.StudentCode, Mode=OneWay, TargetNullValue=—}" />
+                    <Run Text=" · " />
+                    <Run Text="{Binding Transcript.FullName, Mode=OneWay, TargetNullValue=—}" />
+                </TextBlock>
+            </StackPanel>
+        </DockPanel>
+
+        <Border Grid.Row="1"
+                Style="{StaticResource ErrorBannerStyle}"
+                Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="{Binding ErrorMessage}"
+                       Foreground="{StaticResource DangerBrush}"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap" />
+        </Border>
+
+        <ProgressBar Grid.Row="2"
+                     IsIndeterminate="True"
+                     Height="4"
+                     Margin="0,0,0,10"
+                     Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+
+        <Grid Grid.Row="3">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <UniformGrid Columns="2" Margin="0,0,0,14">
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,7,0">
+                            <StackPanel>
+                                <TextBlock Text="Cumulative GPA"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding CumulativeGpa, StringFormat=N2, TargetNullValue=—}"
+                                           FontSize="28"
+                                           FontWeight="ExtraBold"
+                                           Foreground="{StaticResource PrimaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Style="{StaticResource CardBorderStyle}" Margin="7,0,0,0">
+                            <StackPanel>
+                                <TextBlock Text="Completed credits"
+                                           Style="{StaticResource FieldLabelStyle}" />
+                                <TextBlock Text="{Binding CompletedCredits}"
+                                           FontSize="28"
+                                           FontWeight="ExtraBold"
+                                           Foreground="{StaticResource PrimaryBrush}" />
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <ItemsControl ItemsSource="{Binding Transcript.Semesters}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Expander IsExpanded="True" Margin="0,0,0,12">
+                                    <Expander.Header>
+                                        <DockPanel MinWidth="760">
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Foreground="{StaticResource MutedTextBrush}">
+                                                <Run Text="GPA " />
+                                                <Run Text="{Binding SemesterGpa, Mode=OneWay, StringFormat=N2, TargetNullValue=—}"
+                                                     FontWeight="ExtraBold" />
+                                                <Run Text=" · " />
+                                                <Run Text="{Binding EarnedCredits, Mode=OneWay}" />
+                                                <Run Text=" credits" />
+                                            </TextBlock>
+                                            <TextBlock FontWeight="ExtraBold"
+                                                       Foreground="{StaticResource TextBrush}">
+                                                <Run Text="{Binding SemesterCode, Mode=OneWay}" />
+                                                <Run Text=" — " />
+                                                <Run Text="{Binding SemesterName, Mode=OneWay}" />
+                                            </TextBlock>
+                                        </DockPanel>
+                                    </Expander.Header>
+
+                                    <DataGrid ItemsSource="{Binding Items}"
+                                              Style="{StaticResource CatalogDataGridStyle}"
+                                              ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                                              CellStyle="{StaticResource CatalogCellStyle}">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Code"
+                                                                Binding="{Binding CourseCode}"
+                                                                Width="110" />
+                                            <DataGridTextColumn Header="Course"
+                                                                Binding="{Binding CourseName}"
+                                                                Width="*" />
+                                            <DataGridTextColumn Header="Credits"
+                                                                Binding="{Binding Credits}"
+                                                                Width="80" />
+                                            <DataGridTextColumn Header="Final"
+                                                                Binding="{Binding FinalScore, StringFormat=N1, TargetNullValue=—}"
+                                                                Width="90" />
+                                            <DataGridTextColumn Header="Grade point"
+                                                                Binding="{Binding GradePoint, StringFormat=N2, TargetNullValue=—}"
+                                                                Width="110" />
+                                            <DataGridTextColumn Header="Letter"
+                                                                Binding="{Binding LetterGrade, TargetNullValue=—}"
+                                                                Width="80" />
+                                            <DataGridTextColumn Header="Status"
+                                                                Binding="{Binding Status}"
+                                                                Width="100" />
+                                            <DataGridTextColumn Header="Attempt"
+                                                                Binding="{Binding AttemptNo}"
+                                                                Width="80" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </Expander>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Background="{StaticResource SurfaceBrush}"
+                    Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="No transcript data is available."
+                               Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Text="Completed and in-progress enrollments will appear here."
+                               Style="{StaticResource PageSubtitleStyle}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>
