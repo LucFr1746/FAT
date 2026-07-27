@@ -83,10 +83,11 @@
                           SelectedItem="{Binding SelectedItem}"
                           Style="{StaticResource CatalogDataGridStyle}"
                           ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
-                          CellStyle="{StaticResource CatalogCellStyle}">
+                          CellStyle="{StaticResource CatalogCellStyle}"
+                          HorizontalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Mã ngành" Binding="{Binding MajorCode}" Width="130" />
-                        <DataGridTextColumn Header="Tên ngành" Binding="{Binding MajorName}" Width="*" />
+                        <DataGridTextColumn Header="Tên ngành" Binding="{Binding MajorName}" Width="*" MinWidth="200" />
                         <DataGridTextColumn Header="Tín chỉ tốt nghiệp" Binding="{Binding RequiredCredits}" Width="150" />
                         <DataGridTextColumn Header="Số kỳ" Binding="{Binding TotalTerms}" Width="80" />
                         <DataGridTemplateColumn Header="Trạng thái" Width="120">

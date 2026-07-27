@@ -1,6 +1,6 @@
+using App.Navigation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using App.Navigation;
 using Services.Abstractions;
 using Services.Dtos;
 

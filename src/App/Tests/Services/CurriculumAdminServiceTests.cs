@@ -1,9 +1,9 @@
 using Data;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Services.Dtos;
 using Services.Implementations;
 using Tests.TestSupport;
-using FluentAssertions;
-using Microsoft.EntityFrameworkCore;
 
 namespace Tests.Services;
 
@@ -246,6 +246,37 @@ public class CurriculumAdminServiceTests
         var results = await CreateService(db).GetByMajorAsync(major.MajorId);
 
         results.Select(r => r.CourseCode).Should().ContainInOrder("TERM1A", "TERM2A", "TERM2B");
+    }
+
+    [Fact]
+    public async Task GetMajorCodesByCourseIdsAsync_groups_by_course_and_ignores_unassigned_ids()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var se = db.AddMajor("SE");
+        var ai = db.AddMajor("AI");
+        var shared = db.AddCourse("PRF192");
+        var seOnly = db.AddCourse("SWE201c");
+        var unassigned = db.AddCourse("CSD201");
+        db.AddCurriculumItem(se.MajorId, shared.CourseId, 1);
+        db.AddCurriculumItem(ai.MajorId, shared.CourseId, 1);
+        db.AddCurriculumItem(se.MajorId, seOnly.CourseId, 2);
+
+        var result = await CreateService(db).GetMajorCodesByCourseIdsAsync(
+            [shared.CourseId, seOnly.CourseId, unassigned.CourseId]);
+
+        result[shared.CourseId].Should().BeEquivalentTo(["AI", "SE"]);
+        result[seOnly.CourseId].Should().BeEquivalentTo(["SE"]);
+        result.Should().NotContainKey(unassigned.CourseId);
+    }
+
+    [Fact]
+    public async Task GetMajorCodesByCourseIdsAsync_returns_empty_for_an_empty_request()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+
+        var result = await CreateService(db).GetMajorCodesByCourseIdsAsync([]);
+
+        result.Should().BeEmpty();
     }
 
     [Fact]

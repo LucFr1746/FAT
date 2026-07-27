@@ -1,11 +1,11 @@
-using Services.Import;
 using FluentAssertions;
+using Services.Import;
 
 namespace Tests.Import;
 
 /// <summary>
 /// Covers every shape the FLM prerequisite column actually takes. The examples
-/// are copied verbatim from db/data/csv/subjects.csv rather than invented, so a
+/// are copied verbatim from db/data/json/subjects.json rather than invented, so a
 /// passing test means the real file parses.
 /// </summary>
 public class PrerequisiteTextParserTests

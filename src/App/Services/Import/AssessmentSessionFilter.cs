@@ -5,7 +5,7 @@ namespace Services.Import;
 /// lesson.
 ///
 /// The workbook already applies this judgement: the "LichKiemTra" sheet holds
-/// 2,927 of the 13,354 sessions in sessions.csv. The CSV reader has to make the
+/// 2,927 of the 13,354 sessions in sessions.json. The JSON reader has to make the
 /// same call, or importing the folder would produce a schedule tens of times
 /// larger than importing the workbook - and the two sources are meant to be
 /// interchangeable.

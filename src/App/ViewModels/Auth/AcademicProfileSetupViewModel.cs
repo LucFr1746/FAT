@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using App.Navigation;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using App.Navigation;
 using Services.Abstractions;
 using Services.Dtos;
 
@@ -80,10 +80,25 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
                     var existingProfile = await _userService.GetProfileAsync(sId, cancellationToken);
                     if (existingProfile != null)
                     {
-                        if (!string.IsNullOrWhiteSpace(existingProfile.FullName)) FullName = existingProfile.FullName;
-                        if (!string.IsNullOrWhiteSpace(existingProfile.Email)) Email = existingProfile.Email;
-                        if (!string.IsNullOrWhiteSpace(existingProfile.Phone)) Phone = existingProfile.Phone;
-                        if (!string.IsNullOrWhiteSpace(existingProfile.ClassName)) SelectedClassName = existingProfile.ClassName;
+                        if (!string.IsNullOrWhiteSpace(existingProfile.FullName))
+                        {
+                            FullName = existingProfile.FullName;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(existingProfile.Email))
+                        {
+                            Email = existingProfile.Email;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(existingProfile.Phone))
+                        {
+                            Phone = existingProfile.Phone;
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(existingProfile.ClassName))
+                        {
+                            SelectedClassName = existingProfile.ClassName;
+                        }
                     }
                 }
             }

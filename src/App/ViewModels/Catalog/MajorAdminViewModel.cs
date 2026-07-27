@@ -1,7 +1,7 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using App.Navigation;
 using App.ViewModels.Common;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Services.Abstractions;
 using Services.Dtos;
 

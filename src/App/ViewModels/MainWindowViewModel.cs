@@ -1,5 +1,5 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using App.Navigation;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Services.Abstractions;
 
 namespace App.ViewModels;

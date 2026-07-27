@@ -24,7 +24,7 @@
             <StackPanel Grid.Row="0" Margin="0,0,0,18">
                 <TextBlock Text="Import Dữ Liệu Chương Trình Học (FLM)" Style="{StaticResource PageTitleStyle}" />
                 <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"
-                           Text="Nhập ngành, môn học, tín chỉ, GPA, môn tiên quyết, cấu trúc điểm, tài liệu và lịch kiểm tra từ tệp Excel hoặc thư mục CSV đã crawl từ FLM. Chạy lại nhiều lần vẫn an toàn: dữ liệu đã có sẽ được cập nhật chứ không tạo bản sao." />
+                           Text="Nhập ngành, môn học, tín chỉ, GPA, môn tiên quyết, cấu trúc điểm, tài liệu và lịch kiểm tra từ tệp Excel hoặc thư mục JSON đã crawl từ FLM. Chạy lại nhiều lần vẫn an toàn: dữ liệu đã có sẽ được cập nhật chứ không tạo bản sao." />
             </StackPanel>
 
             <!-- Source -->
@@ -39,7 +39,7 @@
                     <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <Button Content="Chọn tệp Excel (.xlsx)" Command="{Binding BrowseWorkbookCommand}"
                                 Style="{StaticResource GhostButtonStyle}" />
-                        <Button Content="Chọn thư mục CSV" Command="{Binding BrowseCsvFolderCommand}"
+                        <Button Content="Chọn thư mục JSON" Command="{Binding BrowseJsonFolderCommand}"
                                 Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
                         <Button Content="Xem trước" Command="{Binding PreviewCommand}"
                                 Style="{StaticResource PrimaryButtonStyle}" Margin="16,0,0,0" MinWidth="140" />

@@ -24,9 +24,9 @@ public static class RepositoryPaths
     public static string? FlmWorkbook =>
         FlmDataFolder is null ? null : Path.Combine(FlmDataFolder, "flm_chuong_trinh_hoc.xlsx");
 
-    /// <summary>db/data/csv - the same export as CSV.</summary>
-    public static string? FlmCsvFolder =>
-        FlmDataFolder is null ? null : Path.Combine(FlmDataFolder, "csv");
+    /// <summary>db/data/json - the same export as JSON.</summary>
+    public static string? FlmJsonFolder =>
+        FlmDataFolder is null ? null : Path.Combine(FlmDataFolder, "json");
 
     private static string? FindRepositoryRoot()
     {

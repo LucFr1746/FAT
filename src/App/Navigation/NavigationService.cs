@@ -1,7 +1,7 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using App.ViewModels;
-using Services.Abstractions;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.DependencyInjection;
+using Services.Abstractions;
 
 namespace App.Navigation;
 

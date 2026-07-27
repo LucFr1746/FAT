@@ -9,6 +9,11 @@
 # Files that only ever run on Unix (GitHub Actions uses bash) must keep LF
 *.sh text eol=lf
 
+# Shared git hooks (core.hooksPath=.githooks) are POSIX shell scripts invoked
+# directly by git; a CRLF-terminated shebang line breaks them the same way a
+# .sh file would.
+.githooks/* text eol=lf
+
 # Binary - never touch the contents
 *.png  binary
 *.jpg  binary
@@ -25,3 +30,4 @@
 # GitHub language statistics
 *.sql linguist-detectable=true
 docs/* linguist-documentation=true
+db/data/** linguist-generated=true

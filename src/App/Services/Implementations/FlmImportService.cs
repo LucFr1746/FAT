@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Data;
 using Domain.Constants;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
 using Services.Import;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 
@@ -22,7 +22,7 @@ public sealed partial class FlmImportService : IFlmImportService
     private readonly IReadOnlyList<IFlmDataReader> _readers;
 
     public FlmImportService(FAT_DBContext db, ICurrentUserContext currentUser)
-        : this(db, currentUser, [new XlsxFlmDataReader(), new CsvFlmDataReader()])
+        : this(db, currentUser, [new XlsxFlmDataReader(), new JsonFlmDataReader()])
     {
     }
 
@@ -88,69 +88,94 @@ public sealed partial class FlmImportService : IFlmImportService
                 "Tệp không chứa môn học nào. Hãy kiểm tra lại nguồn dữ liệu.", stopwatch.Elapsed);
         }
 
-        var session = new ImportSession(Validate(data));
-
         // One transaction for the whole import. Partway-through is the worst
         // possible state: Major.RequiredCredits would no longer match the
         // curriculum, and every graduation percentage would be wrong until
         // somebody noticed.
         //
+        // The whole attempt - transaction included - runs through the
+        // configured execution strategy (SqlServerRetryingExecutionStrategy,
+        // see DataServiceCollectionExtensions), because EF Core forbids a
+        // manually-opened transaction under a retrying strategy: a retry has
+        // to be able to redo BeginTransaction itself. ImportSession is
+        // recreated on every attempt for the same reason - a retried attempt
+        // must not double-count what the failed attempt already counted.
+        //
         // Skipped on a non-relational provider, which is the only reason the
         // in-memory unit tests can exercise this method at all.
-        var useTransaction = _db.Database.IsRelational();
-        await using var transaction = useTransaction
-            ? await _db.Database.BeginTransactionAsync(cancellationToken)
-            : null;
+        var strategy = _db.Database.CreateExecutionStrategy();
+        ImportSession session;
 
         try
         {
-            var majorsByCode = await UpsertMajorsAsync(data, session, cancellationToken);
-            var coursesByCode = await UpsertCoursesAsync(data, options, session, cancellationToken);
-
-            await EnsureTermsAsync(data, cancellationToken);
-            await UpsertCurriculumLinksAsync(data, majorsByCode, coursesByCode, options, session, cancellationToken);
-
-            if (options.ImportAssessments)
+            session = await strategy.ExecuteAsync(async () =>
             {
-                await UpsertAssessmentsAsync(data, coursesByCode, options, session, cancellationToken);
-            }
+                var attemptSession = new ImportSession(Validate(data));
 
-            if (options.ImportMaterials)
-            {
-                await UpsertMaterialsAsync(data, coursesByCode, options, session, cancellationToken);
-            }
+                var useTransaction = _db.Database.IsRelational();
+                await using var transaction = useTransaction
+                    ? await _db.Database.BeginTransactionAsync(cancellationToken)
+                    : null;
 
-            if (options.ImportSchedules)
-            {
-                await UpsertSchedulesAsync(data, coursesByCode, options, session, cancellationToken);
-            }
+                try
+                {
+                    var majorsByCode = await UpsertMajorsAsync(data, attemptSession, cancellationToken);
+                    var coursesByCode = await UpsertCoursesAsync(data, options, attemptSession, cancellationToken);
 
-            if (options.ImportPrerequisites)
-            {
-                await UpsertPrerequisitesAsync(data, coursesByCode, session, cancellationToken);
-            }
+                    await EnsureTermsAsync(data, cancellationToken);
+                    await UpsertCurriculumLinksAsync(
+                        data, majorsByCode, coursesByCode, options, attemptSession, cancellationToken);
 
-            // Must happen inside the transaction: a curriculum whose credits
-            // were never resynced is exactly the drift this guards against.
-            foreach (var majorId in majorsByCode.Values)
-            {
-                await MajorCreditCalculator.SyncAsync(_db, majorId, cancellationToken);
-            }
+                    if (options.ImportAssessments)
+                    {
+                        await UpsertAssessmentsAsync(data, coursesByCode, options, attemptSession, cancellationToken);
+                    }
 
-            await _db.SaveChangesAsync(cancellationToken);
+                    if (options.ImportMaterials)
+                    {
+                        await UpsertMaterialsAsync(data, coursesByCode, options, attemptSession, cancellationToken);
+                    }
 
-            if (transaction is not null)
-            {
-                await transaction.CommitAsync(cancellationToken);
-            }
+                    if (options.ImportSchedules)
+                    {
+                        await UpsertSchedulesAsync(data, coursesByCode, options, attemptSession, cancellationToken);
+                    }
+
+                    if (options.ImportPrerequisites)
+                    {
+                        await UpsertPrerequisitesAsync(data, coursesByCode, attemptSession, cancellationToken);
+                    }
+
+                    // Must happen inside the transaction: a curriculum whose
+                    // credits were never resynced is exactly the drift this
+                    // guards against.
+                    foreach (var majorId in majorsByCode.Values)
+                    {
+                        await MajorCreditCalculator.SyncAsync(_db, majorId, cancellationToken);
+                    }
+
+                    await _db.SaveChangesAsync(cancellationToken);
+
+                    if (transaction is not null)
+                    {
+                        await transaction.CommitAsync(cancellationToken);
+                    }
+                }
+                catch
+                {
+                    if (transaction is not null)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                    }
+
+                    throw;
+                }
+
+                return attemptSession;
+            });
         }
         catch (Exception ex)
         {
-            if (transaction is not null)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-            }
-
             return ImportResultDto.Failure(
                 $"Import thất bại và đã được hoàn tác: {ex.Message}", stopwatch.Elapsed);
         }
@@ -175,7 +200,7 @@ public sealed partial class FlmImportService : IFlmImportService
         return _readers.FirstOrDefault(r => r.CanRead(path))
             ?? throw new NotSupportedException(
                 $"Không hỗ trợ nguồn dữ liệu '{path}'. " +
-                "Hãy chọn tệp .xlsx hoặc thư mục chứa các tệp .csv (subjects.csv, assessments.csv, ...).");
+                "Hãy chọn tệp .xlsx hoặc thư mục chứa các tệp .json (subjects.json, assessments.json, ...).");
     }
 
     /// <summary>

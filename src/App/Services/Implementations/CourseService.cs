@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
 using Data;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 

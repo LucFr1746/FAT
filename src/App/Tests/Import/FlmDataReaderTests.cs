@@ -1,6 +1,6 @@
+using FluentAssertions;
 using Services.Import;
 using Tests.TestSupport;
-using FluentAssertions;
 
 namespace Tests.Import;
 
@@ -14,10 +14,14 @@ namespace Tests.Import;
 /// </summary>
 public class FlmDataReaderTests
 {
-    /// <summary>The six programmes in the FLM export.</summary>
-    private const int ExpectedMajorCount = 6;
+    /// <summary>
+    /// The three real programmes (SE, AI, IB). The FLM export lists one code per
+    /// cohort (BIT_SE_K19..., BIT_SE_K20...), which the reader collapses to the
+    /// major they share - so six curriculum codes become three programmes.
+    /// </summary>
+    private const int ExpectedMajorCount = 3;
 
-    /// <summary>Distinct subject codes across all six programmes.</summary>
+    /// <summary>Distinct subject codes across all three programmes.</summary>
     private const int ExpectedSubjectCount = 135;
 
     [SkippableFact]
@@ -37,12 +41,12 @@ public class FlmDataReaderTests
     }
 
     [SkippableFact]
-    public async Task Csv_reader_loads_every_programme_and_subject()
+    public async Task Json_reader_loads_every_programme_and_subject()
     {
-        var path = RepositoryPaths.FlmCsvFolder;
-        Skip.If(path is null || !Directory.Exists(path), "db/data/csv is not available.");
+        var path = RepositoryPaths.FlmJsonFolder;
+        Skip.If(path is null || !Directory.Exists(path), "db/data/json is not available.");
 
-        var data = await new CsvFlmDataReader().ReadAsync(path!);
+        var data = await new JsonFlmDataReader().ReadAsync(path!);
 
         data.Curricula.Should().HaveCount(ExpectedMajorCount);
         data.Subjects.Select(s => s.SubjectCode).Distinct()
@@ -57,26 +61,26 @@ public class FlmDataReaderTests
     /// catalog. They are not byte-identical - the workbook is a curated view and
     /// drops retired codes such as DBI202-OLD - so a small, bounded difference is
     /// expected. A large one means a reader is misreading its columns, which is
-    /// what this guards against: an earlier version of the CSV reader ignored
-    /// combos.csv and silently lost 48 elective subjects.
+    /// what this guards against: an earlier version of the JSON reader ignored
+    /// combos.json and silently lost 48 elective subjects.
     /// </summary>
     [SkippableFact]
-    public async Task Xlsx_and_csv_readers_agree_on_the_core_catalog()
+    public async Task Xlsx_and_json_readers_agree_on_the_core_catalog()
     {
         Skip.If(RepositoryPaths.FlmWorkbook is null || !File.Exists(RepositoryPaths.FlmWorkbook),
             "FLM data is not available.");
 
         var fromXlsx = await new XlsxFlmDataReader().ReadAsync(RepositoryPaths.FlmWorkbook!);
-        var fromCsv = await new CsvFlmDataReader().ReadAsync(RepositoryPaths.FlmCsvFolder!);
+        var fromJson = await new JsonFlmDataReader().ReadAsync(RepositoryPaths.FlmJsonFolder!);
 
         fromXlsx.Curricula.Select(c => c.MajorCode)
-            .Should().BeEquivalentTo(fromCsv.Curricula.Select(c => c.MajorCode));
+            .Should().BeEquivalentTo(fromJson.Curricula.Select(c => c.MajorCode));
 
         var xlsxSubjects = fromXlsx.Subjects.Select(s => s.SubjectCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var csvSubjects = fromCsv.Subjects.Select(s => s.SubjectCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var jsonSubjects = fromJson.Subjects.Select(s => s.SubjectCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        xlsxSubjects.Intersect(csvSubjects).Should().HaveCountGreaterThanOrEqualTo(ExpectedSubjectCount - 5);
-        csvSubjects.Except(xlsxSubjects).Should().HaveCountLessThanOrEqualTo(
+        xlsxSubjects.Intersect(jsonSubjects).Should().HaveCountGreaterThanOrEqualTo(ExpectedSubjectCount - 5);
+        jsonSubjects.Except(xlsxSubjects).Should().HaveCountLessThanOrEqualTo(
             5, "only a handful of retired codes should differ between the two sources");
     }
 

@@ -233,7 +233,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="UserID" Binding="{Binding UserId}" Width="65"/>
                                 <DataGridTextColumn Header="Tên Đăng Nhập" Binding="{Binding Username}" Width="130"/>
-                                <DataGridTextColumn Header="Họ và Tên" Binding="{Binding FullName}" Width="*"/>
+                                <DataGridTextColumn Header="Họ và Tên" Binding="{Binding FullName}" Width="*" MinWidth="160"/>
                                 <DataGridTextColumn Header="Mã Sinh Viên" Binding="{Binding StudentCode}" Width="110"/>
                                 <DataGridTextColumn Header="Ngành Học" Binding="{Binding MajorName}" Width="150"/>
                                 <DataGridTextColumn Header="Quyền (Role)" Binding="{Binding RoleName}" Width="100"/>

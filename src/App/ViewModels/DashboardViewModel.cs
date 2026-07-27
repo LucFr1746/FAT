@@ -1,12 +1,14 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using App.Navigation;
 using App.ViewModels.Auth;
 using App.ViewModels.Catalog;
+using App.ViewModels.Grades;
+using App.ViewModels.Materials;
 using App.ViewModels.Student;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.DependencyInjection;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace App.ViewModels;
 
@@ -19,6 +21,8 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly INavigationService _navigationService;
+    private readonly ICourseService _courseService;
+    private readonly ICatalogAdminService _catalogAdminService;
     public ICurrentUserContext CurrentUserContext { get; }
 
     [ObservableProperty]
@@ -46,14 +50,30 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     [ObservableProperty]
     private bool _isProfileMenuOpen;
 
+    [ObservableProperty]
+    private bool _isCatalogMenuOpen;
+
+    [ObservableProperty]
+    private bool _isGradeMenuOpen;
+
+    [ObservableProperty]
+    private string _currentSemesterLabel = "Đang tải...";
+
+    [ObservableProperty]
+    private int _totalSubjectCount;
+
     public DashboardViewModel(
         IServiceProvider serviceProvider,
         INavigationService navigationService,
-        ICurrentUserContext currentUserContext)
+        ICurrentUserContext currentUserContext,
+        ICourseService courseService,
+        ICatalogAdminService catalogAdminService)
     {
         _serviceProvider = serviceProvider;
         _navigationService = navigationService;
         CurrentUserContext = currentUserContext;
+        _courseService = courseService;
+        _catalogAdminService = catalogAdminService;
         Title = "FAT System - FPT Academic & Conduct Tracker";
 
         CurrentUserContext.UserChanged += (s, e) =>
@@ -83,6 +103,24 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     private void ToggleProfileMenu()
     {
         IsProfileMenuOpen = !IsProfileMenuOpen;
+        IsCatalogMenuOpen = false;
+        IsGradeMenuOpen = false;
+    }
+
+    [RelayCommand]
+    private void ToggleCatalogMenu()
+    {
+        IsCatalogMenuOpen = !IsCatalogMenuOpen;
+        IsProfileMenuOpen = false;
+        IsGradeMenuOpen = false;
+    }
+
+    [RelayCommand]
+    private void ToggleGradeMenu()
+    {
+        IsGradeMenuOpen = !IsGradeMenuOpen;
+        IsProfileMenuOpen = false;
+        IsCatalogMenuOpen = false;
     }
 
     [RelayCommand]
@@ -90,6 +128,8 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     {
         ActiveTab = tabName;
         IsProfileMenuOpen = false; // Close profile menu dropdown on tab switch
+        IsCatalogMenuOpen = false; // Close catalog dropdown on tab switch
+        IsGradeMenuOpen = false;
 
         try
         {
@@ -129,15 +169,6 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     await ShowTabAsync<MajorAdminViewModel>();
                     break;
 
-                case "TermAdmin":
-                    if (!IsAdmin)
-                    {
-                        break;
-                    }
-
-                    await ShowTabAsync<TermAdminViewModel>();
-                    break;
-
                 case "SemesterAdmin":
                     if (!IsAdmin)
                     {
@@ -174,6 +205,11 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     await ShowTabAsync<FlmImportViewModel>();
                     break;
 
+                // ----- Materials library (everyone) -----
+                case "MaterialLibrary":
+                    await ShowTabAsync<MaterialLibraryViewModel>();
+                    break;
+
                 // ----- Student screens -----
                 case "MyCurriculum":
                     if (!IsStudent)
@@ -193,15 +229,87 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     await ShowTabAsync<GpaPredictionViewModel>();
                     break;
 
+                case "ViewGrades":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GradeListViewModel>();
+                    break;
+
+                case "ManageGrades":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GradeEntryViewModel>();
+                    break;
+
+                case "GpaCalculator":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GpaCalculatorViewModel>();
+                    break;
+
+                case "Transcript":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<TranscriptViewModel>();
+                    break;
+
+                case "Statistics":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<StatisticsViewModel>();
+                    break;
+
                 case "Home":
                 default:
                     CurrentTabViewModel = null; // Show Home Dashboard Cards
+                    if (IsAdmin)
+                    {
+                        await LoadAdminSummaryAsync();
+                    }
                     break;
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error switching tab to {tabName}: {ex}");
+        }
+    }
+
+    /// <summary>
+    /// Populates the Home dashboard's KPI cards. Best-effort: a failure here
+    /// should not block the admin from reaching the rest of the shell, so it
+    /// only leaves the labels at their default text.
+    /// </summary>
+    private async Task LoadAdminSummaryAsync()
+    {
+        try
+        {
+            var currentSemester = await _courseService.GetCurrentSemesterAsync();
+            CurrentSemesterLabel = currentSemester is null
+                ? "Chưa thiết lập"
+                : $"{currentSemester.SemesterName} - Đang diễn ra";
+
+            var subjects = await _catalogAdminService.GetCoursesAsync(new CourseFilter());
+            TotalSubjectCount = subjects.Count;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error loading admin summary: {ex}");
         }
     }
 

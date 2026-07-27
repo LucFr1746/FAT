@@ -3,9 +3,9 @@ using System.Text;
 using Data;
 using Domain.Constants;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 
@@ -122,6 +122,28 @@ public sealed class CurriculumAdminService : ICurriculumAdminService
                 c.SubjectMaterials.Count,
                 c.Assessments.Count))
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyDictionary<int, IReadOnlyList<string>>> GetMajorCodesByCourseIdsAsync(
+        IReadOnlyList<int> courseIds, CancellationToken cancellationToken = default)
+    {
+        if (courseIds.Count == 0)
+        {
+            return new Dictionary<int, IReadOnlyList<string>>();
+        }
+
+        var rows = await _db.CurriculumItems
+            .AsNoTracking()
+            .Where(ci => courseIds.Contains(ci.CourseId))
+            .Select(ci => new { ci.CourseId, ci.Major!.MajorCode })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return rows
+            .GroupBy(r => r.CourseId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<string>)g.Select(r => r.MajorCode).OrderBy(code => code).ToList());
     }
 
     // =========================================================================

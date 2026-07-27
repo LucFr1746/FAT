@@ -3,7 +3,7 @@ using Services.Dtos;
 namespace Services.Abstractions;
 
 /// <summary>
-/// Loads the catalog from an FLM export - the Excel workbook or the CSV folder.
+/// Loads the catalog from an FLM export - the Excel workbook or the JSON folder.
 ///
 /// IDEMPOTENT BY CONTRACT. Running the same import twice must leave the database
 /// in the same state as running it once: every row is matched on its natural key

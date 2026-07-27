@@ -2,18 +2,18 @@ using System.IO;
 using System.Windows;
 using App.Startup;
 using Data;
-using Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Services;
 
 namespace App;
 
 /// <summary>
 /// Application entry point and composition root.
 ///
-/// OWNED BY THE TEAM LEAD - see docs/TEAM.md.
+/// OWNED BY THE CVerify team - see docs/TEAM.md.
 /// Module services are registered in App/Startup/&lt;Module&gt;Registration.cs,
 /// one file per member, so that nobody else needs to edit this file.
 /// </summary>
@@ -73,6 +73,8 @@ public partial class App : Application
                 // One line per module, per docs/TEAM.md: the module owns its own
                 // registration file so nobody else has to edit this one.
                 services.AddCatalogModule();
+                services.AddMaterialsModule();
+                services.AddGradeModule();
 
                 // Navigation & Container ViewModels
                 services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();

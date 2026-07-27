@@ -1,8 +1,8 @@
 using Domain.Constants;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Services.Dtos;
 using Services.Import;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 
@@ -16,6 +16,27 @@ namespace Services.Implementations;
 /// </summary>
 public sealed partial class FlmImportService
 {
+    /// <summary>
+    /// Matches how SQL Server actually compares these pairs: the database's
+    /// default collation (SQL_Latin1_General_CP1_CI_AS) is case-INSENSITIVE, so
+    /// UQ_Assessment_Name and UQ_SubjectMaterial_Title treat "Final Exam" and
+    /// "Final exam" as the same row. A plain (int, string) tuple key does not -
+    /// it uses ordinal, case-SENSITIVE equality - so without this comparer the
+    /// in-memory "does it already exist" check and the database's own unique
+    /// constraint can disagree, and disagree in exactly the direction that
+    /// turns a matching update into a duplicate-key insert.
+    /// </summary>
+    private sealed class CourseNamePairComparer : IEqualityComparer<(int CourseId, string Name)>
+    {
+        public static readonly CourseNamePairComparer Instance = new();
+
+        public bool Equals((int CourseId, string Name) x, (int CourseId, string Name) y)
+            => x.CourseId == y.CourseId && string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
+
+        public int GetHashCode((int CourseId, string Name) obj)
+            => HashCode.Combine(obj.CourseId, obj.Name.ToUpperInvariant());
+    }
+
     /// <summary>Creates or updates the programmes, returning code -&gt; MajorId.</summary>
     private async Task<Dictionary<string, int>> UpsertMajorsAsync(
         FlmDataSet data,
@@ -258,6 +279,13 @@ public sealed partial class FlmImportService
         // which is the order the programme sheet was authored in.
         var orderPerTerm = new Dictionary<(int MajorId, int TermNo), int>();
 
+        // The same subject can appear in several cohorts of one programme (e.g.
+        // BIT_SE_K19 and BIT_SE_K20) that DISAGREE on the term. Once cohort codes
+        // collapse to a single major, only one term can survive, so the FIRST
+        // listing (the older cohort) wins and later duplicates are ignored - which
+        // keeps the term stable instead of last-write-wins.
+        var handledThisRun = new HashSet<(int MajorId, int CourseId)>();
+
         foreach (var row in data.Subjects)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -270,6 +298,12 @@ public sealed partial class FlmImportService
 
             if (!majorsByCode.TryGetValue(row.MajorCode, out var majorId) ||
                 !coursesByCode.TryGetValue(row.SubjectCode, out var courseId))
+            {
+                session.CurriculumLinks.CountSkipped();
+                continue;
+            }
+
+            if (!handledThisRun.Add((majorId, courseId)))
             {
                 session.CurriculumLinks.CountSkipped();
                 continue;
@@ -329,7 +363,7 @@ public sealed partial class FlmImportService
 
         var existing = await _db.Assessments
             .Where(a => courseIds.Contains(a.CourseId))
-            .ToDictionaryAsync(a => (a.CourseId, a.Name), cancellationToken);
+            .ToDictionaryAsync(a => (a.CourseId, a.Name), CourseNamePairComparer.Instance, cancellationToken);
 
         foreach (var row in rows)
         {
@@ -408,7 +442,7 @@ public sealed partial class FlmImportService
 
         var existing = await _db.SubjectMaterials
             .Where(m => courseIds.Contains(m.CourseId))
-            .ToDictionaryAsync(m => (m.CourseId, m.Title), cancellationToken);
+            .ToDictionaryAsync(m => (m.CourseId, m.Title), CourseNamePairComparer.Instance, cancellationToken);
 
         foreach (var row in data.Materials)
         {

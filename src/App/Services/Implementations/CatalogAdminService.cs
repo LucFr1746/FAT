@@ -2,16 +2,15 @@ using Data;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Services.Implementations;
 
 /// <summary>
 /// Manage Major, Manage Semester (calendar) and Manage Subject - the write side
-/// of the catalog. Curriculum links live in <see cref="CurriculumAdminService"/>
-/// and the kỳ of the study path in <see cref="TermService"/>.
+/// of the catalog. Curriculum links live in <see cref="CurriculumAdminService"/>.
 ///
 /// Prerequisite handling is in CatalogAdminService.Prerequisites.cs.
 /// </summary>

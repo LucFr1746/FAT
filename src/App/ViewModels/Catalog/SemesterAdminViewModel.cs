@@ -1,7 +1,7 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using App.Navigation;
 using App.ViewModels.Common;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Services.Abstractions;
 using Services.Dtos;
 
@@ -10,9 +10,6 @@ namespace App.ViewModels.Catalog;
 /// <summary>
 /// CRUD over the CALENDAR semesters (FA25, SP26) that enrollments are recorded
 /// against.
-///
-/// Distinct from <see cref="TermAdminViewModel"/>, which manages the kỳ of the
-/// study path. Both screens say which is which in their subtitle.
 /// </summary>
 public partial class SemesterAdminViewModel : PagedListViewModel<SemesterDto>, INavigationAware
 {

@@ -68,11 +68,12 @@
                 <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem}"
                           Style="{StaticResource CatalogDataGridStyle}"
                           ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
-                          CellStyle="{StaticResource CatalogCellStyle}">
+                          CellStyle="{StaticResource CatalogCellStyle}"
+                          HorizontalScrollBarVisibility="Auto">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Thứ tự" Binding="{Binding DisplayOrder}" Width="90" />
                         <DataGridTextColumn Header="Mã" Binding="{Binding SemesterCode}" Width="110" />
-                        <DataGridTextColumn Header="Tên học kỳ" Binding="{Binding SemesterName}" Width="*" />
+                        <DataGridTextColumn Header="Tên học kỳ" Binding="{Binding SemesterName}" Width="*" MinWidth="180" />
                         <DataGridTextColumn Header="Bắt đầu" Width="130"
                                             Binding="{Binding StartDate, StringFormat=dd/MM/yyyy}" />
                         <DataGridTextColumn Header="Kết thúc" Width="130"

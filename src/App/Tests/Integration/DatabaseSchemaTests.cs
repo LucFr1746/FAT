@@ -28,7 +28,10 @@ public class DatabaseSchemaTests : IDisposable
                     .AddJsonFile(file, optional: true)
                     .Build();
                 var connStr = builder.GetConnectionString("AppDatabase");
-                if (!string.IsNullOrWhiteSpace(connStr)) return connStr;
+                if (!string.IsNullOrWhiteSpace(connStr))
+                {
+                    return connStr;
+                }
             }
         }
         return "Server=localhost;Database=FAT_DB;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5";

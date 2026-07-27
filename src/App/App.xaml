@@ -54,9 +54,6 @@
             <DataTemplate DataType="{x:Type vmCat:MajorAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
                 <vCat:MajorAdminView/>
             </DataTemplate>
-            <DataTemplate DataType="{x:Type vmCat:TermAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
-                <vCat:TermAdminView/>
-            </DataTemplate>
             <DataTemplate DataType="{x:Type vmCat:SemesterAdminViewModel}" xmlns:vmCat="clr-namespace:App.ViewModels.Catalog" xmlns:vCat="clr-namespace:App.Views.Catalog">
                 <vCat:SemesterAdminView/>
             </DataTemplate>
@@ -70,12 +67,34 @@
                 <vCat:FlmImportView/>
             </DataTemplate>
 
+            <!-- Materials library (Member 5) -->
+            <DataTemplate DataType="{x:Type vmMat:MaterialLibraryViewModel}" xmlns:vmMat="clr-namespace:App.ViewModels.Materials" xmlns:vMat="clr-namespace:App.Views.Materials">
+                <vMat:MaterialLibraryView/>
+            </DataTemplate>
+
             <!-- Student curriculum & prediction -->
             <DataTemplate DataType="{x:Type vmStu:MyCurriculumViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
                 <vStu:MyCurriculumView/>
             </DataTemplate>
             <DataTemplate DataType="{x:Type vmStu:GpaPredictionViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
                 <vStu:GpaPredictionView/>
+            </DataTemplate>
+
+            <!-- Grade, GPA, transcript and statistics -->
+            <DataTemplate DataType="{x:Type vmGrade:GradeListViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GradeListView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:GradeEntryViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GradeEntryView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:GpaCalculatorViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GpaCalculatorView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:TranscriptViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:TranscriptView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:StatisticsViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:StatisticsView/>
             </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
