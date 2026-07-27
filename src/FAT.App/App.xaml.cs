@@ -1,5 +1,8 @@
 using System.IO;
 using System.Windows;
+using FAT.App.Navigation;
+using FAT.App.Startup;
+using FAT.App.ViewModels;
 using FAT.Data;
 using FAT.Services;
 using Microsoft.EntityFrameworkCore;
@@ -45,11 +48,10 @@ public partial class App : Application
 
                 services.AddFatData(connectionString);
                 services.AddFatCoreServices();
-
-                // Module registrations go here, one line each:
-                //   services.AddAuthModule();
-                //   services.AddCatalogAdminModule();
-                //   ...
+                services.AddGradeGpaModule();
+                services.AddSingleton<INavigationService, NavigationService>();
+                services.AddSingleton<MainWindowViewModel>();
+                services.AddTransient<MainWindow>();
             })
             .Build();
 
@@ -61,7 +63,7 @@ public partial class App : Application
             return;
         }
 
-        var main = new MainWindow();
+        var main = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = main;
         main.Show();
     }

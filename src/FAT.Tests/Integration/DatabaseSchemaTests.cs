@@ -21,8 +21,13 @@ namespace FAT.Tests.Integration;
 /// </summary>
 public class DatabaseSchemaTests : IDisposable
 {
-    private const string ConnectionString =
+    private const string DefaultConnectionString =
         "Server=localhost;Database=FAT;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5";
+
+    private static string ConnectionString =>
+        Environment.GetEnvironmentVariable("FAT_TEST_CONNECTION_STRING") is { Length: > 0 } configured
+            ? configured
+            : DefaultConnectionString;
 
     private readonly FatDbContext? _db;
     private readonly bool _available;
@@ -52,7 +57,9 @@ public class DatabaseSchemaTests : IDisposable
 
     private FatDbContext RequireDb()
     {
-        Skip.IfNot(_available, "SQL Server is unreachable - run db/setup-db.ps1 first.");
+        Skip.IfNot(
+            _available,
+            "SQL Server is unreachable. Run db/setup-db.ps1 first, or set FAT_TEST_CONNECTION_STRING for a non-default instance.");
         return _db!;
     }
 
