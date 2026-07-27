@@ -1,5 +1,81 @@
-<UserControl x:Class="FAT.App.Views.GradeGpa.GpaCalculatorView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F7F8FC">
- <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions><TextBlock Text="GPA Calculator" FontSize="28" FontWeight="SemiBold" Foreground="#2D2859"/><TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="#C62828" Margin="0,8"/>
-  <Grid Grid.Row="2" Margin="0,20"><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Cumulative GPA"/><TextBlock Text="{Binding Summary.CumulativeGpa, TargetNullValue='—', StringFormat=N2}" FontSize="48" Foreground="#5E35B1"/><TextBlock Text="{Binding Summary.ClassificationName}" FontSize="20"/><ProgressBar Value="{Binding Credits.CompletionPercent}" Maximum="100" Height="12" Margin="0,25,0,8"/><TextBlock Text="{Binding Credits.EarnedCredits, StringFormat='Earned: {0} credits'}"/><TextBlock Text="{Binding Credits.InProgressCredits, StringFormat='In progress: {0} credits'}"/><TextBlock Text="{Binding Credits.RemainingCredits, StringFormat='Remaining: {0} credits'}"/></StackPanel><DataGrid Grid.Column="1" Margin="24,0,0,0" ItemsSource="{Binding Summary.BySemester}" AutoGenerateColumns="False" IsReadOnly="True"><DataGrid.Columns><DataGridTextColumn Header="Semester" Binding="{Binding SemesterCode}" Width="*"/><DataGridTextColumn Header="GPA" Binding="{Binding Gpa, StringFormat=N2}"/><DataGridTextColumn Header="Earned credits" Binding="{Binding EarnedCredits}"/></DataGrid.Columns></DataGrid></Grid>
- </Grid>
+<UserControl x:Class="FAT.App.Views.GradeGpa.GpaCalculatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#F7F8FC">
+
+    <Grid Margin="28">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="GPA Calculator"
+                   FontSize="28"
+                   FontWeight="SemiBold"
+                   Foreground="#2D2859" />
+
+        <TextBlock Grid.Row="1"
+                   Text="{Binding ErrorMessage}"
+                   Foreground="#C62828"
+                   Margin="0,8" />
+
+        <Grid Grid.Row="2"
+              Margin="0,20">
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- GPA and credit summary -->
+            <StackPanel>
+                <TextBlock Text="Cumulative GPA" />
+
+                <TextBlock Text="{Binding Summary.CumulativeGpa,
+                                          TargetNullValue='—',
+                                          StringFormat=N2}"
+                           FontSize="48"
+                           Foreground="#5E35B1" />
+
+                <TextBlock Text="{Binding Summary.ClassificationName}"
+                           FontSize="20" />
+
+                <ProgressBar Value="{Binding Credits.CompletionPercent}"
+                             Maximum="100"
+                             Height="12"
+                             Margin="0,25,0,8" />
+
+                <TextBlock Text="{Binding Credits.EarnedCredits,
+                                          StringFormat='Earned: {0} credits'}" />
+
+                <TextBlock Text="{Binding Credits.InProgressCredits,
+                                          StringFormat='In progress: {0} credits'}" />
+
+                <TextBlock Text="{Binding Credits.RemainingCredits,
+                                          StringFormat='Remaining: {0} credits'}" />
+            </StackPanel>
+
+            <!-- GPA by semester -->
+            <DataGrid Grid.Column="1"
+                      Margin="24,0,0,0"
+                      ItemsSource="{Binding Summary.BySemester}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Semester"
+                                        Binding="{Binding SemesterCode}"
+                                        Width="*" />
+
+                    <DataGridTextColumn Header="GPA"
+                                        Binding="{Binding Gpa,
+                                                          StringFormat=N2}" />
+
+                    <DataGridTextColumn Header="Earned credits"
+                                        Binding="{Binding EarnedCredits}" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Grid>
 </UserControl>
