@@ -74,6 +74,7 @@ public partial class App : Application
                 // registration file so nobody else has to edit this one.
                 services.AddCatalogModule();
                 services.AddMaterialsModule();
+                services.AddGradeGpaModule();
 
                 // Navigation & Container ViewModels
                 services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();
