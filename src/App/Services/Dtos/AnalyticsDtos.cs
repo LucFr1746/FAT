@@ -39,4 +39,7 @@ public sealed record DashboardDto(
     IReadOnlyList<GpaTrendPointDto> GpaTrend,
     IReadOnlyList<GradeDistributionDto> GradeDistribution,
     IReadOnlyList<TranscriptItemDto> CurrentCourses,
-    IReadOnlyList<AcademicWarningDto> Warnings);
+    IReadOnlyList<AcademicWarningDto> Warnings,
+    decimal? AverageFinalScore = null,
+    int TotalCourses = 0,
+    int RemainingCredits = 0);

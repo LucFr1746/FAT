@@ -1,8 +1,7 @@
 using System.Windows.Controls;
 
-namespace App.Views.GradeGpa;
+namespace App.Views.Grades;
 
-/// <summary>Grade viewing UI; all behavior lives in GradeListViewModel.</summary>
 public partial class GradeListView : UserControl
 {
     public GradeListView()

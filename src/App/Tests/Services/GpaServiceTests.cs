@@ -126,11 +126,14 @@ public class GpaServiceTests
             semester.SemesterId, EnrollmentStatus.Passed, 10.0m);
         db.AddEnrollment(student.StudentId, db.AddCourse("DOING", credits: 4).CourseId,
             semester.SemesterId, EnrollmentStatus.Studying);
+        db.AddEnrollment(student.StudentId, db.AddCourse("FAILED", credits: 2).CourseId,
+            semester.SemesterId, EnrollmentStatus.Failed, 3.0m);
 
         var summary = await new GpaService(db).GetCreditSummaryAsync(student.StudentId);
 
         summary.EarnedCredits.Should().Be(5);
         summary.InProgressCredits.Should().Be(4);
+        summary.FailedCredits.Should().Be(2);
     }
 
     [Fact]

@@ -17,6 +17,10 @@ public sealed record TranscriptItemDto(
 {
     /// <summary>True when this attempt is excluded from the GPA by a later retake.</summary>
     public bool IsSupersededRetake => !IsCounted && Status != EnrollmentStatus.Studying;
+
+    public string StatusDisplay => Status.ToString();
+    public string FinalScoreDisplay => FinalScore?.ToString("0.0") ?? "-";
+    public string GradePointDisplay => GradePoint?.ToString("0.00") ?? "-";
 }
 
 /// <summary>The transcript for a single semester.</summary>
@@ -35,7 +39,8 @@ public sealed record TranscriptDto(
     int StudentId,
     string StudentCode,
     string FullName,
-    IReadOnlyList<SemesterTranscriptDto> Semesters);
+    IReadOnlyList<SemesterTranscriptDto> Semesters,
+    string? MajorName = null);
 
 /// <summary>GPA for one semester - a single point on the trend chart.</summary>
 public sealed record SemesterGpaDto(
@@ -43,7 +48,8 @@ public sealed record SemesterGpaDto(
     string SemesterCode,
     int DisplayOrder,
     decimal? Gpa,
-    int EarnedCredits);
+    int EarnedCredits,
+    int GpaCredits = 0);
 
 /// <summary>Aggregated GPA information for a student.</summary>
 public sealed record GpaSummaryDto(
@@ -56,7 +62,8 @@ public sealed record GpaSummaryDto(
 public sealed record CreditSummaryDto(
     int EarnedCredits,
     int InProgressCredits,
-    int RequiredCredits)
+    int RequiredCredits,
+    int FailedCredits = 0)
 {
     public int RemainingCredits => Math.Max(0, RequiredCredits - EarnedCredits);
 

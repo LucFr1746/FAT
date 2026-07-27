@@ -166,48 +166,30 @@
                             Style="{StaticResource NavTabButtonStyle}"
                             Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
 
-                    <Button x:Name="AcademicMenuBtn"
-                            Command="{Binding ToggleAcademicMenuCommand}"
-                            Content="📊 Kết Quả Học Tập ▾"
+                    <!-- Student grade/GPA features, grouped to keep the header compact -->
+                    <Button x:Name="GradeMenuBtn" Command="{Binding ToggleGradeMenuCommand}" Content="🎓 Điểm &amp; GPA ▾"
                             Style="{StaticResource NavTabButtonStyle}"
                             Visibility="{Binding IsStudent, Converter={StaticResource BoolToVisConverter}}"/>
-                    <Popup IsOpen="{Binding IsAcademicMenuOpen, Mode=TwoWay}"
-                           StaysOpen="False"
-                           PlacementTarget="{Binding ElementName=AcademicMenuBtn}"
-                           Placement="Bottom"
-                           PopupAnimation="Slide"
-                           AllowsTransparency="True">
-                        <Border Background="#FFFFFF"
-                                BorderBrush="#E5DDCB"
-                                BorderThickness="1.5"
-                                CornerRadius="16"
-                                Width="230"
-                                Margin="0,8,0,0"
-                                Padding="8">
+                    <Popup IsOpen="{Binding IsGradeMenuOpen, Mode=TwoWay}" StaysOpen="False"
+                           PlacementTarget="{Binding ElementName=GradeMenuBtn}" Placement="Bottom"
+                           PopupAnimation="Slide" AllowsTransparency="True">
+                        <Border Background="#FFFFFF" BorderBrush="#E5DDCB" BorderThickness="1.5"
+                                CornerRadius="16" Width="230" Margin="0,8,0,0" Padding="8">
                             <Border.Effect>
-                                <DropShadowEffect Color="#473C33"
-                                                  Direction="270"
-                                                  ShadowDepth="8"
-                                                  BlurRadius="24"
-                                                  Opacity="0.12"/>
+                                <DropShadowEffect Color="#473C33" Direction="270" ShadowDepth="8"
+                                                  BlurRadius="24" Opacity="0.12"/>
                             </Border.Effect>
                             <StackPanel>
-                                <Button Command="{Binding SwitchTabCommand}"
-                                        CommandParameter="Grades"
-                                        Content="📝 Xem Điểm"
-                                        Style="{StaticResource PopupMenuItemButtonStyle}"/>
-                                <Button Command="{Binding SwitchTabCommand}"
-                                        CommandParameter="GpaCalculator"
-                                        Content="🧮 GPA Calculator"
-                                        Style="{StaticResource PopupMenuItemButtonStyle}"/>
-                                <Button Command="{Binding SwitchTabCommand}"
-                                        CommandParameter="Transcript"
-                                        Content="📄 Transcript"
-                                        Style="{StaticResource PopupMenuItemButtonStyle}"/>
-                                <Button Command="{Binding SwitchTabCommand}"
-                                        CommandParameter="Statistics"
-                                        Content="📊 Statistics"
-                                        Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="ViewGrades"
+                                        Content="📋  View Grades" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="ManageGrades"
+                                        Content="✏️  Manage Grades" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="GpaCalculator"
+                                        Content="🧮  GPA Calculator" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Transcript"
+                                        Content="📜  Transcript" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Statistics"
+                                        Content="📊  Statistics" Style="{StaticResource PopupMenuItemButtonStyle}"/>
                             </StackPanel>
                         </Border>
                     </Popup>
@@ -262,9 +244,6 @@
                     </Popup>
 
                     <!-- Admin: account management stays top-level -->
-                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="GradeEntry" Content="📝 Quản Lý Điểm"
-                            Style="{StaticResource NavTabButtonStyle}"
-                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>
                     <Button Command="{Binding SwitchTabCommand}" CommandParameter="UserManagement" Content="🛡️ Tài Khoản"
                             Style="{StaticResource NavTabButtonStyle}"
                             Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisConverter}}"/>

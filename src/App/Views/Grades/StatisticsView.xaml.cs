@@ -1,8 +1,7 @@
 using System.Windows.Controls;
 
-namespace App.Views.GradeGpa;
+namespace App.Views.Grades;
 
-/// <summary>Statistics UI; all aggregation lives in AnalyticsService.</summary>
 public partial class StatisticsView : UserControl
 {
     public StatisticsView()

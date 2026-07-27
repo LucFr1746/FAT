@@ -1,8 +1,7 @@
 using System.Windows.Controls;
 
-namespace App.Views.GradeGpa;
+namespace App.Views.Grades;
 
-/// <summary>GPA summary UI; all calculations live in services.</summary>
 public partial class GpaCalculatorView : UserControl
 {
     public GpaCalculatorView()

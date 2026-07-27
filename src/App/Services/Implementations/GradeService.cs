@@ -10,45 +10,145 @@ namespace Services.Implementations;
 
 /// <summary>
 /// Grade entry, final-score settlement and transcript aggregation.
+/// All persisted values use the existing Enrollment, Assessment, Grade and
+/// GradeScale tables; no calculated aggregate is stored outside Enrollment.
 /// </summary>
 public sealed class GradeService : IGradeService
 {
+    private const decimal MaximumScore = 10m;
+
     private readonly FAT_DBContext _db;
-    private readonly IGpaService _gpaService;
-    private readonly IPrerequisiteService _prerequisiteService;
     private readonly ICurrentUserContext _currentUser;
+    private readonly IPrerequisiteService _prerequisites;
+    private readonly IGpaService _gpaService;
 
     public GradeService(
         FAT_DBContext db,
-        IGpaService gpaService,
-        IPrerequisiteService prerequisiteService,
-        ICurrentUserContext currentUser)
+        ICurrentUserContext currentUser,
+        IPrerequisiteService prerequisites,
+        IGpaService gpaService)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
-        _gpaService = gpaService ?? throw new ArgumentNullException(nameof(gpaService));
-        _prerequisiteService = prerequisiteService ?? throw new ArgumentNullException(nameof(prerequisiteService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
+        _prerequisites = prerequisites ?? throw new ArgumentNullException(nameof(prerequisites));
+        _gpaService = gpaService ?? throw new ArgumentNullException(nameof(gpaService));
+    }
+
+    public async Task<TranscriptDto> GetTranscriptAsync(
+        int studentId, CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireSelfOrAdmin(studentId, "Xem bảng điểm");
+
+        var student = await _db.Students
+            .AsNoTracking()
+            .Where(s => s.StudentId == studentId)
+            .Select(s => new
+            {
+                s.StudentId,
+                s.StudentCode,
+                s.FullName,
+                MajorName = s.Major != null ? s.Major.MajorName : null
+            })
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy sinh viên có mã định danh {studentId}.");
+
+        var rows = await GetStudentGradesAsync(studentId, cancellationToken);
+        var semesterGpas = (await _gpaService.GetGpaBySemesterAsync(studentId, cancellationToken))
+            .ToDictionary(s => s.SemesterId);
+
+        var semesters = rows
+            .GroupBy(r => new
+            {
+                r.SemesterId,
+                r.SemesterCode,
+                r.SemesterName,
+                r.SemesterDisplayOrder
+            })
+            .OrderBy(g => g.Key.SemesterDisplayOrder)
+            .Select(g =>
+            {
+                semesterGpas.TryGetValue(g.Key.SemesterId, out var semesterGpa);
+
+                var items = g
+                    .OrderBy(r => r.CourseCode)
+                    .ThenBy(r => r.AttemptNo)
+                    .Select(r => new TranscriptItemDto(
+                        r.EnrollmentId,
+                        r.CourseCode,
+                        r.CourseName,
+                        r.Credits,
+                        r.FinalScore,
+                        r.LetterGrade,
+                        r.GradePoint,
+                        r.Status,
+                        r.IsCounted,
+                        r.AttemptNo))
+                    .ToList();
+
+                return new SemesterTranscriptDto(
+                    g.Key.SemesterId,
+                    g.Key.SemesterCode,
+                    g.Key.SemesterName,
+                    g.Key.SemesterDisplayOrder,
+                    IsCurrent: g.Any(r => r.SemesterIsCurrent),
+                    items,
+                    semesterGpa?.Gpa,
+                    semesterGpa?.EarnedCredits ?? 0);
+            })
+            .ToList();
+
+        return new TranscriptDto(
+            student.StudentId,
+            student.StudentCode,
+            student.FullName,
+            semesters,
+            student.MajorName);
+    }
+
+    public async Task<IReadOnlyList<GradeCourseDto>> GetStudentGradesAsync(
+        int studentId, CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireSelfOrAdmin(studentId, "Xem điểm");
+
+        var exists = await _db.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.StudentId == studentId, cancellationToken);
+
+        if (!exists)
+        {
+            throw new InvalidOperationException(
+                $"Không tìm thấy sinh viên có mã định danh {studentId}.");
+        }
+
+        var enrollments = await _db.Enrollments
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(e => e.Course)
+                .ThenInclude(c => c!.Assessments)
+            .Include(e => e.Semester)
+            .Include(e => e.Grades)
+            .Where(e => e.StudentId == studentId)
+            .OrderByDescending(e => e.Semester!.DisplayOrder)
+            .ThenBy(e => e.Course!.CourseCode)
+            .ThenByDescending(e => e.AttemptNo)
+            .ToListAsync(cancellationToken);
+
+        return enrollments.Select(MapGradeCourse).ToList();
     }
 
     public async Task<IReadOnlyList<Grade>> GetGradesAsync(
-        int enrollmentId,
-        CancellationToken cancellationToken = default)
+        int enrollmentId, CancellationToken cancellationToken = default)
     {
-        var studentId = await _db.Enrollments
-            .AsNoTracking()
-            .Where(enrollment => enrollment.EnrollmentId == enrollmentId)
-            .Select(enrollment => (int?)enrollment.StudentId)
-            .SingleOrDefaultAsync(cancellationToken)
-            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} was not found.");
-
-        _currentUser.RequireSelfOrAdmin(studentId, "View component grades");
+        var studentId = await RequireEnrollmentOwnerAsync(enrollmentId, "Xem điểm thành phần", cancellationToken);
+        _currentUser.RequireSelfOrAdmin(studentId, "Xem điểm thành phần");
 
         return await _db.Grades
             .AsNoTracking()
-            .Include(grade => grade.Assessment)
-            .Where(grade => grade.EnrollmentId == enrollmentId)
-            .OrderBy(grade => grade.Assessment != null ? grade.Assessment.DisplayOrder : int.MaxValue)
-            .ThenBy(grade => grade.Assessment != null ? grade.Assessment.Name : string.Empty)
+            .Include(g => g.Assessment)
+            .Where(g => g.EnrollmentId == enrollmentId)
+            .OrderBy(g => g.Assessment!.DisplayOrder)
+            .ThenBy(g => g.Assessment!.Name)
             .ToListAsync(cancellationToken);
     }
 
@@ -58,34 +158,33 @@ public sealed class GradeService : IGradeService
         decimal score,
         CancellationToken cancellationToken = default)
     {
-        _currentUser.RequireAdmin("Add or edit grades");
-        GradeCalculation.ValidateScore(score);
+        ValidateScore(score);
 
         var enrollment = await _db.Enrollments
-            .AsNoTracking()
-            .Where(item => item.EnrollmentId == enrollmentId)
-            .Select(item => new { item.CourseId, item.Status })
-            .SingleOrDefaultAsync(cancellationToken)
-            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} was not found.");
+            .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId, cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy lượt học có mã định danh {enrollmentId}.");
+
+        _currentUser.RequireSelfOrAdmin(enrollment.StudentId, "Cập nhật điểm");
 
         if (enrollment.Status == EnrollmentStatus.Withdrawn)
         {
-            throw new InvalidOperationException("Grades cannot be recorded for a withdrawn enrollment.");
+            throw new InvalidOperationException("Không thể nhập điểm cho môn đã rút.");
         }
 
         var assessmentExists = await _db.Assessments.AnyAsync(
-            assessment => assessment.AssessmentId == assessmentId
-                          && assessment.CourseId == enrollment.CourseId,
+            a => a.AssessmentId == assessmentId && a.CourseId == enrollment.CourseId,
             cancellationToken);
 
         if (!assessmentExists)
         {
-            throw new InvalidOperationException(
-                "The selected assessment does not belong to the enrolled course.");
+            throw new ArgumentException(
+                "Assessment không tồn tại hoặc không thuộc môn học đã chọn.",
+                nameof(assessmentId));
         }
 
-        var grade = await _db.Grades.SingleOrDefaultAsync(
-            item => item.EnrollmentId == enrollmentId && item.AssessmentId == assessmentId,
+        var grade = await _db.Grades.FirstOrDefaultAsync(
+            g => g.EnrollmentId == enrollmentId && g.AssessmentId == assessmentId,
             cancellationToken);
 
         if (grade is null)
@@ -105,163 +204,35 @@ public sealed class GradeService : IGradeService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        await RecalculateFinalScoreAsync(enrollmentId, cancellationToken);
+        await RecalculateFinalScoreCoreAsync(enrollmentId, cancellationToken);
+    }
+
+    public async Task DeleteGradeAsync(
+        int enrollmentId,
+        int assessmentId,
+        CancellationToken cancellationToken = default)
+    {
+        var studentId = await RequireEnrollmentOwnerAsync(enrollmentId, "Xóa điểm", cancellationToken);
+        _currentUser.RequireSelfOrAdmin(studentId, "Xóa điểm");
+
+        var grade = await _db.Grades.FirstOrDefaultAsync(
+            g => g.EnrollmentId == enrollmentId && g.AssessmentId == assessmentId,
+            cancellationToken)
+            ?? throw new InvalidOperationException("Không tìm thấy điểm cần xóa.");
+
+        _db.Grades.Remove(grade);
+        await _db.SaveChangesAsync(cancellationToken);
+        await RecalculateFinalScoreCoreAsync(enrollmentId, cancellationToken);
     }
 
     public async Task RecalculateFinalScoreAsync(
-        int enrollmentId,
-        CancellationToken cancellationToken = default)
+        int enrollmentId, CancellationToken cancellationToken = default)
     {
-        _currentUser.RequireAdmin("Recalculate final grades");
+        var studentId = await RequireEnrollmentOwnerAsync(
+            enrollmentId, "Tính lại điểm tổng kết", cancellationToken);
+        _currentUser.RequireSelfOrAdmin(studentId, "Tính lại điểm tổng kết");
 
-        var enrollment = await _db.Enrollments
-            .Include(item => item.Course)!
-            .ThenInclude(course => course!.Assessments)
-            .Include(item => item.Grades)
-            .SingleOrDefaultAsync(item => item.EnrollmentId == enrollmentId, cancellationToken)
-            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} was not found.");
-
-        if (enrollment.Status == EnrollmentStatus.Withdrawn)
-        {
-            throw new InvalidOperationException("A withdrawn enrollment cannot be recalculated.");
-        }
-
-        var assessments = enrollment.Course?.Assessments
-            .OrderBy(assessment => assessment.DisplayOrder)
-            .ToList() ?? [];
-
-        var scores = enrollment.Grades.ToDictionary(
-            grade => grade.AssessmentId,
-            grade => grade.Score);
-
-        var finalScore = GradeCalculation.CalculateFinalScore(
-            assessments.Select(assessment => (
-                assessment.Weight,
-                scores.TryGetValue(assessment.AssessmentId, out var score)
-                    ? (decimal?)score
-                    : null)));
-
-        if (!finalScore.HasValue)
-        {
-            enrollment.FinalScore = null;
-            enrollment.LetterGrade = null;
-            enrollment.GradePoint = null;
-            enrollment.Status = EnrollmentStatus.Studying;
-        }
-        else
-        {
-            var scale = await _db.GradeScales
-                .AsNoTracking()
-                .SingleOrDefaultAsync(
-                    item => finalScore.Value >= item.MinScore && finalScore.Value < item.MaxScore,
-                    cancellationToken)
-                ?? throw new InvalidOperationException(
-                    $"No grade-scale band covers the final score {finalScore.Value:N1}.");
-
-            var passScore = enrollment.Course?.MinAvgMarkToPass ?? AcademicRules.PassScore;
-            var componentMinimumsMet = assessments.All(assessment =>
-                !assessment.MinScoreToPass.HasValue
-                || (scores.TryGetValue(assessment.AssessmentId, out var score)
-                    && score >= assessment.MinScoreToPass.Value));
-
-            enrollment.FinalScore = finalScore.Value;
-            enrollment.LetterGrade = scale.LetterGrade;
-            enrollment.GradePoint = scale.GradePoint;
-            enrollment.Status = finalScore.Value >= passScore && componentMinimumsMet
-                ? EnrollmentStatus.Passed
-                : EnrollmentStatus.Failed;
-        }
-
-        enrollment.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<TranscriptDto> GetTranscriptAsync(
-        int studentId,
-        CancellationToken cancellationToken = default)
-    {
-        _currentUser.RequireSelfOrAdmin(studentId, "View transcript");
-
-        var student = await _db.Students
-            .AsNoTracking()
-            .Where(item => item.StudentId == studentId)
-            .Select(item => new { item.StudentId, item.StudentCode, item.FullName })
-            .SingleOrDefaultAsync(cancellationToken)
-            ?? throw new InvalidOperationException($"Student {studentId} was not found.");
-
-        var rows = await _db.Enrollments
-            .AsNoTracking()
-            .Where(enrollment => enrollment.StudentId == studentId)
-            .Select(enrollment => new
-            {
-                enrollment.EnrollmentId,
-                enrollment.FinalScore,
-                enrollment.LetterGrade,
-                enrollment.GradePoint,
-                enrollment.Status,
-                enrollment.IsCounted,
-                enrollment.AttemptNo,
-                CourseCode = enrollment.Course != null ? enrollment.Course.CourseCode : string.Empty,
-                CourseName = enrollment.Course != null ? enrollment.Course.CourseName : string.Empty,
-                Credits = enrollment.Course != null ? enrollment.Course.Credits : 0,
-                SemesterId = enrollment.Semester != null ? enrollment.Semester.SemesterId : enrollment.SemesterId,
-                SemesterCode = enrollment.Semester != null ? enrollment.Semester.SemesterCode : string.Empty,
-                SemesterName = enrollment.Semester != null ? enrollment.Semester.SemesterName : string.Empty,
-                DisplayOrder = enrollment.Semester != null ? enrollment.Semester.DisplayOrder : int.MaxValue,
-                IsCurrent = enrollment.Semester != null && enrollment.Semester.IsCurrent
-            })
-            .ToListAsync(cancellationToken);
-
-        var semesterGpas = (await _gpaService.GetGpaBySemesterAsync(studentId, cancellationToken))
-            .ToDictionary(item => item.SemesterId);
-
-        var semesters = rows
-            .GroupBy(row => new
-            {
-                row.SemesterId,
-                row.SemesterCode,
-                row.SemesterName,
-                row.DisplayOrder,
-                row.IsCurrent
-            })
-            .OrderBy(group => group.Key.DisplayOrder)
-            .Select(group =>
-            {
-                var items = group
-                    .OrderBy(row => row.CourseCode)
-                    .ThenBy(row => row.AttemptNo)
-                    .Select(row => new TranscriptItemDto(
-                        row.EnrollmentId,
-                        row.CourseCode,
-                        row.CourseName,
-                        row.Credits,
-                        row.FinalScore,
-                        row.LetterGrade,
-                        row.GradePoint,
-                        row.Status,
-                        row.IsCounted,
-                        row.AttemptNo))
-                    .ToList();
-
-                semesterGpas.TryGetValue(group.Key.SemesterId, out var semesterGpa);
-
-                return new SemesterTranscriptDto(
-                    group.Key.SemesterId,
-                    group.Key.SemesterCode,
-                    group.Key.SemesterName,
-                    group.Key.DisplayOrder,
-                    group.Key.IsCurrent,
-                    items,
-                    semesterGpa?.Gpa,
-                    semesterGpa?.EarnedCredits ?? 0);
-            })
-            .ToList();
-
-        return new TranscriptDto(
-            student.StudentId,
-            student.StudentCode,
-            student.FullName,
-            semesters);
+        await RecalculateFinalScoreCoreAsync(enrollmentId, cancellationToken);
     }
 
     public async Task<int> EnrollAsync(
@@ -270,55 +241,49 @@ public sealed class GradeService : IGradeService
         int semesterId,
         CancellationToken cancellationToken = default)
     {
-        _currentUser.RequireSelfOrAdmin(studentId, "Enroll in a course");
+        _currentUser.RequireSelfOrAdmin(studentId, "Đăng ký môn học");
 
-        if (!await _db.Students.AnyAsync(student => student.StudentId == studentId, cancellationToken))
+        if (!await _db.Students.AnyAsync(s => s.StudentId == studentId, cancellationToken))
         {
-            throw new InvalidOperationException($"Student {studentId} was not found.");
+            throw new InvalidOperationException(
+                $"Không tìm thấy sinh viên có mã định danh {studentId}.");
         }
 
-        if (!await _db.Courses.AnyAsync(
-                course => course.CourseId == courseId && course.IsActive,
-                cancellationToken))
+        if (!await _db.Courses.AnyAsync(c => c.CourseId == courseId && c.IsActive, cancellationToken))
         {
-            throw new InvalidOperationException($"Active course {courseId} was not found.");
+            throw new InvalidOperationException("Môn học không tồn tại hoặc đã ngừng hoạt động.");
         }
 
-        if (!await _db.Semesters.AnyAsync(
-                semester => semester.SemesterId == semesterId,
-                cancellationToken))
+        if (!await _db.Semesters.AnyAsync(s => s.SemesterId == semesterId, cancellationToken))
         {
-            throw new InvalidOperationException($"Semester {semesterId} was not found.");
+            throw new InvalidOperationException(
+                $"Không tìm thấy học kỳ có mã định danh {semesterId}.");
         }
 
         if (await _db.Enrollments.AnyAsync(
-                enrollment => enrollment.StudentId == studentId
-                              && enrollment.CourseId == courseId
-                              && enrollment.SemesterId == semesterId,
+                e => e.StudentId == studentId
+                     && e.CourseId == courseId
+                     && e.SemesterId == semesterId,
                 cancellationToken))
         {
-            throw new InvalidOperationException(
-                "The student is already enrolled in this course for the selected semester.");
+            throw new InvalidOperationException("Môn học đã được đăng ký trong học kỳ này.");
         }
 
-        var prerequisiteCheck = await _prerequisiteService.CanEnrollAsync(
-            studentId,
-            courseId,
-            cancellationToken);
+        var prerequisiteCheck = await _prerequisites.CanEnrollAsync(
+            studentId, courseId, cancellationToken);
 
         if (!prerequisiteCheck.CanEnroll)
         {
-            throw new InvalidOperationException("Course prerequisites have not been satisfied.");
+            throw new InvalidOperationException(prerequisiteCheck.BuildReason());
         }
 
         var previousAttempts = await _db.Enrollments
-            .Where(enrollment => enrollment.StudentId == studentId && enrollment.CourseId == courseId)
+            .Where(e => e.StudentId == studentId && e.CourseId == courseId)
             .ToListAsync(cancellationToken);
 
-        foreach (var previousAttempt in previousAttempts)
+        foreach (var attempt in previousAttempts)
         {
-            previousAttempt.IsCounted = false;
-            previousAttempt.UpdatedAt = DateTime.UtcNow;
+            attempt.IsCounted = false;
         }
 
         var enrollment = new Enrollment
@@ -327,27 +292,33 @@ public sealed class GradeService : IGradeService
             CourseId = courseId,
             SemesterId = semesterId,
             Status = EnrollmentStatus.Studying,
+            IsCounted = true,
             AttemptNo = previousAttempts.Count == 0
                 ? 1
-                : previousAttempts.Max(attempt => attempt.AttemptNo) + 1,
-            IsCounted = true,
+                : previousAttempts.Max(e => e.AttemptNo) + 1,
             CreatedAt = DateTime.UtcNow
         };
 
         _db.Enrollments.Add(enrollment);
         await _db.SaveChangesAsync(cancellationToken);
+
         return enrollment.EnrollmentId;
     }
 
     public async Task WithdrawAsync(
-        int enrollmentId,
-        CancellationToken cancellationToken = default)
+        int enrollmentId, CancellationToken cancellationToken = default)
     {
         var enrollment = await _db.Enrollments
-            .SingleOrDefaultAsync(item => item.EnrollmentId == enrollmentId, cancellationToken)
-            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} was not found.");
+            .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId, cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy lượt học có mã định danh {enrollmentId}.");
 
-        _currentUser.RequireSelfOrAdmin(enrollment.StudentId, "Withdraw from a course");
+        _currentUser.RequireSelfOrAdmin(enrollment.StudentId, "Rút môn học");
+
+        if (enrollment.Status != EnrollmentStatus.Studying)
+        {
+            throw new InvalidOperationException("Chỉ có thể rút môn đang học.");
+        }
 
         enrollment.Status = EnrollmentStatus.Withdrawn;
         enrollment.FinalScore = null;
@@ -356,6 +327,152 @@ public sealed class GradeService : IGradeService
         enrollment.IsCounted = false;
         enrollment.UpdatedAt = DateTime.UtcNow;
 
+        var previous = await _db.Enrollments
+            .Where(e => e.StudentId == enrollment.StudentId
+                        && e.CourseId == enrollment.CourseId
+                        && e.EnrollmentId != enrollment.EnrollmentId)
+            .OrderByDescending(e => e.AttemptNo)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (previous is not null)
+        {
+            previous.IsCounted = true;
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task RecalculateFinalScoreCoreAsync(
+        int enrollmentId, CancellationToken cancellationToken)
+    {
+        var enrollment = await _db.Enrollments
+            .Include(e => e.Course)
+            .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId, cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy lượt học có mã định danh {enrollmentId}.");
+
+        var assessments = await _db.Assessments
+            .AsNoTracking()
+            .Where(a => a.CourseId == enrollment.CourseId)
+            .OrderBy(a => a.DisplayOrder)
+            .ToListAsync(cancellationToken);
+
+        var grades = await _db.Grades
+            .AsNoTracking()
+            .Where(g => g.EnrollmentId == enrollmentId)
+            .ToDictionaryAsync(g => g.AssessmentId, cancellationToken);
+
+        if (assessments.Count == 0 || assessments.Any(a => !grades.ContainsKey(a.AssessmentId)))
+        {
+            enrollment.FinalScore = null;
+            enrollment.LetterGrade = null;
+            enrollment.GradePoint = null;
+            enrollment.Status = EnrollmentStatus.Studying;
+            enrollment.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+            return;
+        }
+
+        var finalScore = AcademicRules.RoundFinalScore(
+            assessments.Sum(a => grades[a.AssessmentId].Score * a.Weight));
+
+        var violatesComponentMinimum = assessments.Any(
+            a => a.MinScoreToPass.HasValue
+                 && grades[a.AssessmentId].Score < a.MinScoreToPass.Value);
+
+        var gradeScale = (await _db.GradeScales
+                .AsNoTracking()
+                .OrderBy(s => s.MinScore)
+                .ToListAsync(cancellationToken))
+            .FirstOrDefault(s => s.Contains(finalScore))
+            ?? throw new InvalidOperationException(
+                $"Không có thang quy đổi phù hợp cho điểm tổng kết {finalScore:0.0}.");
+
+        var passScore = enrollment.Course?.MinAvgMarkToPass ?? AcademicRules.PassScore;
+
+        enrollment.FinalScore = finalScore;
+        enrollment.LetterGrade = gradeScale.LetterGrade;
+        enrollment.GradePoint = gradeScale.GradePoint;
+        enrollment.Status = finalScore >= passScore && !violatesComponentMinimum
+            ? EnrollmentStatus.Passed
+            : EnrollmentStatus.Failed;
+        enrollment.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task<int> RequireEnrollmentOwnerAsync(
+        int enrollmentId,
+        string operation,
+        CancellationToken cancellationToken)
+    {
+        var studentId = await _db.Enrollments
+            .AsNoTracking()
+            .Where(e => e.EnrollmentId == enrollmentId)
+            .Select(e => (int?)e.StudentId)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy lượt học có mã định danh {enrollmentId}.");
+
+        _currentUser.RequireSelfOrAdmin(studentId, operation);
+        return studentId;
+    }
+
+    private static void ValidateScore(decimal score)
+    {
+        if (score < 0m || score > MaximumScore)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(score),
+                $"Điểm phải nằm trong khoảng 0 đến {MaximumScore:0}.");
+        }
+    }
+
+    private static GradeCourseDto MapGradeCourse(Enrollment enrollment)
+    {
+        var gradesByAssessment = enrollment.Grades
+            .GroupBy(g => g.AssessmentId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.UpdatedAt).First());
+
+        var assessments = (enrollment.Course?.Assessments ?? [])
+            .OrderBy(a => a.DisplayOrder)
+            .ThenBy(a => a.Name)
+            .Select(a =>
+            {
+                gradesByAssessment.TryGetValue(a.AssessmentId, out var grade);
+
+                return new GradeAssessmentDto(
+                    a.AssessmentId,
+                    a.Name ?? string.Empty,
+                    a.Weight,
+                    a.MinScoreToPass,
+                    a.DisplayOrder,
+                    grade?.GradeId,
+                    grade?.Score);
+            })
+            .ToList();
+
+        var course = enrollment.Course;
+        var semester = enrollment.Semester;
+
+        return new GradeCourseDto(
+            enrollment.EnrollmentId,
+            enrollment.CourseId,
+            course?.CourseCode ?? string.Empty,
+            course?.CourseName ?? string.Empty,
+            Math.Max(0, course?.Credits ?? 0),
+            enrollment.SemesterId,
+            semester?.SemesterCode ?? string.Empty,
+            semester?.SemesterName ?? string.Empty,
+            semester?.DisplayOrder ?? 0,
+            semester?.IsCurrent ?? false,
+            enrollment.Status,
+            enrollment.FinalScore,
+            enrollment.LetterGrade,
+            enrollment.GradePoint,
+            course?.CountsTowardGpa ?? false,
+            enrollment.IsCounted,
+            enrollment.AttemptNo,
+            assessments);
     }
 }

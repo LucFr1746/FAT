@@ -1,8 +1,7 @@
 using System.Windows.Controls;
 
-namespace App.Views.GradeGpa;
+namespace App.Views.Grades;
 
-/// <summary>Transcript UI; aggregation lives in GradeService.</summary>
 public partial class TranscriptView : UserControl
 {
     public TranscriptView()

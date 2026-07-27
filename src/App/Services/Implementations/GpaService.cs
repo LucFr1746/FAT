@@ -88,7 +88,9 @@ public sealed class GpaService : IGpaService
                     .Select(r => (r.FinalScore!.Value, r.Credits))),
                 // Credits are earned by every passed attempt that still counts,
                 // whether or not the subject feeds the GPA.
-                g.Where(r => r.IsCounted).Sum(r => r.Credits)))
+                g.Where(r => r.IsCounted).Sum(r => r.Credits),
+                g.Where(r => r.IsCounted && r.CountsTowardGpa && r.FinalScore.HasValue)
+                    .Sum(r => r.Credits)))
             .ToList();
     }
 
@@ -110,7 +112,8 @@ public sealed class GpaService : IGpaService
         return new CreditSummaryDto(
             EarnedCredits: rows.Where(r => r.Status == EnrollmentStatus.Passed && r.IsCounted).Sum(r => r.Credits),
             InProgressCredits: rows.Where(r => r.Status == EnrollmentStatus.Studying).Sum(r => r.Credits),
-            RequiredCredits: requiredCredits);
+            RequiredCredits: requiredCredits,
+            FailedCredits: rows.Where(r => r.Status == EnrollmentStatus.Failed && r.IsCounted).Sum(r => r.Credits));
     }
 
     /// <summary>
