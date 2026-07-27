@@ -65,7 +65,10 @@ public sealed class GradeService(FatDbContext db) : IGradeService
                 x.Enrollment.GradePoint, x.Enrollment.Status, x.Enrollment.IsCounted, x.Enrollment.AttemptNo)).ToList();
             var counted = items.Where(x => x.Status == EnrollmentStatus.Passed && x.IsCounted && x.FinalScore.HasValue).ToList();
             var credits = counted.Sum(x => x.Credits);
-            var gpa = credits == 0 ? null : AcademicRules.RoundGpa(counted.Sum(x => x.FinalScore!.Value * x.Credits) / credits);
+            decimal? gpa = credits == 0
+                ? null
+                : AcademicRules.RoundGpa(
+                    counted.Sum(x => x.FinalScore!.Value * x.Credits) / credits);
             return new SemesterTranscriptDto(g.Key.SemesterId, g.Key.SemesterCode, g.Key.SemesterName, g.Key.DisplayOrder,
                 g.Key.IsCurrent, items, gpa, credits);
         }).ToList();
