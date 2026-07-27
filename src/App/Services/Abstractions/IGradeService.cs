@@ -12,6 +12,13 @@ public interface IGradeService
 {
     Task<TranscriptDto> GetTranscriptAsync(int studentId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// All course attempts and their assessment slots for the grade list and
+    /// grade-entry screens.
+    /// </summary>
+    Task<IReadOnlyList<GradeCourseDto>> GetStudentGradesAsync(
+        int studentId, CancellationToken cancellationToken = default);
+
     /// <summary>The components and current scores of one course attempt.</summary>
     Task<IReadOnlyList<Grade>> GetGradesAsync(int enrollmentId, CancellationToken cancellationToken = default);
 
@@ -24,6 +31,13 @@ public interface IGradeService
     /// different numbers.
     /// </summary>
     Task UpsertGradeAsync(int enrollmentId, int assessmentId, decimal score, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Deletes one recorded component score and returns the enrollment to an
+    /// unfinished state until every component has a score again.
+    /// </summary>
+    Task DeleteGradeAsync(
+        int enrollmentId, int assessmentId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Recomputes FinalScore, LetterGrade, GradePoint and Status for one attempt.

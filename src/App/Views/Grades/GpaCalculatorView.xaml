@@ -1,0 +1,99 @@
+<UserControl x:Class="App.Views.Grades.GpaCalculatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignHeight="720" d:DesignWidth="1100">
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource SurfaceBrush}">
+        <Grid Margin="28,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <StackPanel>
+                    <TextBlock Text="GPA Calculator" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="GPA thang 10 có trọng số tín chỉ, theo quy tắc hiện hữu của FAT."
+                               Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0" />
+                </StackPanel>
+                <Button Content="Tính lại" Command="{Binding RefreshCommand}"
+                        Style="{StaticResource GhostButtonStyle}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" />
+            </Grid>
+
+            <Border Grid.Row="1" Style="{StaticResource ErrorBannerStyle}"
+                    Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <UniformGrid Grid.Row="2" Columns="5" Margin="0,0,0,16">
+                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,8,0">
+                    <StackPanel>
+                        <TextBlock Text="GPA tích lũy" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding CumulativeGpaDisplay}" FontSize="26"
+                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0">
+                    <StackPanel>
+                        <TextBlock Text="Tín chỉ tính GPA" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding GpaCredits}" FontSize="26"
+                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0">
+                    <StackPanel>
+                        <TextBlock Text="Tín chỉ hoàn thành" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding EarnedCredits}" FontSize="26"
+                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0">
+                    <StackPanel>
+                        <TextBlock Text="Đang học" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding InProgressCredits}" FontSize="26"
+                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Tín chỉ chưa đạt" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="{Binding FailedCredits}" FontSize="26"
+                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}">
+                <Grid>
+                    <DataGrid ItemsSource="{Binding Semesters}"
+                              Style="{StaticResource CatalogDataGridStyle}"
+                              ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                              CellStyle="{StaticResource CatalogCellStyle}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Học kỳ" Binding="{Binding SemesterCode}" Width="*" />
+                            <DataGridTextColumn Header="GPA"
+                                                Binding="{Binding Gpa, StringFormat={}{0:0.00}, TargetNullValue=-}"
+                                                Width="160" />
+                            <DataGridTextColumn Header="Tín chỉ tính GPA" Binding="{Binding GpaCredits}" Width="170" />
+                            <DataGridTextColumn Header="Tín chỉ hoàn thành" Binding="{Binding EarnedCredits}" Width="180" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Text="Chưa có môn hoàn thành để tính GPA."
+                               Style="{StaticResource PageSubtitleStyle}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" />
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

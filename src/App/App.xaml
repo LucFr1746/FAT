@@ -79,6 +79,23 @@
             <DataTemplate DataType="{x:Type vmStu:GpaPredictionViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
                 <vStu:GpaPredictionView/>
             </DataTemplate>
+
+            <!-- Grade, GPA, transcript and statistics -->
+            <DataTemplate DataType="{x:Type vmGrade:GradeListViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GradeListView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:GradeEntryViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GradeEntryView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:GpaCalculatorViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:GpaCalculatorView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:TranscriptViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:TranscriptView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vmGrade:StatisticsViewModel}" xmlns:vmGrade="clr-namespace:App.ViewModels.Grades" xmlns:vGrade="clr-namespace:App.Views.Grades">
+                <vGrade:StatisticsView/>
+            </DataTemplate>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

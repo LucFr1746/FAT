@@ -1,6 +1,7 @@
 using App.Navigation;
 using App.ViewModels.Auth;
 using App.ViewModels.Catalog;
+using App.ViewModels.Grades;
 using App.ViewModels.Materials;
 using App.ViewModels.Student;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -53,6 +54,9 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     private bool _isCatalogMenuOpen;
 
     [ObservableProperty]
+    private bool _isGradeMenuOpen;
+
+    [ObservableProperty]
     private string _currentSemesterLabel = "Đang tải...";
 
     [ObservableProperty]
@@ -100,6 +104,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     {
         IsProfileMenuOpen = !IsProfileMenuOpen;
         IsCatalogMenuOpen = false;
+        IsGradeMenuOpen = false;
     }
 
     [RelayCommand]
@@ -107,6 +112,15 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     {
         IsCatalogMenuOpen = !IsCatalogMenuOpen;
         IsProfileMenuOpen = false;
+        IsGradeMenuOpen = false;
+    }
+
+    [RelayCommand]
+    private void ToggleGradeMenu()
+    {
+        IsGradeMenuOpen = !IsGradeMenuOpen;
+        IsProfileMenuOpen = false;
+        IsCatalogMenuOpen = false;
     }
 
     [RelayCommand]
@@ -115,6 +129,7 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
         ActiveTab = tabName;
         IsProfileMenuOpen = false; // Close profile menu dropdown on tab switch
         IsCatalogMenuOpen = false; // Close catalog dropdown on tab switch
+        IsGradeMenuOpen = false;
 
         try
         {
@@ -212,6 +227,51 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     }
 
                     await ShowTabAsync<GpaPredictionViewModel>();
+                    break;
+
+                case "ViewGrades":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GradeListViewModel>();
+                    break;
+
+                case "ManageGrades":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GradeEntryViewModel>();
+                    break;
+
+                case "GpaCalculator":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<GpaCalculatorViewModel>();
+                    break;
+
+                case "Transcript":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<TranscriptViewModel>();
+                    break;
+
+                case "Statistics":
+                    if (!IsStudent)
+                    {
+                        break;
+                    }
+
+                    await ShowTabAsync<StatisticsViewModel>();
                     break;
 
                 case "Home":
