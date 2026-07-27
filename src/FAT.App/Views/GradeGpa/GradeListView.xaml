@@ -1,9 +1,0 @@
-<UserControl x:Class="FAT.App.Views.GradeGpa.GradeListView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F7F8FC">
- <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
-  <TextBlock Text="My Grades" FontSize="28" FontWeight="SemiBold" Foreground="#2D2859"/><TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="#C62828" Margin="0,8"/>
-  <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto"><ItemsControl ItemsSource="{Binding Semesters}"><ItemsControl.ItemTemplate><DataTemplate>
-   <Border Background="White" CornerRadius="10" Padding="16" Margin="0,8"><StackPanel><DockPanel><TextBlock Text="{Binding SemesterName}" FontSize="18" FontWeight="SemiBold"/><TextBlock DockPanel.Dock="Right" Text="{Binding SemesterGpa, StringFormat='GPA {0:N2}'}"/></DockPanel>
-    <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True" Margin="0,10,0,0"><DataGrid.Columns><DataGridTextColumn Header="Course" Binding="{Binding CourseCode}"/><DataGridTextColumn Header="Course name" Binding="{Binding CourseName}" Width="*"/><DataGridTextColumn Header="Credits" Binding="{Binding Credits}"/><DataGridTextColumn Header="Final" Binding="{Binding FinalScore, StringFormat=N1}"/><DataGridTextColumn Header="Letter" Binding="{Binding LetterGrade}"/><DataGridTextColumn Header="Status" Binding="{Binding Status}"/><DataGridTextColumn Header="Attempt" Binding="{Binding AttemptNo}"/></DataGrid.Columns></DataGrid>
-   </StackPanel></Border></DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
- </Grid>
-</UserControl>
