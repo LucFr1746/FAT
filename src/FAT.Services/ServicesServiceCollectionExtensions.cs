@@ -22,6 +22,9 @@ public static class ServicesServiceCollectionExtensions
         // it as a singleton would pin one DbContext open for the lifetime of the
         // application - leaking memory and serving stale cached data.
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IGpaService, GpaService>();
+        services.AddScoped<IGradeService, GradeService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
 
         return services;
     }
