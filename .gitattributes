@@ -30,3 +30,4 @@
 # GitHub language statistics
 *.sql linguist-detectable=true
 docs/* linguist-documentation=true
+db/data/** linguist-generated=true
