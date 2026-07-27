@@ -32,6 +32,15 @@
     <PackageVersion Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.5" />
   </ItemGroup>
 
+  <ItemGroup Label="Data import">
+    <!--
+      Reads the FLM curriculum workbook (db/data/flm_chuong_trinh_hoc.xlsx).
+      ClosedXML is MIT-licensed. EPPlus was the obvious alternative but moved to
+      a commercial licence at 5.0, which this project cannot use.
+    -->
+    <PackageVersion Include="ClosedXML" Version="0.104.2" />
+  </ItemGroup>
+
   <ItemGroup Label="Security">
     <!-- Password hashing. Never hand-roll cryptography. -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.2.0" />

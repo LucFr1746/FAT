@@ -1,4 +1,4 @@
-# FAT — FPT Academic Tracker
+# Academic Tracker
 
 A WPF desktop application for tracking academic progress: grades, GPA, credits,
 prerequisites, curriculum progress and learning materials.
@@ -22,7 +22,7 @@ git clone https://github.com/LucFr1746/FAT.git
 cd FAT
 ```
 
-Build the database — this **drops and recreates** the `FAT` database:
+Build the database — this **drops and recreates** the `FAT_DB` database:
 
 ```bash
 .\db\setup-db.ps1
@@ -34,14 +34,14 @@ If your SQL Server is not the default instance on `localhost`:
 .\db\setup-db.ps1 -Server ".\SQLEXPRESS"
 ```
 
-…then copy `src/FAT.App/appsettings.Local.json.example` to
+…then copy `src/App/appsettings.Local.json.example` to
 `appsettings.Local.json` and adjust the connection string. That file is
 git-ignored, so everyone keeps their own settings.
 
 Run it:
 
 ```bash
-dotnet run --project src/FAT.App
+dotnet run --project src/App
 ```
 
 ### Demo accounts
@@ -58,24 +58,26 @@ dotnet run --project src/FAT.App
 ## Project layout
 
 ```
-FAT.sln
+Project.sln
 ├── db/                      SQL scripts - THE source of truth for the schema
 ├── docs/TEAM.md             Team assignments, branches, Git workflow
-└── src/
-    ├── FAT.Domain/          Entities, enums, academic rules (no dependencies)
-    ├── FAT.Data/            EF Core: FatDbContext, repositories
-    ├── FAT.Services/        Business logic (no WPF reference, so it is testable)
-    ├── FAT.App/             WPF presentation layer
-    └── FAT.Tests/           xUnit tests
+└── src/App/
+    ├── App.csproj           Single unified project file
+    ├── App.xaml / App.xaml.cs
+    ├── MainWindow.xaml
+    ├── Domain/              Entities, enums, academic rules
+    ├── Data/                EF Core: FAT_DBContext, repositories
+    ├── Services/            Business logic, Dtos, imports
+    └── Tests/               xUnit tests
 ```
 
 ## Common commands
 
 ```bash
-dotnet build FAT.sln          # build
-dotnet test FAT.sln           # run tests
-dotnet format FAT.sln         # apply formatting (CI blocks PRs that skip this)
-.\db\setup-db.ps1             # rebuild the database from scratch
+dotnet build Project.sln       # build
+dotnet test Project.sln        # run tests
+dotnet format Project.sln      # apply formatting (CI blocks PRs that skip this)
+.\db\setup-db.ps1              # rebuild the database from scratch
 ```
 
 ---
@@ -83,7 +85,7 @@ dotnet format FAT.sln         # apply formatting (CI blocks PRs that skip this)
 ## Notes for contributors
 
 **This project does not use EF Core Migrations.** The scripts under `db/` are the
-source of truth for the schema, and the entities in `FAT.Domain/Entities` are written
+source of truth for the schema, and the entities in `Domain/Entities` are written
 to match them. With five people working in parallel, generated migrations break the
 snapshot chain and cost more time than they save. After changing `db/01_schema.sql`,
 update the matching entity and tell the team to re-run `setup-db.ps1`.

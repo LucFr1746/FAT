@@ -1,0 +1,402 @@
+<UserControl x:Class="App.Views.Student.MyCurriculumView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:conv="clr-namespace:App.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="760" d:DesignWidth="1200">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <!-- Optional text fields hide their whole row when empty; the boolean
+             converter would leave them permanently visible. -->
+        <conv:StringToVisibilityConverter x:Key="StringToVis" />
+    </UserControl.Resources>
+
+    <Grid Background="{StaticResource SurfaceBrush}">
+        <Grid Margin="28,24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,18">
+                <StackPanel>
+                    <TextBlock Text="Chương Trình Học Của Tôi" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0"
+                               Text="Chọn ngành và kỳ học hiện tại để xem các môn bạn có thể học, kèm số tín chỉ, cấu trúc điểm, tài liệu, lịch kiểm tra và môn tiên quyết." />
+                </StackPanel>
+                <Button Content="+ Đăng ký học lại" Command="{Binding OpenRetakeDialogCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="180" />
+            </Grid>
+
+            <!-- Major + term pickers & Search -->
+            <Border Grid.Row="1" Style="{StaticResource CardBorderStyle}" Padding="16" Margin="0,0,0,14">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300" />
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Ngành đào tạo" Style="{StaticResource FieldLabelStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding Majors}"
+                                          SelectedItem="{Binding SelectedMajor}" DisplayMemberPath="MajorName"
+                                          Style="{StaticResource CatalogComboBoxStyle}" />
+                                <Button Grid.Column="1" Content="Chọn" Command="{Binding ChangeMajorCommand}"
+                                        Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                            <TextBlock Text="Kỳ hiện tại" Style="{StaticResource FieldLabelStyle}" />
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox Grid.Column="0" ItemsSource="{Binding TermNumbers}"
+                                          SelectedItem="{Binding SelectedTermNo}"
+                                          Style="{StaticResource CatalogComboBoxStyle}" />
+                                <Button Grid.Column="1" Content="Xem" Command="{Binding ChangeTermCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}" Margin="8,0,0,0" />
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Search input -->
+                        <StackPanel Grid.Column="2" Margin="20,0,0,0">
+                            <TextBlock Text="Tìm kiếm môn học" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding SearchKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource CatalogSearchBoxStyle}" Height="38" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Curriculum Progress Component -->
+                    <Border Grid.Row="1" Background="#FAF8F5" CornerRadius="12" Padding="14,10" Margin="0,14,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="📊 Tiến độ toàn khóa:" FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" FontSize="13" />
+                                <TextBlock Text="{Binding ProgressText}" Margin="8,0,0,0" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
+                            </StackPanel>
+
+                            <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" 
+                                         Height="10" Margin="16,0" Foreground="{StaticResource PrimaryBrush}" Background="#E5DDCB"/>
+
+                            <TextBlock Grid.Column="2" Text="{Binding ProgressPercentage, StringFormat='{}{0:0.#}%'}" 
+                                       FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" FontSize="14" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Banners -->
+            <StackPanel Grid.Row="2">
+                <Border Style="{StaticResource StatusBannerStyle}"
+                        Visibility="{Binding HasStatusMessage, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource TextBrush}"
+                               FontWeight="Bold" TextWrapping="Wrap" />
+                </Border>
+                <Border Style="{StaticResource ErrorBannerStyle}"
+                        Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                               FontWeight="Bold" TextWrapping="Wrap" />
+                </Border>
+                <!-- Hidden subjects are counted and named. The rule is to remove a
+                     locked subject from the list, and a silently shorter list
+                     would otherwise look like missing data. -->
+                <Border Style="{StaticResource InfoBannerStyle}"
+                        Visibility="{Binding HasHiddenSubjects, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding HiddenSubjectsMessage}" Foreground="{StaticResource TextBrush}"
+                               FontWeight="Bold" TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+
+            <!-- Subject cards -->
+            <Grid Grid.Row="3">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding FilteredSubjects}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource CardBorderStyle}" Width="340" Margin="0,0,16,16"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="ExtraBold" FontSize="15"
+                                                   Foreground="{StaticResource TextBrush}" TextWrapping="Wrap">
+                                            <Run Text="{Binding CourseCode, Mode=OneWay}" />
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding CourseName}" Style="{StaticResource PageSubtitleStyle}"
+                                                   Margin="0,4,0,10" />
+
+                                        <WrapPanel>
+                                            <Border Style="{StaticResource ChipBorderStyle}">
+                                                <TextBlock Style="{StaticResource ChipTextStyle}">
+                                                    <Run Text="{Binding Credits, Mode=OneWay}" />
+                                                    <Run Text="tín chỉ" />
+                                                </TextBlock>
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}">
+                                                <TextBlock Style="{StaticResource ChipTextStyle}">
+                                                    <Run Text="GPA:" />
+                                                    <Run Text="{Binding GpaDisplay, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}">
+                                                <TextBlock Style="{StaticResource ChipTextStyle}">
+                                                    <Run Text="{Binding AssessmentCount, Mode=OneWay}" />
+                                                    <Run Text="cột điểm" />
+                                                </TextBlock>
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}">
+                                                <TextBlock Style="{StaticResource ChipTextStyle}">
+                                                    <Run Text="{Binding MaterialCount, Mode=OneWay}" />
+                                                    <Run Text="tài liệu" />
+                                                </TextBlock>
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsPassed, Converter={StaticResource BoolToVis}}"
+                                                    Background="{StaticResource SuccessBackgroundBrush}">
+                                                <TextBlock Text="✓ Đã qua môn" FontSize="11" FontWeight="Bold"
+                                                           Foreground="{StaticResource PrimaryBrush}" />
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsFailed, Converter={StaticResource BoolToVis}}"
+                                                    Background="{StaticResource ErrorBackgroundBrush}">
+                                                <TextBlock Text="✕ Trượt môn" FontSize="11" FontWeight="Bold"
+                                                           Foreground="{StaticResource DangerBrush}" />
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsStudying, Converter={StaticResource BoolToVis}}"
+                                                    Background="{StaticResource InfoBackgroundBrush}">
+                                                <TextBlock Text="● Đang học" FontSize="11" FontWeight="Bold"
+                                                           Foreground="{StaticResource TextBrush}" />
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsUncompleted, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="○ Chưa học" FontSize="11" FontWeight="Bold"
+                                                           Foreground="#8C7E72" />
+                                            </Border>
+                                            <Border Style="{StaticResource ChipBorderStyle}"
+                                                    Visibility="{Binding IsRetake, Converter={StaticResource BoolToVis}}"
+                                                    Background="{StaticResource InfoBackgroundBrush}">
+                                                <TextBlock Style="{StaticResource ChipTextStyle}">
+                                                    <Run Text="Lần học thứ" />
+                                                    <Run Text="{Binding MyAttemptCount, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </Border>
+                                        </WrapPanel>
+
+                                        <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,8,0,0"
+                                                   Visibility="{Binding PrerequisiteText, Converter={StaticResource StringToVis}}">
+                                            <Run Text="Tiên quyết:" FontWeight="Bold" />
+                                            <Run Text="{Binding PrerequisiteText, Mode=OneWay}" />
+                                        </TextBlock>
+
+                                        <Button Content="Xem chi tiết"
+                                                Command="{Binding DataContext.OpenSubjectDetailCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                HorizontalAlignment="Left" Margin="0,14,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <Border Background="{StaticResource CardBrush}"
+                        Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="📖" FontSize="42" HorizontalAlignment="Center" />
+                        <TextBlock Text="Kỳ này chưa có môn học nào" Style="{StaticResource SectionTitleStyle}"
+                                   Margin="0,10,0,4" HorizontalAlignment="Center" />
+                        <TextBlock Text="Hãy chọn ngành và kỳ học khác, hoặc liên hệ quản trị viên."
+                                   Style="{StaticResource PageSubtitleStyle}" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ===================== Subject detail ===================== -->
+        <Border Style="{StaticResource ModalOverlayStyle}"
+                Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource ModalPanelStyle}" MaxWidth="880" MinWidth="760" MaxHeight="700">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Margin="0">
+                            <Run Text="{Binding SubjectDetail.Subject.CourseCode, Mode=OneWay}" />
+                            <Run Text=" - " />
+                            <Run Text="{Binding SubjectDetail.Subject.CourseName, Mode=OneWay}" />
+                        </TextBlock>
+                        <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,10">
+                            <Run Text="{Binding SubjectDetail.Subject.Credits, Mode=OneWay}" />
+                            <Run Text="tín chỉ · Tính GPA:" />
+                            <Run Text="{Binding SubjectDetail.Subject.GpaDisplay, Mode=OneWay}" />
+                            <Run Text=" · Ngành: " />
+                            <Run Text="{Binding SelectedMajor.MajorCode, Mode=OneWay}" />
+                            <Run Text=" · Kỳ " />
+                            <Run Text="{Binding SelectedTermNo, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="Cấu trúc điểm" Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,6,0,6" />
+                            <DataGrid ItemsSource="{Binding SubjectDetail.GradeStructure}"
+                                      Style="{StaticResource CatalogDataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                                      CellStyle="{StaticResource CatalogCellStyle}"
+                                      MaxHeight="180">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Cột điểm" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTextColumn Header="Trọng số (%)" Binding="{Binding WeightPercent}"
+                                                        Width="120" />
+                                    <DataGridTextColumn Header="Điểm tối thiểu" Binding="{Binding MinScoreToPass}"
+                                                        Width="130" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="Tài liệu học tập" Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,16,0,6" />
+                            <ItemsControl ItemsSource="{Binding SubjectDetail.Materials}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource SurfaceBrush}" CornerRadius="10"
+                                                Padding="12" Margin="0,0,0,8">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding Title}" FontWeight="Bold"
+                                                               Foreground="{StaticResource TextBrush}"
+                                                               TextWrapping="Wrap" />
+                                                    <TextBlock Text="{Binding Description}"
+                                                               Style="{StaticResource PageSubtitleStyle}"
+                                                               Margin="0,3,0,0" />
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="Mở liên kết"
+                                                        Command="{Binding DataContext.OpenMaterialUrlCommand,
+                                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource SmallActionButtonStyle}"
+                                                        Visibility="{Binding HasUrl, Converter={StaticResource BoolToVis}}" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="Lịch kiểm tra dự kiến" Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,16,0,6" />
+                            <DataGrid ItemsSource="{Binding SubjectDetail.Schedule}"
+                                      Style="{StaticResource CatalogDataGridStyle}"
+                                      ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                                      CellStyle="{StaticResource CatalogCellStyle}"
+                                      MaxHeight="200">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Tuần" Binding="{Binding WeekNo}" Width="70" />
+                                    <DataGridTextColumn Header="Buổi" Binding="{Binding SessionNo}" Width="70" />
+                                    <DataGridTextColumn Header="Nội dung" Binding="{Binding Title}" Width="*" />
+                                    <DataGridTextColumn Header="Ngày dự kiến" Width="130"
+                                                        Binding="{Binding ExpectedDate, StringFormat=dd/MM/yyyy}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="Mô tả môn học" Style="{StaticResource SectionTitleStyle}"
+                                       Margin="0,16,0,6" />
+                            <TextBlock Text="{Binding SubjectDetail.Subject.Description}"
+                                       Style="{StaticResource PageSubtitleStyle}" />
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <Button Grid.Row="2" Content="Đóng" Command="{Binding CloseSubjectDetailCommand}"
+                            Style="{StaticResource GhostButtonStyle}" HorizontalAlignment="Right"
+                            Margin="0,16,0,0" />
+                </Grid>
+            </Border>
+        </Border>
+
+        <!-- ===================== Retake dialog ===================== -->
+        <Border Style="{StaticResource ModalOverlayStyle}"
+                Visibility="{Binding IsRetakeDialogOpen, Converter={StaticResource BoolToVis}}">
+            <Border Style="{StaticResource ModalPanelStyle}">
+                <StackPanel>
+                    <TextBlock Text="Đăng ký học lại" Style="{StaticResource SectionTitleStyle}" />
+                    <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,0,0,12"
+                               Text="Học lại không tạo môn học mới - chỉ tạo một lượt đăng ký mới. Các lần học trước sẽ không còn được tính vào GPA. Bạn có thể học lại nhiều môn khác nhau trong cùng một học kỳ." />
+
+                    <TextBlock Text="Môn cần học lại" Style="{StaticResource FieldLabelStyle}" />
+                    <ComboBox ItemsSource="{Binding RetakeCandidates}"
+                              SelectedItem="{Binding SelectedRetakeCandidate}"
+                              Style="{StaticResource CatalogComboBoxStyle}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock>
+                                    <Run Text="{Binding CourseCode, Mode=OneWay}" FontWeight="Bold" />
+                                    <Run Text=" - " />
+                                    <Run Text="{Binding CourseName, Mode=OneWay}" />
+                                    <Run Text=" (điểm gần nhất: " />
+                                    <Run Text="{Binding LastScore, Mode=OneWay}" />
+                                    <Run Text=")" />
+                                </TextBlock>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBlock Text="Học kỳ đăng ký" Style="{StaticResource FieldLabelStyle}" Margin="0,14,0,4" />
+                    <ComboBox ItemsSource="{Binding Semesters}" SelectedItem="{Binding SelectedRetakeSemester}"
+                              DisplayMemberPath="SemesterName" Style="{StaticResource CatalogComboBoxStyle}" />
+
+                    <Border Style="{StaticResource ErrorBannerStyle}" Margin="0,14,0,0"
+                            Visibility="{Binding HasRetakeError, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding RetakeErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                                   FontWeight="Bold" TextWrapping="Wrap" />
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                        <Button Content="Hủy" Command="{Binding CloseRetakeDialogCommand}"
+                                Style="{StaticResource GhostButtonStyle}" />
+                        <Button Content="Đăng ký học lại" Command="{Binding ConfirmRetakeCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}" Margin="10,0,0,0" MinWidth="150" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
+    </Grid>
+</UserControl>

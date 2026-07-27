@@ -31,9 +31,9 @@
 
 ## Checklist before opening the PR
 
-- [ ] `dotnet build FAT.sln` succeeds with no errors
-- [ ] `dotnet test FAT.sln` is green
-- [ ] `dotnet format FAT.sln` has been run (CI blocks the PR otherwise)
+- [ ] `dotnet build Project.sln` succeeds with no errors
+- [ ] `dotnet test Project.sln` is green
+- [ ] `dotnet format Project.sln` has been run (CI blocks the PR otherwise)
 - [ ] `git pull --rebase origin master` done and all conflicts resolved
 - [ ] No `appsettings.Local.json`, `bin/`, `obj/` or `publish/` committed
 - [ ] No passwords or personal connection strings in the code
@@ -43,7 +43,7 @@
 <!-- Skip this section if you only changed files inside your own module -->
 
 - [ ] Changed `db/*.sql` → the team has been told to re-run `.\db\setup-db.ps1`
-- [ ] Changed an interface in `FAT.Services/Abstractions/` → whoever depends on it has been told
+- [ ] Changed an interface in `Services/Abstractions/` → whoever depends on it has been told
 - [ ] Added a package → the version is in `Directory.Packages.props`, not in the `.csproj`
 
 ## Screenshots

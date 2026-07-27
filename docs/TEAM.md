@@ -1,4 +1,4 @@
-# Team assignments & workflow — FAT (FPT Academic Tracker)
+# Team assignments & workflow — Academic Tracker
 
 ## 1. Process roles
 
@@ -13,8 +13,8 @@ These are roles about *how we work*, independent of which module each person wri
 | **@LucFr1746** | Code review | Reviews for clean code; makes sure every member understands the module they wrote |
 
 > `.github/CODEOWNERS` assigns **@LucFr1746** to every PR automatically, and adds
-> **@Nlonggg** on shared files (`db/`, `Directory.Packages.props`, `Abstractions/`,
-> `FatDbContext.cs`) — the places where one bad change breaks the build for all five people.
+> **@Nlonggg** on shared files (`db/`, `Directory.Packages.props`, `Services/Abstractions/`,
+> `FAT_DBContext.cs`) — the places where one bad change breaks the build for all five people.
 
 ---
 
@@ -133,7 +133,7 @@ master                    <- only @Nlonggg merges into this
 git checkout feature/m4-grade-gpa
 git pull --rebase origin master     # REQUIRED every morning and before every PR
 # ... write code ...
-dotnet format FAT.sln               # otherwise CI blocks the PR
+dotnet format Project.sln           # otherwise CI blocks the PR
 git add -A
 git commit -m "feat: add grade entry screen"
 git push
@@ -167,16 +167,16 @@ to keep them apart:
 
 | Area | How it is avoided |
 |---|---|
-| DI registration | Each module gets its own `FAT.App/Startup/<Module>Registration.cs`. **Do not edit `App.xaml.cs`.** |
+| DI registration | Each module gets its own `App/Startup/<Module>Registration.cs`. **Do not edit `App.xaml.cs`.** |
 | Sidebar menu | Built from the `NavigationItem` entries each module registers. **Do not edit `MainWindow.xaml`.** |
 | Views / ViewModels | Each person owns their own `Views/<Module>/` and `ViewModels/<Module>/` folder |
 
 ### FROZEN areas — tell the team before changing these
 
 - `db/*.sql` — after changing, everyone must re-run `.\db\setup-db.ps1`
-- `src/FAT.Domain/Entities/` — entities must always match the SQL schema
-- `src/FAT.Services/Abstractions/` — changing an interface breaks other people's code
-- `src/FAT.Data/FatDbContext.cs`
+- `src/Domain/Entities/` — entities must always match the SQL schema
+- `src/Services/Abstractions/` — changing an interface breaks other people's code
+- `src/Data/FAT_DBContext.cs`
 - `Directory.Packages.props` — add package versions here, **never** in a `.csproj`
 
 ---
