@@ -73,4 +73,19 @@
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!--
+    Creates FAT_DB if it does not exist yet, so a fresh clone has a working
+    database without anyone running a command by hand. Never drops or
+    reseeds an existing database - see db/ensure-db.ps1.
+
+    ContinueOnError="WarnAndContinue" because a machine with no local SQL
+    Server (CI, a teammate only touching non-DB code) must still be able to
+    build; ensure-db.ps1 itself already exits 0 on every failure path, this
+    is just a second safety net.
+  -->
+  <Target Name="EnsureLocalDatabase" BeforeTargets="Build" Condition="'$(OS)' == 'Windows_NT'">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\db\ensure-db.ps1&quot;"
+          ContinueOnError="WarnAndContinue" />
+  </Target>
+
 </Project>

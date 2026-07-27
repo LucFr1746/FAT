@@ -133,7 +133,7 @@ public partial class App : Application
                 // yet. Idempotent and never destructive - see SchemaUpgrader.
                 db.EnsureDatabaseSchemaUpToDate();
 
-                // Automatically seeds curriculum data from db/data/csv if DB is unseeded
+                // Automatically seeds curriculum data from db/data/json if DB is unseeded
                 await DataSeeder.SeedCurriculumIfEmptyAsync(db);
 
                 return true;

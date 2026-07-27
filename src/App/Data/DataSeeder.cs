@@ -10,8 +10,8 @@ using Services.Import;
 namespace Data;
 
 /// <summary>
-/// Seeds the application database from CSV files under db/data/csv on startup
-/// whenever the Curriculum table is empty.
+/// Seeds the application database from the JSON files under db/data/json on
+/// startup whenever the Curriculum table is empty.
 /// </summary>
 public static class DataSeeder
 {
@@ -28,31 +28,31 @@ public static class DataSeeder
             return;
         }
 
-        var csvFolderPath = FindCsvFolderPath();
-        if (string.IsNullOrEmpty(csvFolderPath))
+        var jsonFolderPath = FindJsonFolderPath();
+        if (string.IsNullOrEmpty(jsonFolderPath))
         {
             return;
         }
 
         var systemAdminContext = new SystemAdminUserContext();
         var importService = new FlmImportService(db, systemAdminContext);
-        await importService.ImportAsync(csvFolderPath, ImportOptions.Default, cancellationToken);
+        await importService.ImportAsync(jsonFolderPath, ImportOptions.Default, cancellationToken);
     }
 
-    private static string? FindCsvFolderPath()
+    private static string? FindJsonFolderPath()
     {
         var candidates = new[]
         {
-            Path.Combine(AppContext.BaseDirectory, "db", "data", "csv"),
-            Path.Combine(Directory.GetCurrentDirectory(), "db", "data", "csv"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "db", "data", "csv"),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "db", "data", "csv")
+            Path.Combine(AppContext.BaseDirectory, "db", "data", "json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "db", "data", "json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "db", "data", "json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "db", "data", "json")
         };
 
         foreach (var candidate in candidates)
         {
             var fullPath = Path.GetFullPath(candidate);
-            if (Directory.Exists(fullPath) && File.Exists(Path.Combine(fullPath, "subjects.csv")))
+            if (Directory.Exists(fullPath) && File.Exists(Path.Combine(fullPath, "subjects.json")))
             {
                 return fullPath;
             }
