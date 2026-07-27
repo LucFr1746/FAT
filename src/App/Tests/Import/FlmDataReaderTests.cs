@@ -14,10 +14,14 @@ namespace Tests.Import;
 /// </summary>
 public class FlmDataReaderTests
 {
-    /// <summary>The six programmes in the FLM export.</summary>
-    private const int ExpectedMajorCount = 6;
+    /// <summary>
+    /// The three real programmes (SE, AI, IB). The FLM export lists one code per
+    /// cohort (BIT_SE_K19..., BIT_SE_K20...), which the reader collapses to the
+    /// major they share - so six curriculum codes become three programmes.
+    /// </summary>
+    private const int ExpectedMajorCount = 3;
 
-    /// <summary>Distinct subject codes across all six programmes.</summary>
+    /// <summary>Distinct subject codes across all three programmes.</summary>
     private const int ExpectedSubjectCount = 135;
 
     [SkippableFact]

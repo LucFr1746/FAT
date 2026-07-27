@@ -63,6 +63,11 @@ public sealed class XlsxFlmDataReader : IFlmDataReader
         var curricula = new List<FlmCurriculumRow>();
         var subjects = new List<FlmSubjectRow>();
 
+        // Several cohort sheets (BIT_SE_K19..., BIT_SE_K20...) collapse to the
+        // same major, so the programme is only listed once even though its
+        // subjects are read from every sheet.
+        var seenMajors = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
         foreach (var sheet in workbook.Worksheets)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -72,8 +77,12 @@ public sealed class XlsxFlmDataReader : IFlmDataReader
                 continue;
             }
 
-            var majorCode = sheet.Name.Trim();
-            curricula.Add(new FlmCurriculumRow(majorCode, null));
+            var (majorCode, majorName) = FlmValueParser.MajorFromCurriculum(sheet.Name.Trim());
+            if (seenMajors.Add(majorCode))
+            {
+                curricula.Add(new FlmCurriculumRow(majorCode, majorName));
+            }
+
             subjects.AddRange(ReadCurriculumSheet(sheet, majorCode));
         }
 
@@ -141,14 +150,16 @@ public sealed class XlsxFlmDataReader : IFlmDataReader
 
         foreach (var row in sheet.RowsUsed().Where(r => r.RowNumber() >= FlatSheetFirstDataRow))
         {
-            var majorCode = FlmValueParser.Clean(Cell(row, 1));
+            var rawCurriculum = FlmValueParser.Clean(Cell(row, 1));
             var subjectCode = FlmValueParser.Clean(Cell(row, 5));
             var termNo = FlmValueParser.ParseIntOrNull(Cell(row, 3));
 
-            if (majorCode is null || subjectCode is null || termNo is null)
+            if (rawCurriculum is null || subjectCode is null || termNo is null)
             {
                 continue;
             }
+
+            var majorCode = FlmValueParser.MajorFromCurriculum(rawCurriculum).Code;
 
             var name = FlmValueParser.Clean(Cell(row, 7)) ?? FlmValueParser.Clean(Cell(row, 6)) ?? subjectCode;
 

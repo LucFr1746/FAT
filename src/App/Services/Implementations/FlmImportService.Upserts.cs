@@ -279,6 +279,13 @@ public sealed partial class FlmImportService
         // which is the order the programme sheet was authored in.
         var orderPerTerm = new Dictionary<(int MajorId, int TermNo), int>();
 
+        // The same subject can appear in several cohorts of one programme (e.g.
+        // BIT_SE_K19 and BIT_SE_K20) that DISAGREE on the term. Once cohort codes
+        // collapse to a single major, only one term can survive, so the FIRST
+        // listing (the older cohort) wins and later duplicates are ignored - which
+        // keeps the term stable instead of last-write-wins.
+        var handledThisRun = new HashSet<(int MajorId, int CourseId)>();
+
         foreach (var row in data.Subjects)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -291,6 +298,12 @@ public sealed partial class FlmImportService
 
             if (!majorsByCode.TryGetValue(row.MajorCode, out var majorId) ||
                 !coursesByCode.TryGetValue(row.SubjectCode, out var courseId))
+            {
+                session.CurriculumLinks.CountSkipped();
+                continue;
+            }
+
+            if (!handledThisRun.Add((majorId, courseId)))
             {
                 session.CurriculumLinks.CountSkipped();
                 continue;

@@ -416,7 +416,8 @@ public class FlmImportServiceTests
         var first = await service.ImportAsync(RepositoryPaths.FlmWorkbook!);
 
         first.IsSuccess.Should().BeTrue();
-        (await db.Majors.CountAsync()).Should().Be(6);
+        // Six cohort codes collapse to the three real programmes (SE, AI, IB).
+        (await db.Majors.CountAsync()).Should().Be(3);
         (await db.Courses.CountAsync()).Should().BeGreaterThanOrEqualTo(135);
         (await db.Assessments.CountAsync()).Should().BeGreaterThan(0);
 

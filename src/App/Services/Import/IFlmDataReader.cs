@@ -33,6 +33,45 @@ public interface IFlmDataReader
 public static class FlmValueParser
 {
     /// <summary>
+    /// The three real programmes. Every FLM curriculum code resolves to one of
+    /// these; the K19/K20 cohort suffix is not a separate major.
+    /// </summary>
+    private static readonly Dictionary<string, (string Code, string Name)> KnownMajors =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["SE"] = ("SE", "Software Engineering"),
+            ["AI"] = ("AI", "Artificial Intelligence"),
+            ["IB"] = ("IB", "International Business"),
+        };
+
+    /// <summary>
+    /// Collapses an FLM curriculum/combo code such as "BIT_SE_K19D_K20A",
+    /// "BBA_IB_K19D20A" or a sheet name to the canonical major it belongs to
+    /// (SE / AI / IB).
+    ///
+    /// WHY: without this every cohort code becomes its own "major", so the
+    /// programme list balloons from three to one-per-cohort. The major token is
+    /// found by scanning the code's segments for a known programme code.
+    /// </summary>
+    public static (string Code, string Name) MajorFromCurriculum(string? curriculumCode)
+    {
+        if (!string.IsNullOrWhiteSpace(curriculumCode))
+        {
+            foreach (var token in curriculumCode.Split(
+                         new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (KnownMajors.TryGetValue(token, out var major))
+                {
+                    return major;
+                }
+            }
+        }
+
+        // Unknown format: keep the original code so nothing is silently dropped.
+        return (curriculumCode ?? string.Empty, curriculumCode ?? string.Empty);
+    }
+
+    /// <summary>
     /// Reads FLM's "Tính GPA" column. Anything that is not an explicit "Không"
     /// counts toward the GPA, because that is the normal case and a blank cell
     /// means "nothing special about this subject".

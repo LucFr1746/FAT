@@ -94,8 +94,9 @@ public sealed class JsonFlmDataReader : IFlmDataReader
         return rows
             .Select(r => FlmValueParser.Clean(Get(r, "curriculum")))
             .Where(code => code is not null)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(code => new FlmCurriculumRow(code!, null))
+            .Select(code => FlmValueParser.MajorFromCurriculum(code))
+            .GroupBy(major => major.Code, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new FlmCurriculumRow(g.Key, g.First().Name))
             .ToList();
     }
 
@@ -105,11 +106,11 @@ public sealed class JsonFlmDataReader : IFlmDataReader
     {
         foreach (var row in rows)
         {
-            var majorCode = FlmValueParser.Clean(Get(row, "curriculum"));
+            var rawCurriculum = FlmValueParser.Clean(Get(row, "curriculum"));
             var subjectCode = FlmValueParser.Clean(Get(row, "subjectCode"));
 
-            if (majorCode is null || subjectCode is null ||
-                majorCode.Equals(ComboPlaceholder, StringComparison.OrdinalIgnoreCase))
+            if (rawCurriculum is null || subjectCode is null ||
+                rawCurriculum.Equals(ComboPlaceholder, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -122,6 +123,7 @@ public sealed class JsonFlmDataReader : IFlmDataReader
                 continue;
             }
 
+            var majorCode = FlmValueParser.MajorFromCurriculum(rawCurriculum).Code;
             yield return ToSubjectRow(row, majorCode, subjectCode, termNo.Value);
         }
     }
@@ -159,14 +161,16 @@ public sealed class JsonFlmDataReader : IFlmDataReader
 
         foreach (var row in comboRows)
         {
-            var majorCode = FlmValueParser.Clean(Get(row, "curriculum"));
+            var rawCurriculum = FlmValueParser.Clean(Get(row, "curriculum"));
             var subjectCode = FlmValueParser.Clean(Get(row, "subjectCode"));
             var termNo = FlmValueParser.ParseIntOrNull(Get(row, "semester"));
 
-            if (majorCode is null || subjectCode is null || termNo is null)
+            if (rawCurriculum is null || subjectCode is null || termNo is null)
             {
                 continue;
             }
+
+            var majorCode = FlmValueParser.MajorFromCurriculum(rawCurriculum).Code;
 
             // The same elective is listed once per combo slot that offers it;
             // one curriculum link per programme is all the catalog can hold.
