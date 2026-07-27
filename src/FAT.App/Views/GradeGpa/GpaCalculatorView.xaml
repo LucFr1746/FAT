@@ -1,0 +1,7 @@
+<UserControl x:Class="FAT.App.Views.GradeGpa.GpaCalculatorView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F7F8FC">
+ <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+  <TextBlock Text="GPA Calculator" FontSize="28" FontWeight="SemiBold" Foreground="#2D2859"/>
+  <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="#C62828" Margin="0,8"/>
+  <StackPanel Grid.Row="2" Margin="0,24"><TextBlock Text="Cumulative GPA"/><TextBlock Text="{Binding Summary.CumulativeGpa, StringFormat=N2}" FontSize="48" Foreground="#5E35B1"/><TextBlock Text="{Binding Summary.ClassificationName}" FontSize="20"/><ProgressBar Value="{Binding Credits.CompletionPercent}" Maximum="100" Height="12" Margin="0,25,0,8"/><TextBlock Text="{Binding Credits.EarnedCredits, StringFormat='Earned credits: {0}'}"/></StackPanel>
+ </Grid>
+</UserControl>
