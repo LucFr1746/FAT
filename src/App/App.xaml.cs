@@ -73,6 +73,7 @@ public partial class App : Application
                 // One line per module, per docs/TEAM.md: the module owns its own
                 // registration file so nobody else has to edit this one.
                 services.AddCatalogModule();
+                services.AddMaterialsModule();
 
                 // Navigation & Container ViewModels
                 services.AddSingleton<Navigation.INavigationService, Navigation.NavigationService>();

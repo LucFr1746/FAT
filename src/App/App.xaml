@@ -67,6 +67,11 @@
                 <vCat:FlmImportView/>
             </DataTemplate>
 
+            <!-- Materials library (Member 5) -->
+            <DataTemplate DataType="{x:Type vmMat:MaterialLibraryViewModel}" xmlns:vmMat="clr-namespace:App.ViewModels.Materials" xmlns:vMat="clr-namespace:App.Views.Materials">
+                <vMat:MaterialLibraryView/>
+            </DataTemplate>
+
             <!-- Student curriculum & prediction -->
             <DataTemplate DataType="{x:Type vmStu:MyCurriculumViewModel}" xmlns:vmStu="clr-namespace:App.ViewModels.Student" xmlns:vStu="clr-namespace:App.Views.Student">
                 <vStu:MyCurriculumView/>

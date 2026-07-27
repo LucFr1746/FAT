@@ -1,6 +1,7 @@
 using App.Navigation;
 using App.ViewModels.Auth;
 using App.ViewModels.Catalog;
+using App.ViewModels.Materials;
 using App.ViewModels.Student;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -187,6 +188,11 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                     }
 
                     await ShowTabAsync<FlmImportViewModel>();
+                    break;
+
+                // ----- Materials library (everyone) -----
+                case "MaterialLibrary":
+                    await ShowTabAsync<MaterialLibraryViewModel>();
                     break;
 
                 // ----- Student screens -----

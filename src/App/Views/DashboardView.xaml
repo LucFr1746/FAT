@@ -155,6 +155,9 @@
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <Button Command="{Binding SwitchTabCommand}" CommandParameter="Home" Content="🏠 Trang Chủ" Style="{StaticResource NavTabButtonStyle}"/>
 
+                    <!-- Materials library: available to every signed-in user -->
+                    <Button Command="{Binding SwitchTabCommand}" CommandParameter="MaterialLibrary" Content="📁 Tài Liệu" Style="{StaticResource NavTabButtonStyle}"/>
+
                     <!-- Student -->
                     <Button Command="{Binding SwitchTabCommand}" CommandParameter="MyCurriculum" Content="📖 Chương Trình Học"
                             Style="{StaticResource NavTabButtonStyle}"
