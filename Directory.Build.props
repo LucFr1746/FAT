@@ -1,0 +1,25 @@
+<Project>
+
+  <!--
+    Properties shared by EVERY project in the solution.
+    Owned by the team lead - see docs/TEAM.md.
+  -->
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Central Package Management: versions are declared in Directory.Packages.props -->
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!--
+      TreatWarningsAsErrors is deliberately OFF. On a tight schedule, having a
+      stray nullable warning block the build for all five people is too high a
+      price. Warnings still surface so they can be cleaned up as we go.
+    -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+</Project>

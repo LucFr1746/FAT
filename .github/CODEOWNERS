@@ -1,0 +1,22 @@
+# Automatic reviewer assignment for pull requests.
+#
+# @LucFr1746 owns code review across the project, so is assigned to every PR.
+# @Nlonggg owns Git and merging, so is added on the shared files where one bad
+# change breaks the build for all five people.
+
+# Default: everything
+*                           @LucFr1746
+
+# SENSITIVE AREAS - changes here affect the whole team, so both reviewers
+/db/                        @LucFr1746 @Nlonggg
+/.github/                   @LucFr1746 @Nlonggg
+/Directory.Packages.props   @LucFr1746 @Nlonggg
+/Directory.Build.props      @LucFr1746 @Nlonggg
+/global.json                @LucFr1746 @Nlonggg
+/.editorconfig              @LucFr1746 @Nlonggg
+/FAT.sln                    @LucFr1746 @Nlonggg
+
+# Frozen contracts - changing these breaks other people's code
+/src/FAT.Services/Abstractions/  @LucFr1746 @Nlonggg
+/src/FAT.Domain/Entities/        @LucFr1746 @Nlonggg
+/src/FAT.Data/FatDbContext.cs    @LucFr1746 @Nlonggg

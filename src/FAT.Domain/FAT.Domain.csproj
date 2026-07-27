@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Innermost layer: entities, enums and constants.
+    References NO other project and NO NuGet package.
+    That keeps the academic rules (grading scale, classification thresholds)
+    independent of EF Core and WPF, so they stay unit testable in isolation.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+</Project>
