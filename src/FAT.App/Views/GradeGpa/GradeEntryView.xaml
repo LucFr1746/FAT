@@ -1,0 +1,7 @@
+<UserControl x:Class="FAT.App.Views.GradeGpa.GradeEntryView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F7F8FC">
+ <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+  <TextBlock Text="Manage Grades" FontSize="28" FontWeight="SemiBold" Foreground="#2D2859"/>
+  <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="#C62828" Margin="0,8"/>
+  <Grid Grid.Row="2" Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><DataGrid ItemsSource="{Binding Grades}" SelectedItem="{Binding SelectedGrade}" AutoGenerateColumns="False"><DataGrid.Columns><DataGridTextColumn Header="Assessment" Binding="{Binding Assessment.Name}"/><DataGridTextColumn Header="Score" Binding="{Binding Score}"/></DataGrid.Columns></DataGrid><StackPanel Grid.Column="1" Margin="20,0"><TextBox Text="{Binding EnrollmentId}"/><TextBox Text="{Binding Score}" Margin="0,14"/><Button Content="Save grade" Command="{Binding SaveCommand}"/></StackPanel></Grid>
+ </Grid>
+</UserControl>

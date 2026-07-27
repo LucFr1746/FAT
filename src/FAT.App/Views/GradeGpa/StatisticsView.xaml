@@ -1,0 +1,7 @@
+<UserControl x:Class="FAT.App.Views.GradeGpa.StatisticsView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Background="#F7F8FC">
+ <Grid Margin="28"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+  <TextBlock Text="Statistics" FontSize="28" FontWeight="SemiBold" Foreground="#2D2859"/>
+  <TextBlock Grid.Row="1" Text="{Binding ErrorMessage}" Foreground="#C62828" Margin="0,8"/>
+  <Grid Grid.Row="2" Margin="0,24"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="Academic overview" FontSize="20"/><TextBlock Text="{Binding Dashboard.CumulativeGpa, StringFormat=GPA: {0:N2}}" FontSize="34"/><TextBlock Text="{Binding Dashboard.GraduationPercent, StringFormat=Progress: {0}%}"/><ItemsControl ItemsSource="{Binding Dashboard.GpaTrend}"/></StackPanel><StackPanel Grid.Column="1"><TextBlock Text="Top courses" FontSize="20"/><ItemsControl ItemsSource="{Binding TopCourses}" DisplayMemberPath="CourseName"/><TextBlock Text="Needs attention" FontSize="20" Margin="0,24,0,0"/><ItemsControl ItemsSource="{Binding WeakestCourses}" DisplayMemberPath="CourseName"/></StackPanel></Grid>
+ </Grid>
+</UserControl>
