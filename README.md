@@ -34,6 +34,14 @@ If your SQL Server is not the default instance on `localhost`:
 .\db\setup-db.ps1 -Server ".\SQLEXPRESS"
 ```
 
+To run the real-database integration tests against that same Express instance,
+set the test connection string for the current PowerShell session:
+
+```powershell
+$env:FAT_TEST_CONNECTION_STRING = 'Server=.\SQLEXPRESS;Database=FAT;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;Connect Timeout=5'
+dotnet test FAT.sln
+```
+
 …then copy `src/FAT.App/appsettings.Local.json.example` to
 `appsettings.Local.json` and adjust the connection string. That file is
 git-ignored, so everyone keeps their own settings.
