@@ -36,6 +36,43 @@ public class GradeGpaServiceTests
         enrollment.FinalScore.Should().Be(5.5m); enrollment.Status.Should().Be(EnrollmentStatus.Failed);
     }
 
+    [Fact]
+    public async Task Gpa_is_null_when_student_has_no_counted_passes()
+    {
+        await using var db = CreateDb(); SeedCatalog(db);
+        db.Enrollments.Add(new Enrollment { StudentId = 1, CourseId = 1, SemesterId = 1,
+            Status = EnrollmentStatus.Failed, FinalScore = 4, IsCounted = true });
+        await db.SaveChangesAsync();
+
+        (await new GpaService(db).GetCumulativeGpaAsync(1)).Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(-0.01)]
+    [InlineData(10.01)]
+    public async Task Grade_upsert_rejects_scores_outside_ten_point_scale(double invalidScore)
+    {
+        await using var db = CreateDb(); SeedCatalog(db);
+        var action = () => new GradeService(db).UpsertGradeAsync(1, 1, (decimal)invalidScore);
+        await action.Should().ThrowAsync<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
+    public async Task Incomplete_assessments_keep_enrollment_studying_without_final_score()
+    {
+        await using var db = CreateDb(); SeedCatalog(db);
+        db.Assessments.AddRange(new Assessment { AssessmentId = 1, CourseId = 1, Weight = .5m },
+            new Assessment { AssessmentId = 2, CourseId = 1, Weight = .5m });
+        db.Enrollments.Add(new Enrollment { EnrollmentId = 1, StudentId = 1, CourseId = 1, SemesterId = 1 });
+        await db.SaveChangesAsync();
+
+        await new GradeService(db).UpsertGradeAsync(1, 1, 8);
+
+        var enrollment = await db.Enrollments.SingleAsync();
+        enrollment.Status.Should().Be(EnrollmentStatus.Studying);
+        enrollment.FinalScore.Should().BeNull();
+    }
+
     private static FatDbContext CreateDb() => new(new DbContextOptionsBuilder<FatDbContext>()
         .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
     private static void SeedCatalog(FatDbContext db)

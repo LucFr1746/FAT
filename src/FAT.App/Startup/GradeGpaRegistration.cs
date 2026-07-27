@@ -9,6 +9,7 @@ public static class GradeGpaRegistration
 {
     public static IServiceCollection AddGradeGpaModule(this IServiceCollection services)
     {
+        services.AddScoped<GradeWorkspaceService>();
         services.AddTransient<GradeListViewModel>();
         services.AddTransient<GradeEntryViewModel>();
         services.AddTransient<GpaCalculatorViewModel>();
