@@ -19,9 +19,11 @@
    ============================================================================= */
 
 SET NOCOUNT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
-USE FAT;
+USE FAT_DB;
 GO
 
 BEGIN TRANSACTION;
@@ -266,6 +268,72 @@ SET AttemptNo = r.AttemptAsc,
     IsCounted = CASE WHEN r.AttemptDesc = 1 THEN 1 ELSE 0 END
 FROM dbo.Enrollment e
 JOIN Ranked r ON r.EnrollmentId = e.EnrollmentId;
+GO
+
+/* -----------------------------------------------------------------------------
+   Backfill: auto-pass earlier terms for any student with CurrentTermNo set
+
+   Setting Student.CurrentTermNo (the "kỳ hiện tại" field on the Profile screen)
+   does NOT by itself satisfy any prerequisite - PrerequisiteService only looks
+   at Enrollment.Status = 'Passed'. Without this, a student whose current term
+   is set to, say, 5 but who has no Enrollment history for terms 1-4 sees every
+   kỳ-5 subject that has a prerequisite HIDDEN (StudentCurriculumService hides
+   rather than disables - see its "alreadyEngaged" check), even though "kỳ 5"
+   plainly implies terms 1-4 are done.
+
+   For every student with CurrentTermNo set, this marks each Curriculum entry
+   in their major, for every term strictly before CurrentTermNo, as PASSED with
+   a placeholder score - but only where that (student, course) pair has no
+   Enrollment yet, so it never overwrites real history. Safe to rerun any time,
+   including directly against a live database (not just a fresh setup-db.ps1
+   run): it only adds rows, never touches ones that already exist.
+
+   The three seeded students above already carry full, hand-authored history
+   and never set CurrentTermNo, so this section does not touch them - it only
+   applies to accounts that set "kỳ hiện tại" without a matching enrollment
+   history, including ones created through the app's own Register screen.
+   ----------------------------------------------------------------------------- */
+DECLARE @BackfillAnchorOrder INT = (SELECT DisplayOrder FROM dbo.Semester WHERE IsCurrent = 1);
+
+INSERT INTO dbo.Enrollment (StudentId, CourseId, SemesterId, Status, FinalScore, LetterGrade, GradePoint, IsCounted, AttemptNo)
+SELECT
+    s.StudentId,
+    cur.CourseId,
+    sem.SemesterId,
+    N'Passed',
+    raw.FinalScore,
+    gs.LetterGrade,
+    gs.GradePoint,
+    1,
+    1
+FROM dbo.Student s
+JOIN dbo.Curriculum cur ON cur.MajorId = s.MajorId AND cur.TermNo < s.CurrentTermNo
+CROSS APPLY (
+    -- Same 5.8..9.5 spread as the hand-authored grades above, so a backfilled
+    -- transcript entry cannot be told apart from a hand-authored one by eye.
+    -- Always >= 5.8, so it always lands on a passing letter grade below.
+    SELECT FinalScore = CAST(5.8 + ((s.StudentId * 7 + cur.CourseId * 13) % 38) / 10.0 AS DECIMAL(4,2))
+) AS raw
+JOIN dbo.GradeScale gs ON raw.FinalScore >= gs.MinScore AND raw.FinalScore < gs.MaxScore
+-- One semester per term, counting back from the globally current one - matches
+-- how every hand-authored student above takes exactly one term per semester.
+-- Clamped to never reach the current semester itself (self-check 4 requires
+-- every enrollment in the current semester to still be 'Studying') and never
+-- below the very first one, for students whose CurrentTermNo is set far ahead
+-- of what the Semester table can represent in the past.
+CROSS APPLY (
+    SELECT TargetOrder = CASE
+        WHEN @BackfillAnchorOrder - (s.CurrentTermNo - cur.TermNo) < 1 THEN 1
+        WHEN @BackfillAnchorOrder - (s.CurrentTermNo - cur.TermNo) >= @BackfillAnchorOrder THEN @BackfillAnchorOrder - 1
+        ELSE @BackfillAnchorOrder - (s.CurrentTermNo - cur.TermNo)
+    END
+) AS ord
+JOIN dbo.Semester sem ON sem.DisplayOrder = ord.TargetOrder
+WHERE s.CurrentTermNo IS NOT NULL
+  AND NOT EXISTS (
+        SELECT 1 FROM dbo.Enrollment e
+        WHERE e.StudentId = s.StudentId AND e.CourseId = cur.CourseId
+      );
 GO
 
 /* -----------------------------------------------------------------------------

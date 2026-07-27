@@ -11,9 +11,11 @@
    ============================================================================= */
 
 SET NOCOUNT ON;
+SET ANSI_NULLS ON;
+SET QUOTED_IDENTIFIER ON;
 GO
 
-USE FAT;
+USE FAT_DB;
 GO
 
 BEGIN TRANSACTION;

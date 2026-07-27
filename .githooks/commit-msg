@@ -1,0 +1,14 @@
+#!/bin/sh
+# Strips any AI co-author attribution trailer from the commit message before
+# the commit is created. See RULE.md: commits/PRs in this repo must never
+# carry a "Co-Authored-By: Claude ..." (or any AI-attribution) trailer.
+
+MSG_FILE="$1"
+
+# Case-insensitive match on "Co-Authored-By:" lines naming an AI assistant
+# (Claude, GPT, Copilot, ChatGPT, ...). Remove the line entirely rather than
+# rejecting the commit, so it never depends on the author noticing.
+sed -i -E '/^[Cc]o-[Aa]uthored-[Bb]y:.*(claude|copilot|chatgpt|gpt-|openai|anthropic)/Id' "$MSG_FILE"
+
+# Collapse any now-blank trailing lines left behind by the removal.
+sed -i -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$MSG_FILE"

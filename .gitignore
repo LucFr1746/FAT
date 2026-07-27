@@ -51,6 +51,7 @@ coverage*.info
 ## Misc
 *.dll.config
 *.pdb
+*.log
 Thumbs.db
 desktop.ini
 .DS_Store

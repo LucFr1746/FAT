@@ -14,9 +14,9 @@
 /Directory.Build.props      @LucFr1746 @Nlonggg
 /global.json                @LucFr1746 @Nlonggg
 /.editorconfig              @LucFr1746 @Nlonggg
-/FAT.sln                    @LucFr1746 @Nlonggg
+/Project.sln                    @LucFr1746 @Nlonggg
 
 # Frozen contracts - changing these breaks other people's code
-/src/FAT.Services/Abstractions/  @LucFr1746 @Nlonggg
-/src/FAT.Domain/Entities/        @LucFr1746 @Nlonggg
-/src/FAT.Data/FatDbContext.cs    @LucFr1746 @Nlonggg
+/src/Services/Abstractions/  @LucFr1746 @Nlonggg
+/src/Domain/Entities/        @LucFr1746 @Nlonggg
+/src/Data/FatDbContext.cs    @LucFr1746 @Nlonggg
