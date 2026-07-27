@@ -49,7 +49,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
         if (value is not null && IsAuthenticated) _ = _navigation.NavigateToAsync(value.ViewModelType);
     }
 
-    [RelayCommand] private void Logout()
+    [RelayCommand]
+    private void Logout()
     {
         _navigation.ClearHistory(); _currentUser.Clear(); MenuItems.Clear();
         CurrentViewModel = null; SelectedItem = null; IsAuthenticated = false; LoginError = null;
@@ -62,6 +63,8 @@ public sealed partial class MainWindowViewModel : ViewModelBase
     {
         MenuItems.Clear();
         foreach (var item in _allItems.Where(item => item.RequiresAdmin ? _currentUser.IsAdmin : !_currentUser.IsAdmin))
+        {
             MenuItems.Add(item);
+        }
     }
 }

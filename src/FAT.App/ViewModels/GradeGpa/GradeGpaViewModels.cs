@@ -20,7 +20,12 @@ public sealed partial class GradeListViewModel(IGradeService service, ICurrentUs
 {
     public ObservableCollection<SemesterTranscriptDto> Semesters { get; } = [];
     protected override Task LoadAsync(object? parameter, CancellationToken token) => RunBusyAsync(async () =>
-    { Semesters.Clear(); foreach (var row in (await service.GetTranscriptAsync(StudentId, token)).Semesters) Semesters.Add(row); });
+    {
+        Semesters.Clear(); foreach (var row in (await service.GetTranscriptAsync(StudentId, token)).Semesters)
+        {
+            Semesters.Add(row);
+        }
+    });
 }
 
 public sealed partial class TranscriptViewModel(IGradeService service, ICurrentUserContext user) : StudentScreenViewModel(user)
@@ -71,7 +76,10 @@ public sealed partial class GradeEntryViewModel(IGradeService service, GradeWork
 
     public Task OnNavigatedToAsync(object? parameter, CancellationToken token = default) => RunBusyAsync(async () =>
     {
-        Students.Clear(); foreach (var item in await workspace.GetStudentsAsync(token)) Students.Add(item);
+        Students.Clear(); foreach (var item in await workspace.GetStudentsAsync(token))
+        {
+            Students.Add(item);
+        }
     });
 
     partial void OnSelectedStudentChanged(StudentOption? value) => _ = LoadEnrollmentsAsync(value);
@@ -79,15 +87,39 @@ public sealed partial class GradeEntryViewModel(IGradeService service, GradeWork
     partial void OnSelectedAssessmentChanged(AssessmentScore? value) { if (value?.Score is decimal score) Score = score; }
 
     private Task LoadEnrollmentsAsync(StudentOption? student) => RunBusyAsync(async () =>
-    { Enrollments.Clear(); Assessments.Clear(); if (student is not null) foreach (var item in await workspace.GetEnrollmentsAsync(student.StudentId)) Enrollments.Add(item); });
-    private Task LoadAssessmentsAsync(EnrollmentOption? enrollment) => RunBusyAsync(async () =>
-    { Assessments.Clear(); if (enrollment is not null) foreach (var item in await workspace.GetAssessmentScoresAsync(enrollment.EnrollmentId)) Assessments.Add(item); });
-
-    [RelayCommand] private Task SaveAsync(CancellationToken token = default) => RunBusyAsync(async () =>
     {
-        if (SelectedEnrollment is null || SelectedAssessment is null) throw new InvalidOperationException("Select a student, course and assessment first.");
+        Enrollments.Clear(); Assessments.Clear(); if (student is not null)
+        {
+            foreach (var item in await workspace.GetEnrollmentsAsync(student.StudentId))
+            {
+                Enrollments.Add(item);
+            }
+        }
+    });
+    private Task LoadAssessmentsAsync(EnrollmentOption? enrollment) => RunBusyAsync(async () =>
+    {
+        Assessments.Clear(); if (enrollment is not null)
+        {
+            foreach (var item in await workspace.GetAssessmentScoresAsync(enrollment.EnrollmentId))
+            {
+                Assessments.Add(item);
+            }
+        }
+    });
+
+    [RelayCommand]
+    private Task SaveAsync(CancellationToken token = default) => RunBusyAsync(async () =>
+    {
+        if (SelectedEnrollment is null || SelectedAssessment is null)
+        {
+            throw new InvalidOperationException("Select a student, course and assessment first.");
+        }
+
         await service.UpsertGradeAsync(SelectedEnrollment.EnrollmentId, SelectedAssessment.AssessmentId, Score, token);
         SuccessMessage = "Grade saved and final result recalculated.";
-        Assessments.Clear(); foreach (var item in await workspace.GetAssessmentScoresAsync(SelectedEnrollment.EnrollmentId, token)) Assessments.Add(item);
+        Assessments.Clear(); foreach (var item in await workspace.GetAssessmentScoresAsync(SelectedEnrollment.EnrollmentId, token))
+        {
+            Assessments.Add(item);
+        }
     });
 }

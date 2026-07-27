@@ -40,8 +40,15 @@ public class GradeGpaServiceTests
     public async Task Gpa_is_null_when_student_has_no_counted_passes()
     {
         await using var db = CreateDb(); SeedCatalog(db);
-        db.Enrollments.Add(new Enrollment { StudentId = 1, CourseId = 1, SemesterId = 1,
-            Status = EnrollmentStatus.Failed, FinalScore = 4, IsCounted = true });
+        db.Enrollments.Add(new Enrollment
+        {
+            StudentId = 1,
+            CourseId = 1,
+            SemesterId = 1,
+            Status = EnrollmentStatus.Failed,
+            FinalScore = 4,
+            IsCounted = true
+        });
         await db.SaveChangesAsync();
 
         (await new GpaService(db).GetCumulativeGpaAsync(1)).Should().BeNull();

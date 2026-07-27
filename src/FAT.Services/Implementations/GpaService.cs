@@ -29,8 +29,16 @@ public sealed class GpaService(FatDbContext db) : IGpaService
     public async Task<IReadOnlyList<SemesterGpaDto>> GetGpaBySemesterAsync(int studentId, CancellationToken cancellationToken = default)
     {
         var rows = await db.Enrollments.AsNoTracking().Where(e => e.StudentId == studentId)
-            .Select(e => new { e.SemesterId, e.Semester!.SemesterCode, e.Semester.DisplayOrder,
-                e.Status, e.IsCounted, e.FinalScore, e.Course!.Credits }).ToListAsync(cancellationToken);
+            .Select(e => new
+            {
+                e.SemesterId,
+                e.Semester!.SemesterCode,
+                e.Semester.DisplayOrder,
+                e.Status,
+                e.IsCounted,
+                e.FinalScore,
+                e.Course!.Credits
+            }).ToListAsync(cancellationToken);
         return rows.GroupBy(x => new { x.SemesterId, x.SemesterCode, x.DisplayOrder })
             .OrderBy(g => g.Key.DisplayOrder)
             .Select(g => new SemesterGpaDto(g.Key.SemesterId, g.Key.SemesterCode, g.Key.DisplayOrder,
@@ -43,8 +51,11 @@ public sealed class GpaService(FatDbContext db) : IGpaService
     public async Task<CreditSummaryDto> GetCreditSummaryAsync(int studentId, CancellationToken cancellationToken = default)
     {
         var student = await db.Students.AsNoTracking().Where(s => s.StudentId == studentId)
-            .Select(s => new { Required = s.Major!.RequiredCredits,
-                Enrollments = s.Enrollments.Select(e => new { e.Status, e.IsCounted, e.Course!.Credits }) })
+            .Select(s => new
+            {
+                Required = s.Major!.RequiredCredits,
+                Enrollments = s.Enrollments.Select(e => new { e.Status, e.IsCounted, e.Course!.Credits })
+            })
             .SingleOrDefaultAsync(cancellationToken) ?? throw new KeyNotFoundException("Student not found.");
         return new(student.Enrollments.Where(e => e.Status == EnrollmentStatus.Passed && e.IsCounted).Sum(e => e.Credits),
             student.Enrollments.Where(e => e.Status == EnrollmentStatus.Studying).Sum(e => e.Credits), student.Required);

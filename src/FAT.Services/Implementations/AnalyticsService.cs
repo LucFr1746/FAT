@@ -60,7 +60,11 @@ public sealed class AnalyticsService(FatDbContext db, IGpaService gpa, IGradeSer
 
     private async Task<IReadOnlyList<CourseHighlightDto>> Highlights(int studentId, int take, bool ascending, CancellationToken token)
     {
-        if (take < 0) throw new ArgumentOutOfRangeException(nameof(take));
+        if (take < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(take));
+        }
+
         var query = db.Enrollments.AsNoTracking().Where(e => e.StudentId == studentId && e.IsCounted && e.FinalScore != null);
         query = ascending ? query.OrderBy(e => e.FinalScore) : query.OrderByDescending(e => e.FinalScore);
         return await query.Take(take).Select(e => new CourseHighlightDto(e.Course!.CourseCode, e.Course.CourseName,

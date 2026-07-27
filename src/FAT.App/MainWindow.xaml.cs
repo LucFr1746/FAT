@@ -14,6 +14,8 @@ public partial class MainWindow : Window
     private async void LoginClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel viewModel)
+        {
             await viewModel.LoginAsync(LoginPassword.Password);
+        }
     }
 }

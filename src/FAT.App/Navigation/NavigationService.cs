@@ -18,7 +18,9 @@ public sealed class NavigationService(IServiceScopeFactory scopeFactory) : INavi
     public async Task NavigateToAsync(Type viewModelType, object? parameter = null)
     {
         if (!typeof(ViewModelBase).IsAssignableFrom(viewModelType))
+        {
             throw new ArgumentException("Navigation targets must derive from ViewModelBase.", nameof(viewModelType));
+        }
 
         var scope = scopeFactory.CreateScope();
         ViewModelBase next;
@@ -26,19 +28,27 @@ public sealed class NavigationService(IServiceScopeFactory scopeFactory) : INavi
         catch { scope.Dispose(); throw; }
 
         if (CurrentViewModel is not null && _currentScope is not null)
+        {
             _history.Push((CurrentViewModel, _currentScope));
+        }
 
         CurrentViewModel = next;
         _currentScope = scope;
         CurrentViewModelChanged?.Invoke(this, EventArgs.Empty);
 
         if (next is INavigationAware aware)
+        {
             await aware.OnNavigatedToAsync(parameter);
+        }
     }
 
     public Task GoBackAsync()
     {
-        if (_history.Count == 0) return Task.CompletedTask;
+        if (_history.Count == 0)
+        {
+            return Task.CompletedTask;
+        }
+
         _currentScope?.Dispose();
         var previous = _history.Pop();
         CurrentViewModel = previous.ViewModel;
@@ -51,7 +61,11 @@ public sealed class NavigationService(IServiceScopeFactory scopeFactory) : INavi
     {
         _currentScope?.Dispose();
         _currentScope = null;
-        while (_history.TryPop(out var entry)) entry.Scope.Dispose();
+        while (_history.TryPop(out var entry))
+        {
+            entry.Scope.Dispose();
+        }
+
         CurrentViewModel = null;
         CurrentViewModelChanged?.Invoke(this, EventArgs.Empty);
     }
