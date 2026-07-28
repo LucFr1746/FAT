@@ -30,7 +30,11 @@ public sealed record StudentSubjectDto(
 
     /// <summary>"Có"/"Không", matching the wording FLM uses.</summary>
     public string GpaDisplay => CountsTowardGpa ? "Có" : "Không";
+
+    /// <summary>Formatted score string e.g. "8.5" or "Chưa có điểm".</summary>
+    public string FinalScoreDisplay => MyFinalScore.HasValue ? MyFinalScore.Value.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) : "Chưa có điểm";
 }
+
 
 /// <summary>Summary of curriculum progress for a student.</summary>
 public sealed record CurriculumProgressDto(

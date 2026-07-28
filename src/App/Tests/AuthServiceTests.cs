@@ -141,4 +141,189 @@ public class AuthServiceTests
         Assert.Equal(1, profile.MajorId);
         Assert.Equal("Kỳ 3", profile.CurrentSemester);
     }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_MatchingEmail_LinksGoogleIdAndSucceeds()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170002",
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170002",
+            FullName = "Nguyễn Văn B",
+            Email = "student.b@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+        var googleInfo = new GoogleUserInfoDto(
+            GoogleId: "1234567890987654321",
+            Email: "student.b@fpt.edu.vn",
+            FullName: "Nguyễn Văn B",
+            PictureUrl: "https://example.com/avatar.jpg"
+        );
+
+        // Act
+        var result = await authService.LoginWithGoogleAsync(googleInfo);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.User);
+        Assert.Equal("SE170002", result.User.Username);
+        Assert.Equal("https://example.com/avatar.jpg", result.User.AvatarUrl);
+
+        var dbUser = await db.Users.FindAsync(user.UserId);
+        Assert.Equal("1234567890987654321", dbUser?.GoogleId);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_UnregisteredEmail_ReturnsAccountNotFound()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var authService = new AuthService(db);
+        var googleInfo = new GoogleUserInfoDto(
+            GoogleId: "9999999999",
+            Email: "unknown.student@fpt.edu.vn",
+            FullName: "Unknown Student",
+            PictureUrl: null
+        );
+
+        // Act
+        var result = await authService.LoginWithGoogleAsync(googleInfo);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Equal("ACCOUNT_NOT_FOUND", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task LoginWithGoogleAsync_InactiveAccount_ReturnsFailure()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170003",
+            RoleId = 2,
+            IsActive = false,
+            GoogleId = "8888888888",
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+        var googleInfo = new GoogleUserInfoDto(
+            GoogleId: "8888888888",
+            Email: "locked.student@fpt.edu.vn",
+            FullName: "Locked Student",
+            PictureUrl: null
+        );
+
+        // Act
+        var result = await authService.LoginWithGoogleAsync(googleInfo);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Contains("khóa", result.ErrorMessage);
+    }
+
+
+    [Fact]
+    public async Task SendResetOtpAsync_ValidUser_GeneratesOtp()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170099",
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170099",
+            FullName = "Test Reset Student",
+            Email = "reset.test@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+
+        // Act
+        var result = await authService.SendResetOtpAsync("SE170099");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.MaskedEmail);
+        Assert.NotNull(result.DevOtpCode);
+        Assert.Equal(6, result.DevOtpCode.Length);
+    }
+
+    [Fact]
+    public async Task ResetPasswordWithOtpAsync_ValidOtp_UpdatesPasswordHashAndAllowsLogin()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170088",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("OldPass@123"),
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170088",
+            FullName = "Test Reset User",
+            Email = "reset.user@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+        var sendResult = await authService.SendResetOtpAsync("SE170088");
+        Assert.True(sendResult.IsSuccess);
+        string otpCode = sendResult.DevOtpCode!;
+
+        // Act
+        var resetResult = await authService.ResetPasswordWithOtpAsync("SE170088", otpCode, "NewSecret@2026");
+
+        // Assert
+        Assert.True(resetResult.IsSuccess);
+        Assert.NotNull(resetResult.User);
+
+        // Verify login works with new password
+        var loginResult = await authService.LoginAsync("SE170088", "NewSecret@2026");
+        Assert.True(loginResult.IsSuccess);
+    }
 }
+
+

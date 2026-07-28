@@ -29,5 +29,15 @@ public interface IAuthService
 
     /// <summary>Changes a password after verifying the current one.</summary>
     Task<bool> ChangePasswordAsync(int userId, string currentPassword, string newPassword, CancellationToken cancellationToken = default);
+
+    /// <summary>Sends a 6-digit OTP code to the student's email for password reset.</summary>
+    Task<OtpSendResult> SendResetOtpAsync(string mssvOrEmail, CancellationToken cancellationToken = default);
+
+    /// <summary>Verifies that the provided OTP code is valid and not expired.</summary>
+    Task<bool> VerifyResetOtpAsync(string mssvOrEmail, string otpCode);
+
+    /// <summary>Resets the user's password after verifying the OTP code.</summary>
+    Task<LoginResult> ResetPasswordWithOtpAsync(string mssvOrEmail, string otpCode, string newPassword, CancellationToken cancellationToken = default);
 }
+
 

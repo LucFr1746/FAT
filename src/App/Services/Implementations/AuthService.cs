@@ -20,8 +20,18 @@ public class AuthService : IAuthService
     private const string InvalidCredentialsMessage = "Sai tên đăng nhập hoặc mật khẩu.";
 
     private readonly FAT_DBContext _db;
+    private readonly IEmailService? _emailService;
 
-    public AuthService(FAT_DBContext db) => _db = db;
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OtpRecord> _otpCache = new(StringComparer.OrdinalIgnoreCase);
+
+    private sealed record OtpRecord(string OtpCode, DateTime ExpiresAt, int UserId, int StudentId, string Email, string FullName);
+
+    public AuthService(FAT_DBContext db, IEmailService? emailService = null)
+    {
+        _db = db;
+        _emailService = emailService;
+    }
+
 
     public async Task<LoginResult> LoginAsync(string username, string password, CancellationToken cancellationToken = default)
     {
@@ -253,4 +263,151 @@ public class AuthService : IAuthService
         await _db.SaveChangesAsync(cancellationToken);
         return true;
     }
+
+    public async Task<OtpSendResult> SendResetOtpAsync(string mssvOrEmail, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(mssvOrEmail))
+        {
+            return new OtpSendResult(false, "Vui lòng nhập MSSV hoặc Email.");
+        }
+
+        var normalized = mssvOrEmail.Trim().ToLowerInvariant();
+
+        var user = await _db.Users
+            .Include(u => u.Role)
+            .Include(u => u.Student)
+            .FirstOrDefaultAsync(u => u.Username.ToLower() == normalized
+                                   || (u.Student != null && u.Student.StudentCode.ToLower() == normalized)
+                                   || (u.Student != null && u.Student.Email != null && u.Student.Email.ToLower() == normalized), cancellationToken);
+
+        if (user is null || user.Student is null || string.IsNullOrWhiteSpace(user.Student.Email))
+        {
+            return new OtpSendResult(false, "Không tìm thấy thông tin sinh viên hoặc Email tương ứng với MSSV này.");
+        }
+
+        if (!user.IsActive)
+        {
+            return new OtpSendResult(false, "Tài khoản của bạn hiện đang bị khóa.");
+        }
+
+        var email = user.Student.Email.Trim();
+        var fullName = user.Student.FullName ?? user.Username;
+
+        // Generate 6-digit OTP
+        var otpCode = Random.Shared.Next(100000, 999999).ToString();
+        var expiresAt = DateTime.UtcNow.AddMinutes(5);
+
+        _otpCache[normalized] = new OtpRecord(otpCode, expiresAt, user.UserId, user.Student.StudentId, email, fullName);
+
+        var maskedEmail = MaskEmail(email);
+
+        bool isSentViaSmtp = false;
+        if (_emailService != null)
+        {
+            isSentViaSmtp = await _emailService.SendPasswordResetOtpAsync(email, fullName, otpCode, cancellationToken);
+        }
+
+        if (isSentViaSmtp)
+        {
+            return new OtpSendResult(true, null, maskedEmail, null, true);
+        }
+        else
+        {
+            // Dev Demo mode (returns otpCode for UI preview)
+            return new OtpSendResult(true, null, maskedEmail, otpCode, false);
+        }
+    }
+
+    public Task<bool> VerifyResetOtpAsync(string mssvOrEmail, string otpCode)
+    {
+        if (string.IsNullOrWhiteSpace(mssvOrEmail) || string.IsNullOrWhiteSpace(otpCode))
+        {
+            return Task.FromResult(false);
+        }
+
+        var normalized = mssvOrEmail.Trim().ToLowerInvariant();
+        if (!_otpCache.TryGetValue(normalized, out var record))
+        {
+            return Task.FromResult(false);
+        }
+
+        if (record.ExpiresAt < DateTime.UtcNow)
+        {
+            _otpCache.TryRemove(normalized, out _);
+            return Task.FromResult(false);
+        }
+
+        return Task.FromResult(record.OtpCode.Equals(otpCode.Trim(), StringComparison.Ordinal));
+    }
+
+    public async Task<LoginResult> ResetPasswordWithOtpAsync(string mssvOrEmail, string otpCode, string newPassword, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword) || newPassword.Length < 8)
+        {
+            return LoginResult.Failure("Mật khẩu mới phải có tối thiểu 8 ký tự.");
+        }
+
+        if (!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[A-Z]") ||
+            !System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[!@#$%^&*(),.? logic :{}|<>]"))
+        {
+            return LoginResult.Failure("Mật khẩu mới phải có ít nhất 1 chữ hoa và 1 ký tự đặc biệt.");
+        }
+
+        var isValidOtp = await VerifyResetOtpAsync(mssvOrEmail, otpCode);
+        if (!isValidOtp)
+        {
+            return LoginResult.Failure("Mã OTP không chính xác hoặc đã hết hạn. Vui lòng thử lại.");
+        }
+
+        var normalized = mssvOrEmail.Trim().ToLowerInvariant();
+        _otpCache.TryGetValue(normalized, out var record);
+        if (record is null)
+        {
+            return LoginResult.Failure("Mã xác thực đã hết hạn.");
+        }
+
+        var user = await _db.Users
+            .Include(u => u.Role)
+            .Include(u => u.Student)
+            .FirstOrDefaultAsync(u => u.UserId == record.UserId, cancellationToken);
+
+        if (user is null)
+        {
+            return LoginResult.Failure("Không tìm thấy tài khoản người dùng.");
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 11);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        _otpCache.TryRemove(normalized, out _);
+
+        var roleName = user.Role?.RoleName ?? RoleNames.Student;
+
+        return LoginResult.Success(new CurrentUserInfo(
+            UserId: user.UserId,
+            Username: user.Username,
+            RoleName: roleName,
+            IsAdmin: roleName == RoleNames.Admin,
+            StudentId: user.Student?.StudentId,
+            StudentCode: user.Student?.StudentCode,
+            FullName: user.Student?.FullName,
+            AvatarUrl: user.AvatarUrl,
+            IsProfileCompleted: user.Student?.IsProfileCompleted ?? true));
+    }
+
+    private static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+            return "***@fpt.edu.vn";
+
+        var parts = email.Split('@');
+        var name = parts[0];
+        var domain = parts[1];
+
+        if (name.Length <= 3)
+            return $"{name[0]}***@{domain}";
+
+        return $"{name[..2]}***{name[^2..]}@{domain}";
+    }
 }
+

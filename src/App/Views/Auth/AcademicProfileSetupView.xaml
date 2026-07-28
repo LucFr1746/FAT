@@ -138,9 +138,16 @@
                     </StackPanel>
 
                     <!-- Class Name Dropdown -->
-                    <StackPanel Margin="0,0,0,24">
+                    <StackPanel Margin="0,0,0,16">
                         <TextBlock Text="LỚP HỌC (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
                         <ComboBox ItemsSource="{Binding ClassOptions}" SelectedItem="{Binding SelectedClassName}" 
+                                  Height="44" Style="{StaticResource CatalogComboBoxStyle}"/>
+                    </StackPanel>
+
+                    <!-- Current Term Selection Dropdown -->
+                    <StackPanel Margin="0,0,0,24">
+                        <TextBlock Text="KỲ HỌC HIỆN TẠI (*)" FontSize="12" FontWeight="ExtraBold" Foreground="#473C33" Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding TermOptions}" SelectedItem="{Binding SelectedTermOption}" 
                                   Height="44" Style="{StaticResource CatalogComboBoxStyle}"/>
                     </StackPanel>
 

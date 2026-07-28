@@ -58,3 +58,12 @@ public sealed record GoogleOAuthResult(
     GoogleUserInfoDto? UserInfo,
     string? ErrorMessage);
 
+/// <summary>Outcome of an OTP send request for Password Reset.</summary>
+public sealed record OtpSendResult(
+    bool IsSuccess,
+    string? ErrorMessage,
+    string? MaskedEmail = null,
+    string? DevOtpCode = null,
+    bool IsSentViaSmtp = false);
+
+

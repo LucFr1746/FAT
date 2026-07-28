@@ -224,8 +224,9 @@
                         <Grid Margin="0,0,0,26">
                             <!-- CheckBox to Toggle Show Password -->
                             <CheckBox Content="Hiển thị mật khẩu" IsChecked="{Binding IsPasswordVisible}" Foreground="#473C33" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            <TextBlock Text="Quên mật khẩu?" Foreground="#473C33" FontSize="13" FontWeight="ExtraBold" HorizontalAlignment="Right" Cursor="Hand" VerticalAlignment="Center"/>
+                            <Button Command="{Binding NavigateToForgotPasswordCommand}" Content="Quên mật khẩu?" Foreground="#473C33" FontSize="13" FontWeight="ExtraBold" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"/>
                         </Grid>
+
 
                         <!-- Login Button (#FEC868) -->
                         <Button Command="{Binding LoginCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,22">
