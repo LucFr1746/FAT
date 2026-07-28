@@ -186,21 +186,33 @@ public abstract partial class PagedListViewModel<T> : ViewModelBase
         {
             StatusMessage = null;
             await action();
-
-            _allItems = ApplySort(await LoadItemsAsync(CancellationToken.None));
-            TotalCount = _allItems.Count;
-
-            // Deleting the last row of the final page would otherwise leave the
-            // user on a page that no longer exists.
-            if (PageIndex > PageCount - 1)
-            {
-                PageIndex = Math.Max(0, PageCount - 1);
-            }
-
-            UpdatePage();
+            await ReloadKeepingPageAsync(CancellationToken.None);
             StatusMessage = successMessage;
         });
 
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    /// <summary>
+    /// Reloads from the service WITHOUT jumping back to page one.
+    ///
+    /// <see cref="RefreshAsync"/> resets the page because a filter changed;
+    /// after an edit nothing about the filter changed, and throwing the user
+    /// back to page one of a hundred-row list to see the row they just saved is
+    /// the wrong outcome.
+    /// </summary>
+    protected async Task ReloadKeepingPageAsync(CancellationToken cancellationToken = default)
+    {
+        _allItems = ApplySort(await LoadItemsAsync(cancellationToken));
+        TotalCount = _allItems.Count;
+
+        // Deleting the last row of the final page would otherwise leave the
+        // user on a page that no longer exists.
+        if (PageIndex > PageCount - 1)
+        {
+            PageIndex = Math.Max(0, PageCount - 1);
+        }
+
+        UpdatePage();
     }
 }

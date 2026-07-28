@@ -101,7 +101,10 @@
                                 <TextBlock Text="{Binding ProgressText}" Margin="8,0,0,0" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" FontSize="13" />
                             </StackPanel>
 
-                            <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage}" Minimum="0" Maximum="100" 
+                            <!-- Mode=OneWay is REQUIRED: ProgressBar.Value binds TwoWay by
+                                 default, and ProgressPercentage is a computed get-only
+                                 property, so the default mode throws on every layout pass. -->
+                            <ProgressBar Grid.Column="1" Value="{Binding ProgressPercentage, Mode=OneWay}" Minimum="0" Maximum="100"
                                          Height="10" Margin="16,0" Foreground="{StaticResource PrimaryBrush}" Background="#E5DDCB"/>
 
                             <TextBlock Grid.Column="2" Text="{Binding ProgressPercentage, StringFormat='{}{0:0.#}%'}" 

@@ -37,6 +37,15 @@ public partial class SubjectAdminViewModel
 
     private int _editingMaterialId;
 
+    // The editor shows title, description and URL only, but UpdateAsync writes
+    // every field of the DTO onto the entity. Carried through so that editing a
+    // title does not erase the bibliographic data the FLM import brought in.
+    private string? _editingMaterialAuthor;
+    private string? _editingMaterialPublisher;
+    private string? _editingMaterialIsbn;
+    private int _editingMaterialDisplayOrder;
+    private bool _editingMaterialIsActive = true;
+
     // ----- Grade structure -----
     [ObservableProperty]
     private ObservableCollection<AssessmentDto> _gradeColumns = [];
@@ -60,6 +69,11 @@ public partial class SubjectAdminViewModel
     private GradeStructureValidationDto? _gradeStructureValidation;
 
     private int _editingGradeColumnId;
+
+    // "PT 3 bài" - how many pieces of work make up the component. Not in the
+    // editor, but UpdateAsync writes it, so without carrying it through every
+    // edit silently collapses the component back to a single part.
+    private int _editingGradeColumnPartCount = 1;
 
     /// <summary>
     /// True when the weights do not add up. Bound to a warning banner, because
@@ -165,6 +179,11 @@ public partial class SubjectAdminViewModel
 
             GradeStructureValidation = await _gradeStructureService.ValidateWeightsAsync(courseId);
             OnPropertyChanged(nameof(HasGradeStructureWarning));
+
+            // DetailCourse was captured from the grid row that opened the panel,
+            // so its counts date from before anything in the panel was changed.
+            // Re-read it rather than let the header contradict the list below it.
+            DetailCourse = await _catalogAdmin.GetCourseAsync(courseId) ?? DetailCourse;
         });
     }
 
@@ -190,6 +209,13 @@ public partial class SubjectAdminViewModel
         {
             await action();
             await ReloadDetailsAsync();
+
+            // The list behind the panel carries "Số tài liệu" and "Số cột điểm"
+            // columns fed by the same rows that were just changed. Without this
+            // the grid keeps showing the counts from before the edit, which
+            // reads as the save having failed.
+            await ReloadKeepingPageAsync();
+
             StatusMessage = successMessage;
         }
         catch (Exception ex)
@@ -209,6 +235,11 @@ public partial class SubjectAdminViewModel
         MaterialTitle = string.Empty;
         MaterialDescription = null;
         MaterialUrl = null;
+        _editingMaterialAuthor = null;
+        _editingMaterialPublisher = null;
+        _editingMaterialIsbn = null;
+        _editingMaterialDisplayOrder = Materials.Count;
+        _editingMaterialIsActive = true;
         DetailErrorMessage = null;
         IsMaterialEditorOpen = true;
     }
@@ -226,6 +257,11 @@ public partial class SubjectAdminViewModel
         MaterialTitle = target.Title;
         MaterialDescription = target.Description;
         MaterialUrl = target.Url;
+        _editingMaterialAuthor = target.Author;
+        _editingMaterialPublisher = target.Publisher;
+        _editingMaterialIsbn = target.Isbn;
+        _editingMaterialDisplayOrder = target.DisplayOrder;
+        _editingMaterialIsActive = target.IsActive;
         DetailErrorMessage = null;
         IsMaterialEditorOpen = true;
     }
@@ -253,9 +289,12 @@ public partial class SubjectAdminViewModel
             MaterialTitle.Trim(),
             string.IsNullOrWhiteSpace(MaterialDescription) ? null : MaterialDescription.Trim(),
             string.IsNullOrWhiteSpace(MaterialUrl) ? null : MaterialUrl.Trim(),
-            Author: null, Publisher: null, Isbn: null,
-            DisplayOrder: 0,
-            IsActive: true);
+            // Carried through untouched - see the note on the backing fields.
+            Author: _editingMaterialAuthor,
+            Publisher: _editingMaterialPublisher,
+            Isbn: _editingMaterialIsbn,
+            DisplayOrder: _editingMaterialDisplayOrder,
+            IsActive: _editingMaterialIsActive);
 
         await RunDetailActionAsync(
             () => _editingMaterialId == 0
@@ -309,6 +348,7 @@ public partial class SubjectAdminViewModel
         GradeColumnWeightPercent = remaining > 0 ? remaining : 10m;
 
         GradeColumnMinScore = null;
+        _editingGradeColumnPartCount = 1;
         DetailErrorMessage = null;
         IsGradeColumnEditorOpen = true;
     }
@@ -326,6 +366,7 @@ public partial class SubjectAdminViewModel
         GradeColumnName = target.Name;
         GradeColumnWeightPercent = target.WeightPercent;
         GradeColumnMinScore = target.MinScoreToPass;
+        _editingGradeColumnPartCount = target.PartCount;
         DetailErrorMessage = null;
         IsGradeColumnEditorOpen = true;
     }
@@ -360,7 +401,9 @@ public partial class SubjectAdminViewModel
             Math.Round(GradeColumnWeightPercent / 100m, CatalogRules.AssessmentWeightDecimals,
                 MidpointRounding.AwayFromZero),
             GradeColumnMinScore,
-            DisplayOrder: _editingGradeColumnId == 0 ? GradeColumns.Count : SelectedGradeColumn?.DisplayOrder ?? 0);
+            DisplayOrder: _editingGradeColumnId == 0 ? GradeColumns.Count : SelectedGradeColumn?.DisplayOrder ?? 0,
+            // Carried through untouched - see the note on the backing field.
+            PartCount: _editingGradeColumnPartCount);
 
         // allowUnbalanced stays true here: a structure is built one column at a
         // time, so demanding 100% on every save would make the first column

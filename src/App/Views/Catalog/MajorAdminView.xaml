@@ -200,14 +200,17 @@
                              Style="{StaticResource CatalogTextBoxStyle}" MaxLength="150" />
 
                     <TextBlock Text="Số kỳ của chương trình" Style="{StaticResource FieldLabelStyle}" Margin="0,12,0,4" />
-                    <TextBox Text="{Binding EditTotalTerms, UpdateSourceTrigger=PropertyChanged}"
+                    <!-- IsReadOnly: TotalTerms is recomputed from the curriculum on
+                         every save, so an editable box here would accept a value and
+                         silently discard it. -->
+                    <TextBox Text="{Binding EditTotalTerms, Mode=OneWay}" IsReadOnly="True"
                              Style="{StaticResource CatalogTextBoxStyle}" />
 
                     <CheckBox Content="Đang hoạt động" IsChecked="{Binding EditIsActive}"
                               Style="{StaticResource CatalogCheckBoxStyle}" Margin="0,14,0,0" />
 
                     <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,10,0,0"
-                               Text="Tổng số tín chỉ tốt nghiệp được tính tự động từ danh sách môn học trong chương trình, không nhập tay." />
+                               Text="Tổng số tín chỉ tốt nghiệp và số kỳ được tính tự động từ danh sách môn học trong chương trình, không nhập tay." />
 
                     <Border Style="{StaticResource ErrorBannerStyle}" Margin="0,12,0,0"
                             Visibility="{Binding HasEditorError, Converter={StaticResource BoolToVis}}">

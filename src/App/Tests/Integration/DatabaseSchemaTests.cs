@@ -121,6 +121,11 @@ public class DatabaseSchemaTests : IDisposable
 
         (await db.CurriculumItems.Select(ci => ci.DisplayOrder).Take(1).ToListAsync()).Should().NotBeNull();
         (await db.Prerequisites.Select(p => p.GroupNo).Take(1).ToListAsync()).Should().NotBeNull();
+
+        // PartCount reached db/01_schema.sql without an upgrade step, so every
+        // database created before that commit failed EVERY Assessment query.
+        (await db.Assessments.Select(a => a.PartCount).Take(1).ToListAsync()).Should().NotBeNull();
+
         (await db.Majors.Select(m => m.Description).Take(1).ToListAsync()).Should().NotBeNull();
         (await db.Students.Select(s => s.CurrentTermNo).Take(1).ToListAsync()).Should().NotBeNull();
     }

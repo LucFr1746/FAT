@@ -153,6 +153,27 @@ public static class SchemaUpgrader
             END
             """),
 
+        // Reached db/01_schema.sql without an upgrade path, so every database
+        // created before that commit fails EVERY Assessment query with
+        // "Invalid column name 'PartCount'" - which takes the subject detail,
+        // grade structure and student curriculum screens down with it.
+        ("Assessment.PartCount", """
+            IF OBJECT_ID(N'dbo.Assessment', N'U') IS NOT NULL
+               AND COL_LENGTH(N'dbo.Assessment', N'PartCount') IS NULL
+                ALTER TABLE dbo.Assessment ADD PartCount INT NOT NULL
+                    CONSTRAINT DF_Assessment_PartCount DEFAULT (1);
+            """),
+
+        ("Assessment.PartCount check constraint", """
+            IF OBJECT_ID(N'dbo.Assessment', N'U') IS NOT NULL
+               AND COL_LENGTH(N'dbo.Assessment', N'PartCount') IS NOT NULL
+               AND NOT EXISTS (SELECT 1 FROM sys.check_constraints
+                               WHERE name = N'CK_Assessment_PartCount'
+                                 AND parent_object_id = OBJECT_ID(N'dbo.Assessment'))
+                ALTER TABLE dbo.Assessment
+                    ADD CONSTRAINT CK_Assessment_PartCount CHECK (PartCount >= 1);
+            """),
+
         ("Prerequisite.GroupNo", """
             IF OBJECT_ID(N'dbo.Prerequisite', N'U') IS NOT NULL
                AND COL_LENGTH(N'dbo.Prerequisite', N'GroupNo') IS NULL

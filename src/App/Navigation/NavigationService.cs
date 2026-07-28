@@ -16,6 +16,21 @@ public partial class NavigationService : ObservableObject, INavigationService
     private readonly ICurrentUserContext _currentUserContext;
     private readonly Stack<(Type ViewModelType, object? Parameter)> _history = new();
 
+    /// <summary>
+    /// The DI scope owning the screen currently on display.
+    ///
+    /// WITHOUT THIS THE WHOLE APPLICATION SHARES ONE FAT_DBContext. This class
+    /// is a singleton, so resolving a view model straight out of
+    /// <see cref="_serviceProvider"/> resolves it - and every scoped service it
+    /// depends on - from the ROOT scope, which lives as long as the process.
+    /// One change tracker then serves every screen: an entity another screen
+    /// loaded is handed back from the cache instead of being read again, so an
+    /// edit made on one screen does not show up on the next one, and a
+    /// SaveChanges that fails leaves its half-applied entity staged for
+    /// whichever screen saves next.
+    /// </summary>
+    private IServiceScope? _currentScope;
+
     [ObservableProperty]
     private ViewModelBase? _currentViewModel;
 
@@ -55,7 +70,7 @@ public partial class NavigationService : ObservableObject, INavigationService
             _history.Push((CurrentViewModel.GetType(), null));
         }
 
-        var viewModel = (ViewModelBase)_serviceProvider.GetRequiredService(viewModelType);
+        var viewModel = ActivateInNewScope(viewModelType);
 
         CurrentViewModel = viewModel;
         CurrentViewModelChanged?.Invoke(this, EventArgs.Empty);
@@ -72,7 +87,7 @@ public partial class NavigationService : ObservableObject, INavigationService
         if (_history.Count > 0)
         {
             var (viewModelType, parameter) = _history.Pop();
-            var viewModel = (ViewModelBase)_serviceProvider.GetRequiredService(viewModelType);
+            var viewModel = ActivateInNewScope(viewModelType);
 
             CurrentViewModel = viewModel;
             CurrentViewModelChanged?.Invoke(this, EventArgs.Empty);
@@ -83,6 +98,43 @@ public partial class NavigationService : ObservableObject, INavigationService
                 await navigationAware.OnNavigatedToAsync(parameter);
             }
         }
+    }
+
+    /// <summary>
+    /// Resolves a view model inside a FRESH scope, then releases the scope the
+    /// previous screen was using.
+    ///
+    /// The old scope is disposed only AFTER the new one has resolved
+    /// successfully: a view model whose constructor throws must leave the
+    /// current screen working rather than tear down its services underneath it.
+    /// </summary>
+    private ViewModelBase ActivateInNewScope(Type viewModelType)
+    {
+        var scope = _serviceProvider.CreateScope();
+
+        ViewModelBase viewModel;
+        try
+        {
+            viewModel = (ViewModelBase)scope.ServiceProvider.GetRequiredService(viewModelType);
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
+
+        var outgoing = CurrentViewModel;
+        var previousScope = _currentScope;
+        _currentScope = scope;
+
+        // The outgoing instance is never reused - GoBackAsync re-resolves from
+        // the type - so it is safe to dispose. DashboardViewModel needs it: it
+        // owns a second scope for whichever tab was open, which the scope
+        // disposal below cannot reach.
+        (outgoing as IDisposable)?.Dispose();
+        previousScope?.Dispose();
+
+        return viewModel;
     }
 
     public void ClearHistory()

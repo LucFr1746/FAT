@@ -84,6 +84,13 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
 
     private int _editingCourseId;
 
+    // Not shown in the editor, but UpdateCourseAsync writes every field of the
+    // DTO straight onto the entity - so anything not carried through here is
+    // ERASED the moment an administrator edits an unrelated field. Both arrive
+    // with the FLM import and nothing else ever puts them back.
+    private decimal? _editMinAvgMarkToPass;
+    private string? _editSyllabusCode;
+
     /// <summary>Which detail panel is showing: Materials | GradeStructure | Schedule.</summary>
     [ObservableProperty]
     private string _activeDetailTab = "Materials";
@@ -219,6 +226,8 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
         EditCountsTowardGpa = true;
         EditPrerequisiteText = null;
         EditIsActive = true;
+        _editMinAvgMarkToPass = null;
+        _editSyllabusCode = null;
         EditorErrorMessage = null;
         IsEditorOpen = true;
     }
@@ -241,6 +250,8 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
         EditCountsTowardGpa = target.CountsTowardGpa;
         EditPrerequisiteText = target.PrerequisiteText;
         EditIsActive = target.IsActive;
+        _editMinAvgMarkToPass = target.MinAvgMarkToPass;
+        _editSyllabusCode = target.SyllabusCode;
         EditorErrorMessage = null;
         IsEditorOpen = true;
     }
@@ -285,8 +296,10 @@ public partial class SubjectAdminViewModel : PagedListViewModel<CourseDto>, INav
             EditIsActive,
             PrerequisiteCount: 0,
             CountsTowardGpa: EditCountsTowardGpa,
-            MinAvgMarkToPass: null,
-            PrerequisiteText: string.IsNullOrWhiteSpace(EditPrerequisiteText) ? null : EditPrerequisiteText.Trim());
+            // Carried through untouched - see the note on the backing fields.
+            MinAvgMarkToPass: _editMinAvgMarkToPass,
+            PrerequisiteText: string.IsNullOrWhiteSpace(EditPrerequisiteText) ? null : EditPrerequisiteText.Trim(),
+            SyllabusCode: _editSyllabusCode);
 
         try
         {

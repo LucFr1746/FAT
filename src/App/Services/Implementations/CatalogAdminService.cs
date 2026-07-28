@@ -99,11 +99,16 @@ public sealed partial class CatalogAdminService : ICatalogAdminService
         entity.MajorCode = code;
         entity.MajorName = name;
         entity.IsActive = major.IsActive;
-        entity.TotalTerms = Math.Max(1, major.TotalTerms);
 
-        // RequiredCredits is deliberately NOT taken from the form: it is derived
-        // from the curriculum, and letting an administrator type a different
-        // number is exactly how it drifts out of step with the subject list.
+        // NEITHER RequiredCredits NOR TotalTerms is taken from the form: both are
+        // derived from the curriculum by MajorCreditCalculator, and letting an
+        // administrator type a different number is exactly how they drift out of
+        // step with the subject list.
+        //
+        // Assigning TotalTerms here would be worse than useless - SyncAsync
+        // overwrites it on the very next line, so the form field would look
+        // editable and silently do nothing. MajorAdminView shows both as
+        // read-only for the same reason.
         await MajorCreditCalculator.SyncAsync(_db, entity.MajorId, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
     }

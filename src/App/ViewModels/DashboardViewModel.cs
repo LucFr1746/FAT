@@ -17,9 +17,13 @@ namespace App.ViewModels;
 /// Displays Top Navigation, User Badge (Name, Avatar, Role Student/Admin)
 /// and handles tab navigation & Logout.
 /// </summary>
-public partial class DashboardViewModel : ViewModelBase, INavigationAware
+public partial class DashboardViewModel : ViewModelBase, INavigationAware, IDisposable
 {
     private readonly IServiceProvider _serviceProvider;
+
+    /// <summary>The DI scope owning the tab currently on display - see <see cref="ActivateTabInNewScope{T}"/>.</summary>
+    private IServiceScope? _currentTabScope;
+
     private readonly INavigationService _navigationService;
     private readonly ICourseService _courseService;
     private readonly ICatalogAdminService _catalogAdminService;
@@ -157,19 +161,15 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
                         break; // Admin does not view/edit student profile
                     }
 
-                    var profileVm = _serviceProvider.GetRequiredService<ProfileViewModel>();
-                    CurrentTabViewModel = profileVm;
-                    await profileVm.OnNavigatedToAsync(null);
+                    await ShowTabAsync<ProfileViewModel>();
                     break;
 
                 case "ChangePassword":
-                    CurrentTabViewModel = _serviceProvider.GetRequiredService<ChangePasswordViewModel>();
+                    CurrentTabViewModel = ActivateTabInNewScope<ChangePasswordViewModel>();
                     break;
 
                 case "UserManagement":
-                    var userMgmtVm = _serviceProvider.GetRequiredService<UserManagementViewModel>();
-                    CurrentTabViewModel = userMgmtVm;
-                    await userMgmtVm.OnNavigatedToAsync(null);
+                    await ShowTabAsync<UserManagementViewModel>();
                     break;
 
                 // ----- Catalog administration -----
@@ -389,13 +389,66 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
     /// </summary>
     private async Task ShowTabAsync<TViewModel>() where TViewModel : ViewModelBase
     {
-        var viewModel = _serviceProvider.GetRequiredService<TViewModel>();
+        var viewModel = ActivateTabInNewScope<TViewModel>();
         CurrentTabViewModel = viewModel;
 
         if (viewModel is INavigationAware navigationAware)
         {
             await navigationAware.OnNavigatedToAsync(null);
         }
+    }
+
+    /// <summary>
+    /// Resolves a tab's view model in a FRESH DI scope and releases the scope
+    /// the previous tab was using.
+    ///
+    /// EVERY ADMIN SCREEN IS A TAB OF THIS SHELL, not a NavigationService
+    /// destination, so the scope discipline has to be repeated here. Resolving
+    /// them all from this view model's own provider gives the whole admin area
+    /// ONE FAT_DBContext for as long as the dashboard is open: entities loaded
+    /// by the Curriculum tab are served back out of that change tracker when the
+    /// Major tab asks for them, so a credit total edited on one tab still shows
+    /// its old value on the next. A scope per tab makes each one read the
+    /// database again.
+    ///
+    /// The previous scope is disposed only after the new one resolves, so a
+    /// failing constructor leaves the current tab usable.
+    /// </summary>
+    /// <summary>
+    /// Releases the open tab's scope.
+    ///
+    /// A scope created from a scoped provider is rooted at the container, not
+    /// nested inside the parent, so disposing THIS view model's scope does not
+    /// reach the tab's. Without this the DbContext behind the last tab open at
+    /// logout is never released.
+    /// </summary>
+    public void Dispose()
+    {
+        _currentTabScope?.Dispose();
+        _currentTabScope = null;
+        GC.SuppressFinalize(this);
+    }
+
+    private TViewModel ActivateTabInNewScope<TViewModel>() where TViewModel : ViewModelBase
+    {
+        var scope = _serviceProvider.CreateScope();
+
+        TViewModel viewModel;
+        try
+        {
+            viewModel = scope.ServiceProvider.GetRequiredService<TViewModel>();
+        }
+        catch
+        {
+            scope.Dispose();
+            throw;
+        }
+
+        var previousScope = _currentTabScope;
+        _currentTabScope = scope;
+        previousScope?.Dispose();
+
+        return viewModel;
     }
 
     [RelayCommand]
