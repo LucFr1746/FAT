@@ -320,7 +320,10 @@ public partial class DashboardViewModel : ViewModelBase, INavigationAware
             var userService = _serviceProvider.GetRequiredService<IUserService>();
             var profile = await userService.GetProfileAsync(studentId);
             int termNo = profile?.CurrentTermNo ?? 1;
-            if (termNo < 1 || termNo > 9) termNo = 1;
+            if (termNo < 1 || termNo > 9)
+            {
+                termNo = 1;
+            }
 
             StudentCurrentTermTitle = $"Kỳ {termNo}";
 

@@ -398,14 +398,18 @@ public class AuthService : IAuthService
     private static string MaskEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
+        {
             return "***@fpt.edu.vn";
+        }
 
         var parts = email.Split('@');
         var name = parts[0];
         var domain = parts[1];
 
         if (name.Length <= 3)
+        {
             return $"{name[0]}***@{domain}";
+        }
 
         return $"{name[..2]}***{name[^2..]}@{domain}";
     }

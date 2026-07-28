@@ -293,7 +293,10 @@ public class DatabaseSchemaTests : IDisposable
     [Fact]
     public async Task SeedCurriculum_imports_latest_curriculum_json_into_real_database()
     {
-        if (!_available || _db == null) return;
+        if (!_available || _db == null)
+        {
+            return;
+        }
 
         await DataSeeder.SeedCurriculumIfEmptyAsync(_db, forceImport: true);
 
