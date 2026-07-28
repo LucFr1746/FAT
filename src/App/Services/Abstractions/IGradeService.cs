@@ -19,6 +19,13 @@ public interface IGradeService
     Task<IReadOnlyList<GradeCourseDto>> GetStudentGradesAsync(
         int studentId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Active programme terms used by the signed-in student's curriculum.
+    /// Names and availability come from the existing Term table.
+    /// </summary>
+    Task<IReadOnlyList<GradeTermOptionDto>> GetTermOptionsAsync(
+        int studentId, CancellationToken cancellationToken = default);
+
     /// <summary>All real calendar semesters available for a new enrollment.</summary>
     Task<IReadOnlyList<GradeSemesterOptionDto>> GetSemesterOptionsAsync(
         CancellationToken cancellationToken = default);
@@ -46,6 +53,18 @@ public interface IGradeService
         int enrollmentId,
         int courseId,
         int semesterId,
+        int assessmentId,
+        decimal score,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Simplified grade-entry overload. A curriculum course without an
+    /// enrollment is registered in the existing current calendar semester.
+    /// </summary>
+    Task<int> UpsertStudentGradeAsync(
+        int studentId,
+        int enrollmentId,
+        int courseId,
         int assessmentId,
         decimal score,
         CancellationToken cancellationToken = default);

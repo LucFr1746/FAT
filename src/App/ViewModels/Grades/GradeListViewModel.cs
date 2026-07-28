@@ -18,6 +18,9 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     private ObservableCollection<GradeCourseDto> _grades = [];
 
     [ObservableProperty]
+    private GradeCourseDto? _selectedGrade;
+
+    [ObservableProperty]
     private ObservableCollection<GradeTermOptionDto> _terms = [];
 
     [ObservableProperty]
@@ -31,6 +34,7 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
 
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
     public bool IsEmpty => !IsBusy && !HasError && Grades.Count == 0;
+    public bool HasSelection => SelectedGrade is not null;
 
     public GradeListViewModel(
         IGradeService gradeService,
@@ -38,7 +42,7 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     {
         _gradeService = gradeService ?? throw new ArgumentNullException(nameof(gradeService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-        Title = "View Grades";
+        Title = "Xem điểm";
     }
 
     public Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
@@ -47,6 +51,9 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     partial void OnSelectedTermChanged(GradeTermOptionDto? value) => ApplyFilters();
 
     partial void OnSearchKeywordChanged(string value) => ApplyFilters();
+
+    partial void OnSelectedGradeChanged(GradeCourseDto? value)
+        => OnPropertyChanged(nameof(HasSelection));
 
     partial void OnStatusMessageChanged(string? value) => OnPropertyChanged(nameof(HasStatusMessage));
 
@@ -64,12 +71,13 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
         await RunBusyAsync(async () =>
         {
             _allGrades = await _gradeService.GetStudentGradesAsync(studentId, cancellationToken);
+            var termOptions = await _gradeService.GetTermOptionsAsync(studentId, cancellationToken);
 
             Terms.Clear();
-            Terms.Add(new GradeTermOptionDto(null, "Tất cả 9 kỳ"));
-            for (var termNo = 1; termNo <= 9; termNo++)
+            Terms.Add(GradeTermOptionDto.All);
+            foreach (var term in termOptions)
             {
-                Terms.Add(new GradeTermOptionDto(termNo, $"Kỳ {termNo}"));
+                Terms.Add(term);
             }
 
             SelectedTerm = Terms.FirstOrDefault(t => t.TermNo == selectedTermNo)
@@ -79,7 +87,7 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
             var enrolledAttempts = _allGrades.Count(g => g.IsEnrolled);
             var curriculumCourses = _allGrades.Select(g => g.CourseId).Distinct().Count();
             StatusMessage =
-                $"Đã tải {curriculumCourses} môn thuộc 9 kỳ " +
+                $"Đã tải {curriculumCourses} môn thuộc {termOptions.Count} học kỳ " +
                 $"({enrolledAttempts} lượt học đã đăng ký).";
         });
 
@@ -88,6 +96,8 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
 
     private void ApplyFilters()
     {
+        var selectedEnrollmentId = SelectedGrade?.EnrollmentId;
+        var selectedCourseId = SelectedGrade?.CourseId;
         var keyword = SearchKeyword?.Trim();
         var query = _allGrades.AsEnumerable();
 
@@ -108,6 +118,12 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
         {
             Grades.Add(grade);
         }
+
+        SelectedGrade = Grades.FirstOrDefault(g =>
+                            selectedEnrollmentId > 0
+                            && g.EnrollmentId == selectedEnrollmentId)
+                        ?? Grades.FirstOrDefault(g => g.CourseId == selectedCourseId)
+                        ?? Grades.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsEmpty));
     }

@@ -5,6 +5,7 @@ using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Services.Abstractions;
 using Services.Dtos;
+using System.Text;
 
 namespace Services.Implementations;
 
@@ -16,6 +17,9 @@ namespace Services.Implementations;
 public sealed class GradeService : IGradeService
 {
     private const decimal MaximumScore = 10m;
+    private static readonly Encoding StrictUtf8Encoding =
+        new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+    private static readonly Encoding Windows1252Encoding = CreateWindows1252Encoding();
 
     private readonly FAT_DBContext _db;
     private readonly ICurrentUserContext _currentUser;
@@ -128,11 +132,11 @@ public sealed class GradeService : IGradeService
         var curriculumItems = await _db.CurriculumItems
             .AsNoTracking()
             .AsSplitQuery()
+            .Include(ci => ci.Term)
             .Include(ci => ci.Course)
-                .ThenInclude(c => c!.Assessments)
             .Where(ci => ci.MajorId == student.MajorId
-                         && ci.TermNo >= 1
-                         && ci.TermNo <= 9
+                         && ci.Term != null
+                         && ci.Term.IsActive
                          && ci.Course != null
                          && ci.Course.IsActive)
             .OrderBy(ci => ci.TermNo)
@@ -144,7 +148,6 @@ public sealed class GradeService : IGradeService
             .AsNoTracking()
             .AsSplitQuery()
             .Include(e => e.Course)
-                .ThenInclude(c => c!.Assessments)
             .Include(e => e.Semester)
             .Include(e => e.Grades)
             .Where(e => e.StudentId == studentId)
@@ -152,6 +155,34 @@ public sealed class GradeService : IGradeService
             .ThenBy(e => e.Course!.CourseCode)
             .ThenByDescending(e => e.AttemptNo)
             .ToListAsync(cancellationToken);
+
+        var courseIds = curriculumItems
+            .Select(ci => ci.CourseId)
+            .Concat(enrollments.Select(e => e.CourseId))
+            .Distinct()
+            .ToList();
+
+        // Project only the columns Grade needs. Some existing FAT databases do
+        // not have the newer Assessment.PartCount column yet; materializing the
+        // full entity would make EF select that unrelated column and prevent
+        // users from viewing or entering scores.
+        var assessmentDefinitions = await _db.Assessments
+            .AsNoTracking()
+            .Where(a => courseIds.Contains(a.CourseId))
+            .OrderBy(a => a.DisplayOrder)
+            .ThenBy(a => a.Name)
+            .Select(a => new GradeAssessmentDefinition(
+                a.AssessmentId,
+                a.CourseId,
+                a.Name,
+                a.Weight,
+                a.MinScoreToPass,
+                a.DisplayOrder))
+            .ToListAsync(cancellationToken);
+
+        var assessmentsByCourseId = assessmentDefinitions
+            .GroupBy(a => a.CourseId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<GradeAssessmentDefinition>)g.ToList());
 
         var curriculumByCourseId = curriculumItems
             .GroupBy(ci => ci.CourseId)
@@ -163,11 +194,16 @@ public sealed class GradeService : IGradeService
                 var termNo = curriculumByCourseId.TryGetValue(
                     enrollment.CourseId, out var curriculum)
                     ? curriculum.TermNo
-                    : 0;
+                    : -1;
+                assessmentsByCourseId.TryGetValue(
+                    enrollment.CourseId, out var courseAssessments);
 
                 return MapGradeCourse(
                     enrollment,
                     termNo,
+                    curriculum?.Term?.TermName,
+                    curriculum?.DisplayOrder ?? 0,
+                    courseAssessments ?? [],
                     student.RequiresComponentGrades);
             })
             .ToList();
@@ -178,15 +214,53 @@ public sealed class GradeService : IGradeService
 
         results.AddRange(curriculumItems
             .Where(ci => !enrolledCourseIds.Contains(ci.CourseId))
-            .Select(MapCurriculumCourse));
+            .Select(ci =>
+            {
+                assessmentsByCourseId.TryGetValue(ci.CourseId, out var courseAssessments);
+                return MapCurriculumCourse(ci, courseAssessments ?? []);
+            }));
 
         return results
-            .OrderBy(r => r.CurriculumTermNo is >= 1 and <= 9
-                ? r.CurriculumTermNo
-                : int.MaxValue)
+            .OrderBy(r => r.CurriculumTermNo >= 0 ? r.CurriculumTermNo : int.MaxValue)
+            .ThenBy(r => r.CurriculumDisplayOrder)
             .ThenBy(r => r.CourseCode)
             .ThenBy(r => r.SemesterDisplayOrder)
             .ThenBy(r => r.AttemptNo)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<GradeTermOptionDto>> GetTermOptionsAsync(
+        int studentId, CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireSelfOrAdmin(studentId, "Xem học kỳ");
+
+        var majorId = await _db.Students
+            .AsNoTracking()
+            .Where(s => s.StudentId == studentId)
+            .Select(s => (int?)s.MajorId)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException(
+                $"Không tìm thấy sinh viên có mã định danh {studentId}.");
+
+        var curriculumTermNumbers = _db.CurriculumItems
+            .AsNoTracking()
+            .Where(ci => ci.MajorId == majorId
+                         && ci.Course != null
+                         && ci.Course.IsActive)
+            .Select(ci => ci.TermNo)
+            .Distinct();
+
+        var terms = await _db.Terms
+            .AsNoTracking()
+            .Where(t => t.IsActive && curriculumTermNumbers.Contains(t.TermNo))
+            .OrderBy(t => t.TermNo)
+            .Select(t => new { t.TermNo, t.TermName })
+            .ToListAsync(cancellationToken);
+
+        return terms
+            .Select(t => new GradeTermOptionDto(
+                t.TermNo,
+                NormalizeDatabaseText(t.TermName)))
             .ToList();
     }
 
@@ -240,15 +314,15 @@ public sealed class GradeService : IGradeService
         var belongsToCurriculum = await _db.CurriculumItems
             .AsNoTracking()
             .AnyAsync(ci => ci.CourseId == courseId
-                            && ci.TermNo >= 1
-                            && ci.TermNo <= 9
+                            && ci.Term != null
+                            && ci.Term.IsActive
                             && ci.Major!.Students.Any(s => s.StudentId == studentId),
                 cancellationToken);
 
         if (!belongsToCurriculum)
         {
             throw new InvalidOperationException(
-                "Môn học không thuộc chương trình Kỳ 1–9 của sinh viên.");
+                "Môn học không thuộc chương trình hiện tại của sinh viên.");
         }
 
         var assessmentExists = await _db.Assessments
@@ -272,19 +346,84 @@ public sealed class GradeService : IGradeService
         return newEnrollmentId;
     }
 
+    public async Task<int> UpsertStudentGradeAsync(
+        int studentId,
+        int enrollmentId,
+        int courseId,
+        int assessmentId,
+        decimal score,
+        CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireSelfOrAdmin(studentId, "Cập nhật điểm");
+        ValidateScore(score);
+
+        if (enrollmentId > 0)
+        {
+            return await UpsertStudentGradeAsync(
+                studentId,
+                enrollmentId,
+                courseId,
+                semesterId: 0,
+                assessmentId,
+                score,
+                cancellationToken);
+        }
+
+        var currentSemesterId = await _db.Semesters
+            .AsNoTracking()
+            .Where(s => s.IsCurrent)
+            .OrderByDescending(s => s.DisplayOrder)
+            .Select(s => (int?)s.SemesterId)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException(
+                "Chưa có học kỳ hiện tại trong hệ thống. Không thể tạo lượt học để nhập điểm.");
+
+        return await UpsertStudentGradeAsync(
+            studentId,
+            enrollmentId,
+            courseId,
+            currentSemesterId,
+            assessmentId,
+            score,
+            cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Grade>> GetGradesAsync(
         int enrollmentId, CancellationToken cancellationToken = default)
     {
         var studentId = await RequireEnrollmentOwnerAsync(enrollmentId, "Xem điểm thành phần", cancellationToken);
         _currentUser.RequireSelfOrAdmin(studentId, "Xem điểm thành phần");
 
-        return await _db.Grades
+        var grades = await _db.Grades
             .AsNoTracking()
-            .Include(g => g.Assessment)
             .Where(g => g.EnrollmentId == enrollmentId)
-            .OrderBy(g => g.Assessment!.DisplayOrder)
-            .ThenBy(g => g.Assessment!.Name)
             .ToListAsync(cancellationToken);
+
+        var assessmentIds = grades.Select(g => g.AssessmentId).Distinct().ToList();
+        var assessments = await _db.Assessments
+            .AsNoTracking()
+            .Where(a => assessmentIds.Contains(a.AssessmentId))
+            .Select(a => new Assessment
+            {
+                AssessmentId = a.AssessmentId,
+                CourseId = a.CourseId,
+                Name = a.Name,
+                Weight = a.Weight,
+                MinScoreToPass = a.MinScoreToPass,
+                DisplayOrder = a.DisplayOrder
+            })
+            .ToDictionaryAsync(a => a.AssessmentId, cancellationToken);
+
+        foreach (var grade in grades)
+        {
+            assessments.TryGetValue(grade.AssessmentId, out var assessment);
+            grade.Assessment = assessment;
+        }
+
+        return grades
+            .OrderBy(g => g.Assessment?.DisplayOrder ?? int.MaxValue)
+            .ThenBy(g => g.Assessment?.Name)
+            .ToList();
     }
 
     public async Task UpsertGradeAsync(
@@ -490,6 +629,13 @@ public sealed class GradeService : IGradeService
             .AsNoTracking()
             .Where(a => a.CourseId == enrollment.CourseId)
             .OrderBy(a => a.DisplayOrder)
+            .Select(a => new GradeAssessmentDefinition(
+                a.AssessmentId,
+                a.CourseId,
+                a.Name,
+                a.Weight,
+                a.MinScoreToPass,
+                a.DisplayOrder))
             .ToListAsync(cancellationToken);
 
         var grades = await _db.Grades
@@ -566,11 +712,14 @@ public sealed class GradeService : IGradeService
     private static GradeCourseDto MapGradeCourse(
         Enrollment enrollment,
         int curriculumTermNo,
+        string? curriculumTermName,
+        int curriculumDisplayOrder,
+        IReadOnlyList<GradeAssessmentDefinition> assessmentDefinitions,
         bool requiresComponentGrades)
     {
         var course = enrollment.Course;
         var semester = enrollment.Semester;
-        var assessments = MapAssessments(course?.Assessments, enrollment.Grades);
+        var assessments = MapAssessments(assessmentDefinitions, enrollment.Grades);
         var hasCompleteComponentGrades =
             assessments.Count > 0 && assessments.All(a => a.HasScore);
         var canUsePersistedResult =
@@ -597,10 +746,14 @@ public sealed class GradeService : IGradeService
             enrollment.IsCounted,
             enrollment.AttemptNo,
             assessments,
-            curriculumTermNo);
+            curriculumTermNo,
+            NormalizeDatabaseText(curriculumTermName),
+            curriculumDisplayOrder);
     }
 
-    private static GradeCourseDto MapCurriculumCourse(Curriculum curriculum)
+    private static GradeCourseDto MapCurriculumCourse(
+        Curriculum curriculum,
+        IReadOnlyList<GradeAssessmentDefinition> assessmentDefinitions)
     {
         var course = curriculum.Course;
 
@@ -622,19 +775,21 @@ public sealed class GradeService : IGradeService
             CountsTowardGpa: course?.CountsTowardGpa ?? false,
             IsCounted: false,
             AttemptNo: 0,
-            Assessments: MapAssessments(course?.Assessments, []),
-            CurriculumTermNo: curriculum.TermNo);
+            Assessments: MapAssessments(assessmentDefinitions, []),
+            CurriculumTermNo: curriculum.TermNo,
+            CurriculumTermName: NormalizeDatabaseText(curriculum.Term?.TermName),
+            CurriculumDisplayOrder: curriculum.DisplayOrder);
     }
 
     private static IReadOnlyList<GradeAssessmentDto> MapAssessments(
-        IEnumerable<Assessment>? assessments,
+        IEnumerable<GradeAssessmentDefinition> assessments,
         IEnumerable<Grade> grades)
     {
         var gradesByAssessment = grades
             .GroupBy(g => g.AssessmentId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.UpdatedAt).First());
 
-        return (assessments ?? [])
+        return assessments
             .OrderBy(a => a.DisplayOrder)
             .ThenBy(a => a.Name)
             .Select(a =>
@@ -652,4 +807,88 @@ public sealed class GradeService : IGradeService
             })
             .ToList();
     }
+
+    private static string NormalizeDatabaseText(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value ?? string.Empty;
+        }
+
+        var normalized = value;
+        for (var pass = 0; pass < 3; pass++)
+        {
+            var currentScore = GetMojibakeScore(normalized);
+            if (currentScore == 0)
+            {
+                break;
+            }
+
+            try
+            {
+                var repaired = StrictUtf8Encoding.GetString(
+                    Windows1252Encoding.GetBytes(normalized));
+
+                if (GetMojibakeScore(repaired) >= currentScore)
+                {
+                    break;
+                }
+
+                normalized = repaired;
+            }
+            catch (EncoderFallbackException)
+            {
+                break;
+            }
+            catch (DecoderFallbackException)
+            {
+                break;
+            }
+        }
+
+        return normalized;
+    }
+
+    private static int GetMojibakeScore(string value)
+    {
+        var score = value.Count(c => c is >= '\u0080' and <= '\u009F');
+        score += value.Count(c => c is 'Ã' or 'Â' or 'Ä' or 'Æ');
+        score += CountOccurrences(value, "á»");
+        score += CountOccurrences(value, "áº");
+        return score;
+    }
+
+    private static int CountOccurrences(string value, string marker)
+    {
+        var count = 0;
+        var startIndex = 0;
+
+        while ((startIndex = value.IndexOf(
+                   marker,
+                   startIndex,
+                   StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            startIndex += marker.Length;
+        }
+
+        return count;
+    }
+
+    private static Encoding CreateWindows1252Encoding()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        return Encoding.GetEncoding(
+            1252,
+            EncoderFallback.ExceptionFallback,
+            DecoderFallback.ExceptionFallback);
+    }
+
+    private sealed record GradeAssessmentDefinition(
+        int AssessmentId,
+        int CourseId,
+        string Name,
+        decimal Weight,
+        decimal? MinScoreToPass,
+        int DisplayOrder);
 }

@@ -21,8 +21,8 @@
 
             <Grid Grid.Row="0" Margin="0,0,0,18">
                 <StackPanel>
-                    <TextBlock Text="View Grades" Style="{StaticResource PageTitleStyle}" />
-                    <TextBlock Text="Điểm thành phần, trọng số, điểm tổng kết và trạng thái từng môn."
+                    <TextBlock Text="Xem điểm" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="Chọn một môn để xem điểm thành phần và điểm tổng kết."
                                Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0" />
                 </StackPanel>
                 <Button Content="Làm mới" Command="{Binding RefreshCommand}"
@@ -62,70 +62,99 @@
             </StackPanel>
 
             <Grid Grid.Row="3">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding Grades}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,0,14">
-                                    <StackPanel>
-                                        <Grid Margin="0,0,0,12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="{Binding CourseCode}" FontWeight="ExtraBold"
-                                                               FontSize="16" Foreground="{StaticResource TextBrush}" />
-                                                    <TextBlock Text="{Binding CourseName, StringFormat= — {0}}"
-                                                               FontSize="16" Foreground="{StaticResource TextBrush}" />
-                                                </StackPanel>
-                                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">
-                                                    <Run Text="{Binding TermAndSemesterDisplay, Mode=OneWay}" />
-                                                    <Run Text="{Binding Credits, Mode=OneWay, StringFormat= • {0} tín chỉ}" />
-                                                    <Run Text="{Binding AttemptDisplay, Mode=OneWay, StringFormat= • {0}}" />
-                                                </TextBlock>
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <Border Style="{StaticResource ChipBorderStyle}">
-                                                    <TextBlock Text="{Binding StatusDisplay}" Style="{StaticResource ChipTextStyle}" />
-                                                </Border>
-                                                <Border Style="{StaticResource ChipBorderStyle}">
-                                                    <TextBlock Style="{StaticResource ChipTextStyle}">
-                                                        <Run Text="Tổng kết: " />
-                                                        <Run Text="{Binding FinalScoreDisplay, Mode=OneWay}" />
-                                                    </TextBlock>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="3*" />
+                </Grid.RowDefinitions>
 
-                                        <DataGrid ItemsSource="{Binding Assessments}"
-                                                  Style="{StaticResource CatalogDataGridStyle}"
-                                                  ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
-                                                  CellStyle="{StaticResource CatalogCellStyle}"
-                                                  MaxHeight="230">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="Assessment" Binding="{Binding Name}" Width="*" />
-                                                <DataGridTextColumn Header="Trọng số"
-                                                                    Binding="{Binding WeightPercent, Mode=OneWay, StringFormat={}{0:0.##}%}"
-                                                                    Width="120" />
-                                                <DataGridTextColumn Header="Điểm tối thiểu"
-                                                                    Binding="{Binding MinimumDisplay, Mode=OneWay}" Width="130" />
-                                                <DataGridTextColumn Header="Điểm"
-                                                                    Binding="{Binding ScoreDisplay, Mode=OneWay}" Width="110" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </StackPanel>
+                <Border Grid.Row="0" Style="{StaticResource CardBorderStyle}">
+                    <Grid>
+                        <DataGrid ItemsSource="{Binding Grades}"
+                                  SelectedItem="{Binding SelectedGrade}"
+                                  Style="{StaticResource CatalogDataGridStyle}"
+                                  ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                                  CellStyle="{StaticResource CatalogCellStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Học kỳ"
+                                                    Binding="{Binding CurriculumTermDisplay}"
+                                                    Width="130" />
+                                <DataGridTextColumn Header="Mã môn" Binding="{Binding CourseCode}" Width="120" />
+                                <DataGridTextColumn Header="Tên môn" Binding="{Binding CourseName}" Width="*" />
+                                <DataGridTextColumn Header="Tín chỉ" Binding="{Binding Credits}" Width="90" />
+                                <DataGridTextColumn Header="Tổng kết"
+                                                    Binding="{Binding FinalScoreDisplay}"
+                                                    Width="110" />
+                                <DataGridTextColumn Header="Trạng thái"
+                                                    Binding="{Binding StatusDisplay}"
+                                                    Width="130" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Không có môn học phù hợp."
+                                   Style="{StaticResource PageSubtitleStyle}"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" />
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}"
+                        Visibility="{Binding HasSelection, Converter={StaticResource BoolToVis}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock FontSize="16" Foreground="{StaticResource TextBrush}">
+                                    <Run Text="{Binding SelectedGrade.CourseCode, Mode=OneWay}"
+                                         FontWeight="ExtraBold" />
+                                    <Run Text="{Binding SelectedGrade.CourseName, Mode=OneWay, StringFormat= — {0}}" />
+                                </TextBlock>
+                                <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">
+                                    <Run Text="{Binding SelectedGrade.TermAndSemesterDisplay, Mode=OneWay}" />
+                                    <Run Text="{Binding SelectedGrade.Credits, Mode=OneWay, StringFormat= • {0} tín chỉ}" />
+                                    <Run Text="{Binding SelectedGrade.AttemptDisplay, Mode=OneWay, StringFormat= • {0}}" />
+                                </TextBlock>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Style="{StaticResource ChipBorderStyle}">
+                                    <TextBlock Text="{Binding SelectedGrade.StatusDisplay}"
+                                               Style="{StaticResource ChipTextStyle}" />
                                 </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                <Border Style="{StaticResource ChipBorderStyle}">
+                                    <TextBlock Style="{StaticResource ChipTextStyle}">
+                                        <Run Text="Tổng kết: " />
+                                        <Run Text="{Binding SelectedGrade.FinalScoreDisplay, Mode=OneWay}" />
+                                    </TextBlock>
+                                </Border>
+                            </StackPanel>
+                        </Grid>
 
-                <TextBlock Text="Không có dữ liệu điểm phù hợp."
-                           Style="{StaticResource PageSubtitleStyle}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}" />
+                        <DataGrid Grid.Row="1"
+                                  ItemsSource="{Binding SelectedGrade.Assessments}"
+                                  Style="{StaticResource CatalogDataGridStyle}"
+                                  ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
+                                  CellStyle="{StaticResource CatalogCellStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Assessment" Binding="{Binding Name}" Width="*" />
+                                <DataGridTextColumn Header="Trọng số"
+                                                    Binding="{Binding WeightPercent, Mode=OneWay, StringFormat={}{0:0.##}%}"
+                                                    Width="120" />
+                                <DataGridTextColumn Header="Điểm tối thiểu"
+                                                    Binding="{Binding MinimumDisplay, Mode=OneWay}" Width="130" />
+                                <DataGridTextColumn Header="Điểm"
+                                                    Binding="{Binding ScoreDisplay, Mode=OneWay}" Width="110" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
             </Grid>
         </Grid>
     </Grid>

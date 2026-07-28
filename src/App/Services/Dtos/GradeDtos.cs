@@ -22,7 +22,10 @@ public sealed record GradeAssessmentDto(
 }
 
 /// <summary>A programme-term filter used by both grade screens.</summary>
-public sealed record GradeTermOptionDto(int? TermNo, string Display);
+public sealed record GradeTermOptionDto(int? TermNo, string Display)
+{
+    public static GradeTermOptionDto All { get; } = new(null, "Tất cả học kỳ");
+}
 
 /// <summary>A real calendar semester available when registering a missing course.</summary>
 public sealed record GradeSemesterOptionDto(
@@ -61,30 +64,32 @@ public sealed record GradeCourseDto(
     bool IsCounted,
     int AttemptNo,
     IReadOnlyList<GradeAssessmentDto> Assessments,
-    int CurriculumTermNo = 0)
+    int CurriculumTermNo = -1,
+    string CurriculumTermName = "",
+    int CurriculumDisplayOrder = 0)
 {
     public bool IsEnrolled => EnrollmentId > 0;
     public bool HasAnyGrade => Assessments.Any(a => a.HasScore);
     public bool IsFullyGraded => Assessments.Count > 0 && Assessments.All(a => a.HasScore);
     public bool CanManageGrades => !IsEnrolled || Status != EnrollmentStatus.Withdrawn;
-    public bool CanChooseSemester => !IsEnrolled;
-
     public string StatusDisplay => !IsEnrolled
-        ? "Not Graded"
+        ? "Chưa có điểm"
         : Status switch
         {
-            EnrollmentStatus.Passed => "Passed",
-            EnrollmentStatus.Failed => "Failed",
-            EnrollmentStatus.Withdrawn => "Withdrawn",
-            _ when !HasAnyGrade => "Not Graded",
-            _ => "Studying"
+            EnrollmentStatus.Passed => "Đạt",
+            EnrollmentStatus.Failed => "Chưa đạt",
+            EnrollmentStatus.Withdrawn => "Đã rút",
+            _ when !HasAnyGrade => "Chưa có điểm",
+            _ => "Đang học"
         };
 
     public string FinalScoreDisplay => FinalScore?.ToString("0.0") ?? "-";
     public string GradePointDisplay => GradePoint?.ToString("0.00") ?? "-";
-    public string CurriculumTermDisplay => CurriculumTermNo is >= 1 and <= 9
-        ? $"Kỳ {CurriculumTermNo}"
-        : "Ngoài chương trình";
+    public string CurriculumTermDisplay => !string.IsNullOrWhiteSpace(CurriculumTermName)
+        ? CurriculumTermName
+        : CurriculumTermNo >= 0
+            ? $"Kỳ {CurriculumTermNo}"
+            : "Ngoài chương trình";
     public string TermAndSemesterDisplay => string.IsNullOrWhiteSpace(SemesterCode)
         ? CurriculumTermDisplay
         : $"{CurriculumTermDisplay} • {SemesterCode}";
