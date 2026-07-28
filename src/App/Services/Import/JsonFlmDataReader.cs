@@ -292,16 +292,29 @@ public sealed class JsonFlmDataReader : IFlmDataReader
         foreach (var row in await JsonFile.ReadAsync(Path.Combine(folder, MaterialsFile), cancellationToken))
         {
             var subjectCode = FlmValueParser.Clean(Get(row, "subjectCode"))?.ToUpperInvariant();
-            var title = FlmValueParser.Truncate(Get(row, "materialDescription"), CatalogRules.MaterialTitleMaxLength);
+            var description = FlmValueParser.Clean(Get(row, "materialDescription"));
+            var note = FlmValueParser.Clean(Get(row, "note"));
+
+            // materials.json keeps the web link (Coursera, edX, openlibrary...) INSIDE
+            // the description or note rather than in a dedicated field, so pull it out
+            // here - otherwise every online reference imports as "no link".
+            var url = ExtractUrl(description) ?? ExtractUrl(note);
+
+            // When the description is just a bare URL, the note usually holds the real
+            // title; prefer it so the row does not display a raw link as its name.
+            var titleSource = url is not null && description is not null && IsBareUrl(description) && note is not null
+                ? note
+                : description;
+            var title = FlmValueParser.Truncate(titleSource, CatalogRules.MaterialTitleMaxLength);
 
             if (subjectCode is not null && title is not null)
             {
                 Add(subjectCode, title,
-                    url: null,
+                    url: FlmValueParser.Truncate(url, CatalogRules.UrlMaxLength),
                     author: FlmValueParser.Truncate(Get(row, "author"), 200),
                     publisher: FlmValueParser.Truncate(Get(row, "publisher"), 200),
                     isbn: FlmValueParser.Truncate(Get(row, "isbn"), 50),
-                    note: FlmValueParser.Clean(Get(row, "note")));
+                    note: note);
             }
         }
 
@@ -320,6 +333,40 @@ public sealed class JsonFlmDataReader : IFlmDataReader
 
         return result;
     }
+
+    /// <summary>Pulls the first http/https link out of free text, or null if there is none.</summary>
+    private static string? ExtractUrl(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        var idx = text.IndexOf("http://", StringComparison.OrdinalIgnoreCase);
+        if (idx < 0)
+        {
+            idx = text.IndexOf("https://", StringComparison.OrdinalIgnoreCase);
+        }
+
+        if (idx < 0)
+        {
+            return null;
+        }
+
+        var url = text[idx..];
+        var stop = url.IndexOfAny([' ', '\t', '\n', '\r', '"', '<', '>']);
+        if (stop > 0)
+        {
+            url = url[..stop];
+        }
+
+        return url.TrimEnd('.', ',', ')', ';');
+    }
+
+    /// <summary>True when the whole string is essentially just a URL (no other text).</summary>
+    private static bool IsBareUrl(string text)
+        => text.TrimStart().StartsWith("http", StringComparison.OrdinalIgnoreCase)
+           && !text.Trim().Contains(' ');
 
     private static async Task<IReadOnlyList<FlmScheduleRow>> ReadSchedulesAsync(
         string folder, CancellationToken cancellationToken)

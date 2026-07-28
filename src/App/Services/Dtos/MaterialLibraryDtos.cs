@@ -29,8 +29,40 @@ public sealed record MaterialLibraryItemDto(
     /// <summary>True when there is a link to open; false for a printed book with no online copy.</summary>
     public bool HasLink => !string.IsNullOrWhiteSpace(Url);
 
-    /// <summary>Whether the "Tải xuống" button does anything: open a link or save a file.</summary>
+    /// <summary>Whether the row has any action: download a file or open a web link.</summary>
     public bool CanDownload => HasLink || IsUploadedFile;
+
+    /// <summary>File extensions we treat as a direct download rather than a web page.</summary>
+    private static readonly string[] FileExtensions =
+        { ".zip", ".rar", ".7z", ".pdf", ".doc", ".docx", ".ppt", ".pptx", ".xls", ".xlsx", ".txt", ".csv" };
+
+    /// <summary>
+    /// A material the user can download straight to disk: an uploaded file, or a
+    /// URL that points at a file (ends in a file extension, or an FLM /download/
+    /// link). Shown as the green "Tải xuống" button.
+    /// </summary>
+    public bool IsDirectDownload => IsUploadedFile || (HasLink && PointsToFile(Url!));
+
+    /// <summary>
+    /// A link that opens a web page (Coursera, edX, a book page...) instead of
+    /// downloading a file. Shown as the underlined "Xem tài liệu" link.
+    /// </summary>
+    public bool IsWebLink => !IsUploadedFile && HasLink && !PointsToFile(Url!);
+
+    /// <summary>No file and no link - only bibliographic info (a printed book).</summary>
+    public bool HasNoAction => !CanDownload;
+
+    private static bool PointsToFile(string url)
+    {
+        var lower = url.ToLowerInvariant();
+        if (lower.Contains("/download/"))
+        {
+            return true;
+        }
+
+        var path = lower.Split('?', '#')[0].TrimEnd('/');
+        return FileExtensions.Any(ext => path.EndsWith(ext, StringComparison.Ordinal));
+    }
 
     /// <summary>"MSSV - Tên môn" style label, so a row makes sense on its own.</summary>
     public string SubjectDisplay => $"{CourseCode} - {CourseName}";
