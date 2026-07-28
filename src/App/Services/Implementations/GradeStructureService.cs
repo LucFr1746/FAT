@@ -33,7 +33,7 @@ public sealed class GradeStructureService : IGradeStructureService
             .OrderBy(a => a.DisplayOrder)
             .ThenBy(a => a.Name)
             .Select(a => new AssessmentDto(
-                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder))
+                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder, 1))
             .ToListAsync(cancellationToken);
 
     public async Task<int> CreateAsync(

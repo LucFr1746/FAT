@@ -11,7 +11,7 @@ public sealed record TermDto(
     bool IsActive,
     int SubjectCount = 0);
 
-/// <summary>A syllabus reading or link.</summary>
+/// <summary>A syllabus reading, link or uploaded file.</summary>
 public sealed record SubjectMaterialDto(
     int SubjectMaterialId,
     int CourseId,
@@ -22,9 +22,14 @@ public sealed record SubjectMaterialDto(
     string? Publisher,
     string? Isbn,
     int DisplayOrder,
-    bool IsActive)
+    bool IsActive,
+    int? MaterialId = null,
+    string? FileName = null)
 {
     public bool HasUrl => !string.IsNullOrWhiteSpace(Url);
+    public bool IsUploadedFile => MaterialId.HasValue;
+    public bool CanDownload => HasUrl || IsUploadedFile;
+    public string ActionButtonText => IsUploadedFile ? "Tải xuống" : "Mở liên kết";
 }
 
 /// <summary>One grade component of a subject.</summary>
@@ -34,7 +39,8 @@ public sealed record AssessmentDto(
     string Name,
     decimal Weight,
     decimal? MinScoreToPass,
-    int DisplayOrder)
+    int DisplayOrder,
+    int PartCount = 1)
 {
     /// <summary>The weight as a percentage, which is how the UI shows and edits it.</summary>
     public decimal WeightPercent => Math.Round(Weight * 100m, 2);

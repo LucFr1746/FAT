@@ -230,22 +230,53 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             .Select(ci => (int?)ci.TermNo)
             .FirstOrDefaultAsync(cancellationToken);
 
-        var gradeStructure = await _db.Assessments
+        var schedulePartCounts = (await _db.AssessmentSchedules
+            .AsNoTracking()
+            .Where(s => s.CourseId == courseId && s.AssessmentId != null)
+            .GroupBy(s => s.AssessmentId!.Value)
+            .Select(g => new { AssessmentId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken))
+            .ToDictionary(g => g.AssessmentId, g => g.Count);
+
+        var gradeStructureRaw = await _db.Assessments
             .AsNoTracking()
             .Where(a => a.CourseId == courseId)
             .OrderBy(a => a.DisplayOrder)
-            .Select(a => new AssessmentDto(
-                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder))
+            .Select(a => new
+            {
+                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder
+            })
             .ToListAsync(cancellationToken);
 
-        var materials = await _db.SubjectMaterials
+        var gradeStructure = gradeStructureRaw
+            .Select(a =>
+            {
+                schedulePartCounts.TryGetValue(a.AssessmentId, out var count);
+                return new AssessmentDto(
+                    a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder,
+                    PartCount: count > 0 ? count : 1);
+            })
+            .ToList();
+
+        var linkMaterials = await _db.SubjectMaterials
             .AsNoTracking()
             .Where(m => m.CourseId == courseId && m.IsActive)
             .OrderBy(m => m.DisplayOrder)
             .Select(m => new SubjectMaterialDto(
                 m.SubjectMaterialId, m.CourseId, m.Title, m.Description, m.Url,
-                m.Author, m.Publisher, m.Isbn, m.DisplayOrder, m.IsActive))
+                m.Author, m.Publisher, m.Isbn, m.DisplayOrder, m.IsActive, null, null))
             .ToListAsync(cancellationToken);
+
+        var fileMaterials = await _db.Materials
+            .AsNoTracking()
+            .Where(m => m.CourseId == courseId && m.IsActive && m.File != null)
+            .OrderByDescending(m => m.UploadedAt)
+            .Select(m => new SubjectMaterialDto(
+                0, m.CourseId!.Value, m.Title, m.Description, null,
+                null, null, null, 99, m.IsActive, m.MaterialId, m.FileName))
+            .ToListAsync(cancellationToken);
+
+        var materials = linkMaterials.Concat(fileMaterials).ToList();
 
         var schedule = await _db.AssessmentSchedules
             .AsNoTracking()

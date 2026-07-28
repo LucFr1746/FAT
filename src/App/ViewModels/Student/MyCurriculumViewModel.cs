@@ -24,6 +24,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
     private readonly IStudentCurriculumService _studentCurriculum;
     private readonly ICourseService _courseService;
     private readonly ICurrentUserContext _currentUser;
+    private readonly IMaterialService _materialService;
 
     [ObservableProperty]
     private ObservableCollection<MajorDto> _majors = [];
@@ -93,11 +94,13 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
     public MyCurriculumViewModel(
         IStudentCurriculumService studentCurriculum,
         ICourseService courseService,
-        ICurrentUserContext currentUser)
+        ICurrentUserContext currentUser,
+        IMaterialService materialService)
     {
         _studentCurriculum = studentCurriculum;
         _courseService = courseService;
         _currentUser = currentUser;
+        _materialService = materialService;
         Title = "Chương Trình Học Của Tôi";
     }
 
@@ -300,17 +303,46 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
     [RelayCommand]
     private void CloseSubjectDetail() => SubjectDetail = null;
 
-    /// <summary>Opens a material link in the default browser.</summary>
+    /// <summary>Opens a material link in the browser or downloads an uploaded file.</summary>
     [RelayCommand]
-    private void OpenMaterialUrl(SubjectMaterialDto? material)
+    private async Task OpenMaterialUrlAsync(SubjectMaterialDto? material)
     {
-        if (material?.Url is null)
+        if (material is null)
         {
             return;
         }
 
-        // Re-checked at the point of launch, not only on save: this hands a
-        // string to the shell, and only http/https are safe to hand over.
+        if (material.IsUploadedFile && material.MaterialId.HasValue)
+        {
+            await RunBusyAsync(async () =>
+            {
+                var file = await _materialService.DownloadAsync(material.MaterialId.Value);
+                if (file is null)
+                {
+                    ErrorMessage = "Không tải được tệp (tệp không còn tồn tại).";
+                    return;
+                }
+
+                var dialog = new Microsoft.Win32.SaveFileDialog
+                {
+                    Title = "Lưu tài liệu",
+                    FileName = file.FileName
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    await System.IO.File.WriteAllBytesAsync(dialog.FileName, file.Content);
+                    StatusMessage = $"Đã lưu: {System.IO.Path.GetFileName(dialog.FileName)}";
+                }
+            });
+            return;
+        }
+
+        if (material.Url is null)
+        {
+            return;
+        }
+
         if (!Uri.TryCreate(material.Url, UriKind.Absolute, out var uri) ||
             (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {

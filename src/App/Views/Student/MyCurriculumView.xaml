@@ -263,7 +263,7 @@
         <!-- ===================== Subject detail ===================== -->
         <Border Style="{StaticResource ModalOverlayStyle}"
                 Visibility="{Binding IsDetailOpen, Converter={StaticResource BoolToVis}}">
-            <Border Style="{StaticResource ModalPanelStyle}" MaxWidth="880" MinWidth="760" MaxHeight="700">
+            <Border Style="{StaticResource ModalPanelStyle}" MinWidth="980" MaxWidth="1150" MaxHeight="780">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -272,12 +272,12 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0">
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Margin="0">
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Margin="0" FontSize="18">
                             <Run Text="{Binding SubjectDetail.Subject.CourseCode, Mode=OneWay}" />
                             <Run Text=" - " />
                             <Run Text="{Binding SubjectDetail.Subject.CourseName, Mode=OneWay}" />
                         </TextBlock>
-                        <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,10">
+                        <TextBlock Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,14">
                             <Run Text="{Binding SubjectDetail.Subject.Credits, Mode=OneWay}" />
                             <Run Text="tín chỉ · Tính GPA:" />
                             <Run Text="{Binding SubjectDetail.Subject.GpaDisplay, Mode=OneWay}" />
@@ -296,23 +296,25 @@
                                       Style="{StaticResource CatalogDataGridStyle}"
                                       ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
                                       CellStyle="{StaticResource CatalogCellStyle}"
-                                      MaxHeight="180">
+                                      MaxHeight="220">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="Cột điểm" Binding="{Binding Name}" Width="*" />
+                                    <DataGridTextColumn Header="Số bài" Binding="{Binding PartCount}" Width="100" />
                                     <DataGridTextColumn Header="Trọng số (%)" Binding="{Binding WeightPercent}"
-                                                        Width="120" />
-                                    <DataGridTextColumn Header="Điểm tối thiểu" Binding="{Binding MinScoreToPass}"
                                                         Width="130" />
+                                    <DataGridTextColumn Header="Điểm tối thiểu" Binding="{Binding MinScoreToPass}"
+                                                        Width="140" />
                                 </DataGrid.Columns>
                             </DataGrid>
 
                             <TextBlock Text="Tài liệu học tập" Style="{StaticResource SectionTitleStyle}"
-                                       Margin="0,16,0,6" />
+                                       Margin="0,18,0,8" />
                             <ItemsControl ItemsSource="{Binding SubjectDetail.Materials}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="{StaticResource SurfaceBrush}" CornerRadius="10"
-                                                Padding="12" Margin="0,0,0,8">
+                                                Padding="14,12" Margin="0,0,0,8"
+                                                BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
@@ -321,49 +323,35 @@
                                                 <StackPanel Grid.Column="0">
                                                     <TextBlock Text="{Binding Title}" FontWeight="Bold"
                                                                Foreground="{StaticResource TextBrush}"
-                                                               TextWrapping="Wrap" />
+                                                               TextWrapping="Wrap" FontSize="13" />
                                                     <TextBlock Text="{Binding Description}"
                                                                Style="{StaticResource PageSubtitleStyle}"
-                                                               Margin="0,3,0,0" />
+                                                               Margin="0,3,0,0"
+                                                               Visibility="{Binding Description, Converter={StaticResource StringToVis}}" />
                                                 </StackPanel>
-                                                <Button Grid.Column="1" Content="Mở liên kết"
+                                                <Button Grid.Column="1" Content="{Binding ActionButtonText}"
                                                         Command="{Binding DataContext.OpenMaterialUrlCommand,
                                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                         CommandParameter="{Binding}"
                                                         Style="{StaticResource SmallActionButtonStyle}"
-                                                        Visibility="{Binding HasUrl, Converter={StaticResource BoolToVis}}" />
+                                                        Visibility="{Binding CanDownload, Converter={StaticResource BoolToVis}}"
+                                                        VerticalAlignment="Center" Margin="12,0,0,0" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <TextBlock Text="Lịch kiểm tra dự kiến" Style="{StaticResource SectionTitleStyle}"
-                                       Margin="0,16,0,6" />
-                            <DataGrid ItemsSource="{Binding SubjectDetail.Schedule}"
-                                      Style="{StaticResource CatalogDataGridStyle}"
-                                      ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
-                                      CellStyle="{StaticResource CatalogCellStyle}"
-                                      MaxHeight="200">
-                                <DataGrid.Columns>
-                                    <DataGridTextColumn Header="Tuần" Binding="{Binding WeekNo}" Width="70" />
-                                    <DataGridTextColumn Header="Buổi" Binding="{Binding SessionNo}" Width="70" />
-                                    <DataGridTextColumn Header="Nội dung" Binding="{Binding Title}" Width="*" />
-                                    <DataGridTextColumn Header="Ngày dự kiến" Width="130"
-                                                        Binding="{Binding ExpectedDate, StringFormat=dd/MM/yyyy}" />
-                                </DataGrid.Columns>
-                            </DataGrid>
-
                             <TextBlock Text="Mô tả môn học" Style="{StaticResource SectionTitleStyle}"
-                                       Margin="0,16,0,6" />
+                                       Margin="0,18,0,6" />
                             <TextBlock Text="{Binding SubjectDetail.Subject.Description}"
-                                       Style="{StaticResource PageSubtitleStyle}" />
+                                       Style="{StaticResource PageSubtitleStyle}" Margin="0,0,0,12" />
                         </StackPanel>
                     </ScrollViewer>
 
                     <Button Grid.Row="2" Content="Đóng" Command="{Binding CloseSubjectDetailCommand}"
                             Style="{StaticResource GhostButtonStyle}" HorizontalAlignment="Right"
-                            Margin="0,16,0,0" />
+                            Margin="0,16,0,0" MinWidth="100" />
                 </Grid>
             </Border>
         </Border>

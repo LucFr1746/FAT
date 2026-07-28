@@ -34,7 +34,7 @@ public sealed class SubjectMaterialService : ISubjectMaterialService
             .ThenBy(m => m.Title)
             .Select(m => new SubjectMaterialDto(
                 m.SubjectMaterialId, m.CourseId, m.Title, m.Description, m.Url,
-                m.Author, m.Publisher, m.Isbn, m.DisplayOrder, m.IsActive))
+                m.Author, m.Publisher, m.Isbn, m.DisplayOrder, m.IsActive, null, null))
             .ToListAsync(cancellationToken);
     }
 
