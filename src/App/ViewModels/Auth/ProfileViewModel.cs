@@ -47,6 +47,14 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
     private bool _isEditMode;
 
     [ObservableProperty]
+    private bool _isGoogleLinked;
+
+    public bool IsEmailReadOnly => IsGoogleLinked || !IsEditMode;
+
+    partial void OnIsEditModeChanged(bool value) => OnPropertyChanged(nameof(IsEmailReadOnly));
+    partial void OnIsGoogleLinkedChanged(bool value) => OnPropertyChanged(nameof(IsEmailReadOnly));
+
+    [ObservableProperty]
     private string? _statusMessage;
 
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
@@ -127,7 +135,8 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
                 SelectedMajor = string.IsNullOrWhiteSpace(Profile.MajorName) ? "Software Engineering" : Profile.MajorName;
                 Username = Profile.Username;
                 SelectedSemester = Profile.CurrentSemester ?? Domain.Constants.CatalogRules.GetTermName(Profile.CurrentTermNo ?? 1);
-                SelectedCampus = string.IsNullOrWhiteSpace(Profile.Campus) ? "Đà Nẵng" : Profile.Campus;
+                SelectedCampus = string.IsNullOrWhiteSpace(Profile.Campus) ? "Hồ Chí Minh" : Profile.Campus;
+                IsGoogleLinked = Profile.IsGoogleLinked;
             }
         });
     }

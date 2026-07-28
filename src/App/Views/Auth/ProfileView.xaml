@@ -178,9 +178,13 @@
 
                         <!-- Right Column -->
                         <StackPanel Grid.Column="1" Margin="16,0,0,0">
-                            <!-- Email Liên hệ (Editable in Edit Mode) -->
-                            <TextBlock Text="Email Liên hệ" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>
-                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsEditMode, Converter={StaticResource InverseBoolToVisConverter}}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,20"/>
+                            <!-- Email Liên hệ (Locked if Google Linked or View Mode) -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBlock Text="Email Liên hệ" FontSize="13" FontWeight="Bold" Foreground="#473C33"/>
+                                <TextBlock Text=" 🔒 (Đã xác minh Google - Không thể sửa)" FontSize="12" FontWeight="Bold" Foreground="#C85210"
+                                           Visibility="{Binding IsGoogleLinked, Converter={StaticResource BoolToVisConverter}}"/>
+                            </StackPanel>
+                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsEmailReadOnly}" Style="{StaticResource ModernTextBoxStyle}" Margin="0,0,0,20"/>
 
                             <!-- Ngành Học (Dropdown ComboBox) -->
                             <TextBlock Text="Ngành Học / Chuyên Ngành *" FontSize="13" FontWeight="Bold" Foreground="#473C33" Margin="0,0,0,8"/>

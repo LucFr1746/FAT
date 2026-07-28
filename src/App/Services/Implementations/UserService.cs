@@ -45,6 +45,8 @@ public class UserService : IUserService
             ? student.CurrentSemester
             : CatalogRules.GetTermName(termNo);
 
+        var isGoogleLinked = !string.IsNullOrWhiteSpace(student.User?.GoogleId);
+
         return new StudentProfileDto(
             StudentId: student.StudentId,
             StudentCode: student.StudentCode,
@@ -62,7 +64,8 @@ public class UserService : IUserService
             CurrentSemester: semesterStr,
             Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus,
             IsProfileCompleted: student.IsProfileCompleted,
-            CurrentTermNo: termNo
+            CurrentTermNo: termNo,
+            IsGoogleLinked: isGoogleLinked
         );
     }
 
@@ -73,9 +76,18 @@ public class UserService : IUserService
             throw new ArgumentException("Họ và tên không được để trống.", nameof(fullName));
         }
 
-        var student = await _db.Students.FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken) ?? throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
+        var student = await _db.Students
+            .Include(s => s.User)
+            .FirstOrDefaultAsync(s => s.StudentId == studentId, cancellationToken) ?? throw new InvalidOperationException("Không tìm thấy thông tin sinh viên.");
+
         student.FullName = fullName.Trim();
-        student.Email = email?.Trim();
+
+        // Lock email editing if account is verified/linked with Google
+        if (string.IsNullOrWhiteSpace(student.User?.GoogleId))
+        {
+            student.Email = email?.Trim();
+        }
+
         student.DateOfBirth = dateOfBirth;
 
         if (!string.IsNullOrWhiteSpace(currentSemester))

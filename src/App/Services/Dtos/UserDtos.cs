@@ -36,7 +36,8 @@ public sealed record StudentProfileDto(
     string? CurrentSemester = "Kỳ 5",
     string? Campus = "Đà Nẵng",
     bool IsProfileCompleted = false,
-    int? CurrentTermNo = 1);
+    int? CurrentTermNo = 1,
+    bool IsGoogleLinked = false);
 
 
 /// <summary>A degree programme.</summary>
