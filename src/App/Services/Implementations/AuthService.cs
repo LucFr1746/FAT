@@ -22,7 +22,7 @@ public class AuthService : IAuthService
     private readonly FAT_DBContext _db;
     private readonly IEmailService? _emailService;
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OtpRecord> _otpCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, OtpRecord> OtpCache = new(StringComparer.OrdinalIgnoreCase);
 
     private sealed record OtpRecord(string OtpCode, DateTime ExpiresAt, int UserId, int StudentId, string Email, string FullName);
 
@@ -297,7 +297,7 @@ public class AuthService : IAuthService
         var otpCode = Random.Shared.Next(100000, 999999).ToString();
         var expiresAt = DateTime.UtcNow.AddMinutes(5);
 
-        _otpCache[normalized] = new OtpRecord(otpCode, expiresAt, user.UserId, user.Student.StudentId, email, fullName);
+        OtpCache[normalized] = new OtpRecord(otpCode, expiresAt, user.UserId, user.Student.StudentId, email, fullName);
 
         var maskedEmail = MaskEmail(email);
 
@@ -326,14 +326,14 @@ public class AuthService : IAuthService
         }
 
         var normalized = mssvOrEmail.Trim().ToLowerInvariant();
-        if (!_otpCache.TryGetValue(normalized, out var record))
+        if (!OtpCache.TryGetValue(normalized, out var record))
         {
             return Task.FromResult(false);
         }
 
         if (record.ExpiresAt < DateTime.UtcNow)
         {
-            _otpCache.TryRemove(normalized, out _);
+            OtpCache.TryRemove(normalized, out _);
             return Task.FromResult(false);
         }
 
@@ -360,7 +360,7 @@ public class AuthService : IAuthService
         }
 
         var normalized = mssvOrEmail.Trim().ToLowerInvariant();
-        _otpCache.TryGetValue(normalized, out var record);
+        OtpCache.TryGetValue(normalized, out var record);
         if (record is null)
         {
             return LoginResult.Failure("Mã xác thực đã hết hạn.");
@@ -379,7 +379,7 @@ public class AuthService : IAuthService
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 11);
         await _db.SaveChangesAsync(cancellationToken);
 
-        _otpCache.TryRemove(normalized, out _);
+        OtpCache.TryRemove(normalized, out _);
 
         var roleName = user.Role?.RoleName ?? RoleNames.Student;
 
