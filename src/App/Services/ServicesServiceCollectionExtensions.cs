@@ -22,8 +22,12 @@ public static class ServicesServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
 
+        // Email & Notification Service
+        services.AddScoped<IEmailService, EmailService>();
+
         // Google OAuth Service
         services.AddSingleton<IGoogleOAuthService, GoogleOAuthService>();
+
 
         return services;
     }

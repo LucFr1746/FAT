@@ -241,5 +241,89 @@ public class AuthServiceTests
         Assert.False(result.IsSuccess);
         Assert.Contains("khóa", result.ErrorMessage);
     }
+
+
+    [Fact]
+    public async Task SendResetOtpAsync_ValidUser_GeneratesOtp()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170099",
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170099",
+            FullName = "Test Reset Student",
+            Email = "reset.test@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+
+        // Act
+        var result = await authService.SendResetOtpAsync("SE170099");
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.MaskedEmail);
+        Assert.NotNull(result.DevOtpCode);
+        Assert.Equal(6, result.DevOtpCode.Length);
+    }
+
+    [Fact]
+    public async Task ResetPasswordWithOtpAsync_ValidOtp_UpdatesPasswordHashAndAllowsLogin()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170088",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("OldPass@123"),
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170088",
+            FullName = "Test Reset User",
+            Email = "reset.user@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var authService = new AuthService(db);
+        var sendResult = await authService.SendResetOtpAsync("SE170088");
+        Assert.True(sendResult.IsSuccess);
+        string otpCode = sendResult.DevOtpCode!;
+
+        // Act
+        var resetResult = await authService.ResetPasswordWithOtpAsync("SE170088", otpCode, "NewSecret@2026");
+
+        // Assert
+        Assert.True(resetResult.IsSuccess);
+        Assert.NotNull(resetResult.User);
+
+        // Verify login works with new password
+        var loginResult = await authService.LoginAsync("SE170088", "NewSecret@2026");
+        Assert.True(loginResult.IsSuccess);
+    }
 }
+
 

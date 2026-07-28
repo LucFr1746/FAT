@@ -136,4 +136,11 @@ public partial class LoginViewModel : ViewModelBase
     {
         await _navigationService.NavigateToAsync<RegisterViewModel>();
     }
+
+    [RelayCommand]
+    private async Task NavigateToForgotPasswordAsync()
+    {
+        await _navigationService.NavigateToAsync<ForgotPasswordViewModel>();
+    }
 }
+

@@ -85,10 +85,12 @@ public partial class App : Application
                 services.AddTransient<ViewModels.Auth.LoginViewModel>();
                 services.AddTransient<ViewModels.Auth.RegisterViewModel>();
                 services.AddTransient<ViewModels.Auth.AcademicProfileSetupViewModel>();
+                services.AddTransient<ViewModels.Auth.ForgotPasswordViewModel>();
                 services.AddTransient<ViewModels.Auth.ProfileViewModel>();
                 services.AddTransient<ViewModels.Auth.ChangePasswordViewModel>();
                 services.AddTransient<ViewModels.Auth.UserManagementViewModel>();
             })
+
             .Build();
 
         await _host.StartAsync();
