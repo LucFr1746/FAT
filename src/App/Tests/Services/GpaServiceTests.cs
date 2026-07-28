@@ -1,5 +1,7 @@
+using Domain.Entities;
 using Domain.Enums;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Services.Implementations;
 using Tests.TestSupport;
 
@@ -26,6 +28,52 @@ public class GpaServiceTests
     }
 
     [Fact]
+    public async Task Registered_student_requires_complete_component_grades_before_GPA()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor("SE");
+        var student = db.AddStudent(major.MajorId);
+        student.CurrentTermNo = 1;
+        var semester = db.AddSemester("SP25", 1, isCurrent: true);
+        var course = db.AddCourse("PRF192", credits: 3);
+        var assessment = new Assessment
+        {
+            CourseId = course.CourseId,
+            Name = "Final exam",
+            Weight = 1m,
+            DisplayOrder = 1
+        };
+        db.Assessments.Add(assessment);
+        var enrollment = db.AddEnrollment(
+            student.StudentId,
+            course.CourseId,
+            semester.SemesterId,
+            EnrollmentStatus.Passed,
+            finalScore: 8m);
+        await db.SaveChangesAsync();
+        var service = new GpaService(db);
+
+        (await service.GetCumulativeGpaAsync(student.StudentId)).Should().BeNull();
+        (await service.GetGpaBySemesterAsync(student.StudentId)).Should().BeEmpty();
+        (await service.GetCreditSummaryAsync(student.StudentId))
+            .EarnedCredits.Should().Be(0);
+
+        db.Grades.Add(new Grade
+        {
+            EnrollmentId = enrollment.EnrollmentId,
+            AssessmentId = assessment.AssessmentId,
+            Score = 8m,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        (await service.GetCumulativeGpaAsync(student.StudentId)).Should().Be(8m);
+        (await service.GetGpaBySemesterAsync(student.StudentId)).Should().ContainSingle();
+        (await service.GetCreditSummaryAsync(student.StudentId))
+            .EarnedCredits.Should().Be(3);
+    }
+
+    [Fact]
     public async Task GetCumulativeGpaAsync_weights_the_average_by_credits()
     {
         using var db = TestDb.CreateWithReferenceData();
@@ -45,7 +93,7 @@ public class GpaServiceTests
     }
 
     [Fact]
-    public async Task GetCumulativeGpaAsync_ignores_failed_and_withdrawn_and_studying_attempts()
+    public async Task GetCumulativeGpaAsync_includes_failed_but_ignores_withdrawn_and_studying()
     {
         using var db = TestDb.CreateWithReferenceData();
         var major = db.AddMajor("SE");
@@ -63,7 +111,34 @@ public class GpaServiceTests
 
         var gpa = await new GpaService(db).GetCumulativeGpaAsync(student.StudentId);
 
-        gpa.Should().Be(8.00m, "only passed attempts count, on neither side of the fraction");
+        gpa.Should().Be(5.50m, "the completed Failed result contributes 3.0 with its credits");
+    }
+
+    [Fact]
+    public async Task GetGpaBySemesterAsync_counts_failed_scores_and_credits()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor("SE");
+        var student = db.AddStudent(major.MajorId);
+        var semester = db.AddSemester("SP24", 1, isCurrent: true);
+
+        db.AddEnrollment(student.StudentId, db.AddCourse("CEA201", 3).CourseId,
+            semester.SemesterId, EnrollmentStatus.Failed, 0m);
+        db.AddEnrollment(student.StudentId, db.AddCourse("CSI104", 3).CourseId,
+            semester.SemesterId, EnrollmentStatus.Passed, 9m);
+        db.AddEnrollment(student.StudentId, db.AddCourse("MAE101", 3).CourseId,
+            semester.SemesterId, EnrollmentStatus.Passed, 8m);
+        db.AddEnrollment(student.StudentId, db.AddCourse("PRF192", 3).CourseId,
+            semester.SemesterId, EnrollmentStatus.Failed, 4m);
+        db.AddEnrollment(student.StudentId, db.AddCourse("SSL101c", 3).CourseId,
+            semester.SemesterId, EnrollmentStatus.Failed, 0m);
+
+        var result = (await new GpaService(db)
+            .GetGpaBySemesterAsync(student.StudentId)).Single();
+
+        result.Gpa.Should().Be(4.20m);
+        result.GpaCredits.Should().Be(15);
+        result.EarnedCredits.Should().Be(6);
     }
 
     /// <summary>

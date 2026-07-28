@@ -14,6 +14,13 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
 {
     private readonly IGradeService _gradeService;
     private readonly ICurrentUserContext _currentUser;
+    private IReadOnlyList<GradeCourseDto> _allCourses = [];
+
+    [ObservableProperty]
+    private ObservableCollection<GradeTermOptionDto> _terms = [];
+
+    [ObservableProperty]
+    private GradeTermOptionDto? _selectedTerm;
 
     [ObservableProperty]
     private ObservableCollection<GradeCourseDto> _courses = [];
@@ -26,6 +33,12 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
 
     [ObservableProperty]
     private GradeAssessmentDto? _selectedAssessment;
+
+    [ObservableProperty]
+    private ObservableCollection<GradeSemesterOptionDto> _semesters = [];
+
+    [ObservableProperty]
+    private GradeSemesterOptionDto? _selectedSemester;
 
     [ObservableProperty]
     private string _scoreText = string.Empty;
@@ -43,7 +56,9 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
     public bool CanDeleteSelected => SelectedAssessment?.HasScore == true;
     public string EditModeLabel => SelectedAssessment?.HasScore == true ? "Chỉnh sửa điểm" : "Thêm điểm";
 
-    public GradeEntryViewModel(IGradeService gradeService, ICurrentUserContext currentUser)
+    public GradeEntryViewModel(
+        IGradeService gradeService,
+        ICurrentUserContext currentUser)
     {
         _gradeService = gradeService ?? throw new ArgumentNullException(nameof(gradeService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
@@ -52,6 +67,9 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
 
     public Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
         => RefreshAsync(cancellationToken);
+
+    partial void OnSelectedTermChanged(GradeTermOptionDto? value)
+        => ApplyTermFilter();
 
     partial void OnSelectedCourseChanged(GradeCourseDto? value)
     {
@@ -65,6 +83,10 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
         }
 
         SelectedAssessment = Assessments.FirstOrDefault();
+        SelectedSemester = value?.IsEnrolled == true
+            ? Semesters.FirstOrDefault(s => s.SemesterId == value.SemesterId)
+            : Semesters.FirstOrDefault(s => s.IsCurrent)
+                ?? Semesters.FirstOrDefault();
         OnPropertyChanged(nameof(HasAssessments));
     }
 
@@ -100,9 +122,21 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
             return;
         }
 
+        if (_currentUser.StudentId is not int studentId)
+        {
+            ValidationMessage = "Không tìm thấy tài khoản sinh viên đang đăng nhập.";
+            return;
+        }
+
         if (SelectedAssessment is null)
         {
             ValidationMessage = "Assessment không được để trống.";
+            return;
+        }
+
+        if (SelectedSemester is null)
+        {
+            ValidationMessage = "Học kỳ thực tế không được để trống.";
             return;
         }
 
@@ -126,12 +160,20 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
         }
 
         var enrollmentId = SelectedCourse.EnrollmentId;
+        var courseId = SelectedCourse.CourseId;
         var assessmentId = SelectedAssessment.AssessmentId;
+        var semesterId = SelectedSemester.SemesterId;
 
         await RunBusyAsync(async () =>
         {
-            await _gradeService.UpsertGradeAsync(
-                enrollmentId, assessmentId, score, cancellationToken);
+            enrollmentId = await _gradeService.UpsertStudentGradeAsync(
+                studentId,
+                enrollmentId,
+                courseId,
+                semesterId,
+                assessmentId,
+                score,
+                cancellationToken);
             StatusMessage = "Đã lưu điểm và tính lại điểm tổng kết.";
         });
 
@@ -206,24 +248,65 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
 
         await RunBusyAsync(async () =>
         {
-            var results = await _gradeService.GetStudentGradesAsync(studentId, cancellationToken);
+            _allCourses = (await _gradeService.GetStudentGradesAsync(
+                    studentId, cancellationToken))
+                .Where(c => c.CanManageGrades)
+                .ToList();
 
-            Courses.Clear();
-            foreach (var course in results.Where(c => c.CanManageGrades))
+            var semesterOptions = await _gradeService.GetSemesterOptionsAsync(cancellationToken);
+            Semesters.Clear();
+            foreach (var semester in semesterOptions)
             {
-                Courses.Add(course);
+                Semesters.Add(semester);
             }
 
-            SelectedCourse = Courses.FirstOrDefault(c => c.EnrollmentId == enrollmentId)
-                             ?? Courses.FirstOrDefault();
+            var selectedTermNo = SelectedTerm?.TermNo;
+            Terms.Clear();
+            Terms.Add(new GradeTermOptionDto(null, "Tất cả 9 kỳ"));
+            for (var termNo = 1; termNo <= 9; termNo++)
+            {
+                Terms.Add(new GradeTermOptionDto(termNo, $"Kỳ {termNo}"));
+            }
+
+            SelectedTerm = Terms.FirstOrDefault(t => t.TermNo == selectedTermNo)
+                           ?? Terms.FirstOrDefault();
+            ApplyTermFilter(enrollmentId);
+
             SelectedAssessment = Assessments.FirstOrDefault(a => a.AssessmentId == assessmentId)
                                  ?? Assessments.FirstOrDefault();
 
             ValidationMessage = null;
-            StatusMessage = preserveStatus ? existingStatus : $"Đã tải {Courses.Count} môn học.";
+            StatusMessage = preserveStatus
+                ? existingStatus
+                : $"Đã tải {_allCourses.Select(c => c.CourseId).Distinct().Count()} môn thuộc 9 kỳ.";
             OnPropertyChanged(nameof(HasCourses));
             OnPropertyChanged(nameof(HasAssessments));
         });
+    }
+
+    private void ApplyTermFilter(int? preferredEnrollmentId = null)
+    {
+        var previousCourseId = SelectedCourse?.CourseId;
+        var query = _allCourses.AsEnumerable();
+
+        if (SelectedTerm?.TermNo is int termNo)
+        {
+            query = query.Where(c => c.CurriculumTermNo == termNo);
+        }
+
+        Courses.Clear();
+        foreach (var course in query)
+        {
+            Courses.Add(course);
+        }
+
+        SelectedCourse = Courses.FirstOrDefault(c =>
+                             preferredEnrollmentId.HasValue
+                             && c.EnrollmentId == preferredEnrollmentId.Value)
+                         ?? Courses.FirstOrDefault(c => c.CourseId == previousCourseId)
+                         ?? Courses.FirstOrDefault();
+
+        OnPropertyChanged(nameof(HasCourses));
     }
 
     private static bool TryParseScore(string? text, out decimal score)

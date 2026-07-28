@@ -71,7 +71,12 @@ public sealed class GraduationService : IGraduationService
 
         var passedCourseIds = await _db.Enrollments
             .AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.Status == EnrollmentStatus.Passed)
+            .Where(e => e.StudentId == studentId
+                        && e.Status == EnrollmentStatus.Passed
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => e.CourseId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -121,15 +126,20 @@ public sealed class GraduationService : IGraduationService
     }
 
     /// <summary>
-    /// DISTINCT subjects the student has retaken.
-    ///
-    /// Counts subjects, not attempts: failing one subject three times is one
-    /// retaken subject, which is what the regulation is about.
+    /// DISTINCT subjects whose current official final score is exactly zero.
+    /// The completeness check keeps this result aligned with the prediction
+    /// screen and prevents an ungraded placeholder from becoming a retake.
     /// </summary>
     private async Task<int> CountRetakenSubjectsAsync(int studentId, CancellationToken cancellationToken)
         => await _db.Enrollments
             .AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.AttemptNo > 1)
+            .Where(e => e.StudentId == studentId
+                        && e.IsCounted
+                        && e.FinalScore == 0m
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => e.CourseId)
             .Distinct()
             .CountAsync(cancellationToken);

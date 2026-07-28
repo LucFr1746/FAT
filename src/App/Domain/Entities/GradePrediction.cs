@@ -6,8 +6,9 @@ namespace Domain.Entities;
 /// A saved snapshot of a GPA forecast.
 ///
 /// READ-ONLY HISTORY. Nothing here ever feeds back into the real GPA: the only
-/// source of truth for that is Enrollment (Status = Passed AND IsCounted). The
-/// table exists so a student can see how their projection moved over time.
+/// source of truth for that is a completed Enrollment (Passed or Failed) with
+/// IsCounted = true. This table only lets a student review how their projection
+/// moved over time.
 /// </summary>
 public class GradePrediction
 {
@@ -19,7 +20,7 @@ public class GradePrediction
 
     public decimal PredictedGpa { get; set; }
 
-    /// <summary>Distinct subjects the student has retaken - the demotion input.</summary>
+    /// <summary>Distinct current subjects with an official final score of zero.</summary>
     public int RetakeCount { get; set; }
 
     /// <summary>Classification implied by <see cref="PredictedGpa"/> alone.</summary>

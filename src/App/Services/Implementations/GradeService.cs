@@ -58,6 +58,7 @@ public sealed class GradeService : IGradeService
             .ToDictionary(s => s.SemesterId);
 
         var semesters = rows
+            .Where(r => r.IsEnrolled)
             .GroupBy(r => new
             {
                 r.SemesterId,
@@ -111,15 +112,33 @@ public sealed class GradeService : IGradeService
     {
         _currentUser.RequireSelfOrAdmin(studentId, "Xem điểm");
 
-        var exists = await _db.Students
+        var student = await _db.Students
             .AsNoTracking()
-            .AnyAsync(s => s.StudentId == studentId, cancellationToken);
-
-        if (!exists)
-        {
-            throw new InvalidOperationException(
+            .Where(s => s.StudentId == studentId)
+            .Select(s => new
+            {
+                s.StudentId,
+                s.MajorId,
+                RequiresComponentGrades = s.CurrentTermNo.HasValue
+            })
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new InvalidOperationException(
                 $"Không tìm thấy sinh viên có mã định danh {studentId}.");
-        }
+
+        var curriculumItems = await _db.CurriculumItems
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(ci => ci.Course)
+                .ThenInclude(c => c!.Assessments)
+            .Where(ci => ci.MajorId == student.MajorId
+                         && ci.TermNo >= 1
+                         && ci.TermNo <= 9
+                         && ci.Course != null
+                         && ci.Course.IsActive)
+            .OrderBy(ci => ci.TermNo)
+            .ThenBy(ci => ci.DisplayOrder)
+            .ThenBy(ci => ci.Course!.CourseCode)
+            .ToListAsync(cancellationToken);
 
         var enrollments = await _db.Enrollments
             .AsNoTracking()
@@ -134,7 +153,123 @@ public sealed class GradeService : IGradeService
             .ThenByDescending(e => e.AttemptNo)
             .ToListAsync(cancellationToken);
 
-        return enrollments.Select(MapGradeCourse).ToList();
+        var curriculumByCourseId = curriculumItems
+            .GroupBy(ci => ci.CourseId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(ci => ci.TermNo).First());
+
+        var results = enrollments
+            .Select(enrollment =>
+            {
+                var termNo = curriculumByCourseId.TryGetValue(
+                    enrollment.CourseId, out var curriculum)
+                    ? curriculum.TermNo
+                    : 0;
+
+                return MapGradeCourse(
+                    enrollment,
+                    termNo,
+                    student.RequiresComponentGrades);
+            })
+            .ToList();
+
+        var enrolledCourseIds = enrollments
+            .Select(e => e.CourseId)
+            .ToHashSet();
+
+        results.AddRange(curriculumItems
+            .Where(ci => !enrolledCourseIds.Contains(ci.CourseId))
+            .Select(MapCurriculumCourse));
+
+        return results
+            .OrderBy(r => r.CurriculumTermNo is >= 1 and <= 9
+                ? r.CurriculumTermNo
+                : int.MaxValue)
+            .ThenBy(r => r.CourseCode)
+            .ThenBy(r => r.SemesterDisplayOrder)
+            .ThenBy(r => r.AttemptNo)
+            .ToList();
+    }
+
+    public async Task<IReadOnlyList<GradeSemesterOptionDto>> GetSemesterOptionsAsync(
+        CancellationToken cancellationToken = default)
+        => await _db.Semesters
+            .AsNoTracking()
+            .OrderByDescending(s => s.IsCurrent)
+            .ThenByDescending(s => s.DisplayOrder)
+            .Select(s => new GradeSemesterOptionDto(
+                s.SemesterId,
+                s.SemesterCode,
+                s.SemesterName,
+                s.DisplayOrder,
+                s.IsCurrent))
+            .ToListAsync(cancellationToken);
+
+    public async Task<int> UpsertStudentGradeAsync(
+        int studentId,
+        int enrollmentId,
+        int courseId,
+        int semesterId,
+        int assessmentId,
+        decimal score,
+        CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireSelfOrAdmin(studentId, "Cập nhật điểm");
+        ValidateScore(score);
+
+        if (enrollmentId > 0)
+        {
+            var enrollment = await _db.Enrollments
+                .AsNoTracking()
+                .Where(e => e.EnrollmentId == enrollmentId)
+                .Select(e => new { e.StudentId, e.CourseId })
+                .FirstOrDefaultAsync(cancellationToken)
+                ?? throw new InvalidOperationException(
+                    $"Không tìm thấy lượt học có mã định danh {enrollmentId}.");
+
+            if (enrollment.StudentId != studentId || enrollment.CourseId != courseId)
+            {
+                throw new InvalidOperationException(
+                    "Lượt học đã chọn không thuộc sinh viên hoặc môn học hiện tại.");
+            }
+
+            await UpsertGradeAsync(
+                enrollmentId, assessmentId, score, cancellationToken);
+            return enrollmentId;
+        }
+
+        var belongsToCurriculum = await _db.CurriculumItems
+            .AsNoTracking()
+            .AnyAsync(ci => ci.CourseId == courseId
+                            && ci.TermNo >= 1
+                            && ci.TermNo <= 9
+                            && ci.Major!.Students.Any(s => s.StudentId == studentId),
+                cancellationToken);
+
+        if (!belongsToCurriculum)
+        {
+            throw new InvalidOperationException(
+                "Môn học không thuộc chương trình Kỳ 1–9 của sinh viên.");
+        }
+
+        var assessmentExists = await _db.Assessments
+            .AsNoTracking()
+            .AnyAsync(a => a.AssessmentId == assessmentId
+                           && a.CourseId == courseId,
+                cancellationToken);
+
+        if (!assessmentExists)
+        {
+            throw new ArgumentException(
+                "Assessment không tồn tại hoặc không thuộc môn học đã chọn.",
+                nameof(assessmentId));
+        }
+
+        var newEnrollmentId = await EnrollAsync(
+            studentId, courseId, semesterId, cancellationToken);
+        await UpsertGradeAsync(
+            newEnrollmentId, assessmentId, score, cancellationToken);
+
+        return newEnrollmentId;
     }
 
     public async Task<IReadOnlyList<Grade>> GetGradesAsync(
@@ -428,13 +563,78 @@ public sealed class GradeService : IGradeService
         }
     }
 
-    private static GradeCourseDto MapGradeCourse(Enrollment enrollment)
+    private static GradeCourseDto MapGradeCourse(
+        Enrollment enrollment,
+        int curriculumTermNo,
+        bool requiresComponentGrades)
     {
-        var gradesByAssessment = enrollment.Grades
+        var course = enrollment.Course;
+        var semester = enrollment.Semester;
+        var assessments = MapAssessments(course?.Assessments, enrollment.Grades);
+        var hasCompleteComponentGrades =
+            assessments.Count > 0 && assessments.All(a => a.HasScore);
+        var canUsePersistedResult =
+            !requiresComponentGrades || hasCompleteComponentGrades;
+
+        return new GradeCourseDto(
+            enrollment.EnrollmentId,
+            enrollment.CourseId,
+            course?.CourseCode ?? string.Empty,
+            course?.CourseName ?? string.Empty,
+            Math.Max(0, course?.Credits ?? 0),
+            enrollment.SemesterId,
+            semester?.SemesterCode ?? string.Empty,
+            semester?.SemesterName ?? string.Empty,
+            semester?.DisplayOrder ?? 0,
+            semester?.IsCurrent ?? false,
+            canUsePersistedResult
+                ? enrollment.Status
+                : EnrollmentStatus.Studying,
+            canUsePersistedResult ? enrollment.FinalScore : null,
+            canUsePersistedResult ? enrollment.LetterGrade : null,
+            canUsePersistedResult ? enrollment.GradePoint : null,
+            course?.CountsTowardGpa ?? false,
+            enrollment.IsCounted,
+            enrollment.AttemptNo,
+            assessments,
+            curriculumTermNo);
+    }
+
+    private static GradeCourseDto MapCurriculumCourse(Curriculum curriculum)
+    {
+        var course = curriculum.Course;
+
+        return new GradeCourseDto(
+            EnrollmentId: 0,
+            CourseId: curriculum.CourseId,
+            CourseCode: course?.CourseCode ?? string.Empty,
+            CourseName: course?.CourseName ?? string.Empty,
+            Credits: Math.Max(0, course?.Credits ?? 0),
+            SemesterId: 0,
+            SemesterCode: string.Empty,
+            SemesterName: string.Empty,
+            SemesterDisplayOrder: 0,
+            SemesterIsCurrent: false,
+            Status: EnrollmentStatus.Studying,
+            FinalScore: null,
+            LetterGrade: null,
+            GradePoint: null,
+            CountsTowardGpa: course?.CountsTowardGpa ?? false,
+            IsCounted: false,
+            AttemptNo: 0,
+            Assessments: MapAssessments(course?.Assessments, []),
+            CurriculumTermNo: curriculum.TermNo);
+    }
+
+    private static IReadOnlyList<GradeAssessmentDto> MapAssessments(
+        IEnumerable<Assessment>? assessments,
+        IEnumerable<Grade> grades)
+    {
+        var gradesByAssessment = grades
             .GroupBy(g => g.AssessmentId)
             .ToDictionary(g => g.Key, g => g.OrderByDescending(x => x.UpdatedAt).First());
 
-        var assessments = (enrollment.Course?.Assessments ?? [])
+        return (assessments ?? [])
             .OrderBy(a => a.DisplayOrder)
             .ThenBy(a => a.Name)
             .Select(a =>
@@ -451,28 +651,5 @@ public sealed class GradeService : IGradeService
                     grade?.Score);
             })
             .ToList();
-
-        var course = enrollment.Course;
-        var semester = enrollment.Semester;
-
-        return new GradeCourseDto(
-            enrollment.EnrollmentId,
-            enrollment.CourseId,
-            course?.CourseCode ?? string.Empty,
-            course?.CourseName ?? string.Empty,
-            Math.Max(0, course?.Credits ?? 0),
-            enrollment.SemesterId,
-            semester?.SemesterCode ?? string.Empty,
-            semester?.SemesterName ?? string.Empty,
-            semester?.DisplayOrder ?? 0,
-            semester?.IsCurrent ?? false,
-            enrollment.Status,
-            enrollment.FinalScore,
-            enrollment.LetterGrade,
-            enrollment.GradePoint,
-            course?.CountsTowardGpa ?? false,
-            enrollment.IsCounted,
-            enrollment.AttemptNo,
-            assessments);
     }
 }

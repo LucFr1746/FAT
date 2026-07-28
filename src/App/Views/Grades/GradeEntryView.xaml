@@ -58,12 +58,19 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="Chọn môn và assessment"
                                    Style="{StaticResource SectionTitleStyle}" />
-                        <ComboBox Grid.Row="1" ItemsSource="{Binding Courses}"
+                        <ComboBox Grid.Row="1"
+                                  ItemsSource="{Binding Terms}"
+                                  SelectedItem="{Binding SelectedTerm}"
+                                  DisplayMemberPath="Display"
+                                  Style="{StaticResource CatalogComboBoxStyle}"
+                                  Margin="0,0,0,10" />
+                        <ComboBox Grid.Row="2" ItemsSource="{Binding Courses}"
                                   SelectedItem="{Binding SelectedCourse}"
                                   Style="{StaticResource CatalogComboBoxStyle}" Margin="0,0,0,14">
                             <ComboBox.ItemTemplate>
@@ -71,13 +78,13 @@
                                     <TextBlock>
                                         <Run Text="{Binding CourseCode, Mode=OneWay}" FontWeight="Bold" />
                                         <Run Text="{Binding CourseName, Mode=OneWay, StringFormat= — {0}}" />
-                                        <Run Text="{Binding SemesterCode, Mode=OneWay, StringFormat= ({0})}" />
+                                        <Run Text="{Binding TermAndSemesterDisplay, Mode=OneWay, StringFormat= ({0})}" />
                                     </TextBlock>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <DataGrid Grid.Row="2" ItemsSource="{Binding Assessments}"
+                        <DataGrid Grid.Row="3" ItemsSource="{Binding Assessments}"
                                   SelectedItem="{Binding SelectedAssessment}"
                                   Style="{StaticResource CatalogDataGridStyle}"
                                   ColumnHeaderStyle="{StaticResource CatalogColumnHeaderStyle}"
@@ -109,6 +116,19 @@
                         <TextBlock Text="Trọng số" Style="{StaticResource FieldLabelStyle}" />
                         <TextBlock Text="{Binding SelectedAssessment.WeightPercent, StringFormat={}{0:0.##}%}"
                                    Foreground="{StaticResource TextBrush}" Margin="0,0,0,12" />
+
+                        <TextBlock Text="Học kỳ thực tế" Style="{StaticResource FieldLabelStyle}" />
+                        <ComboBox ItemsSource="{Binding Semesters}"
+                                  SelectedItem="{Binding SelectedSemester}"
+                                  DisplayMemberPath="Display"
+                                  IsEnabled="{Binding SelectedCourse.CanChooseSemester}"
+                                  Style="{StaticResource CatalogComboBoxStyle}"
+                                  Margin="0,0,0,6" />
+                        <TextBlock Text="Chọn học kỳ khi nhập điểm lần đầu cho môn chưa đăng ký."
+                                   Foreground="{StaticResource MutedTextBrush}"
+                                   FontSize="11"
+                                   TextWrapping="Wrap"
+                                   Margin="0,0,0,12" />
 
                         <TextBlock Text="Điểm (0–10)" Style="{StaticResource FieldLabelStyle}" />
                         <TextBox Text="{Binding ScoreText, UpdateSourceTrigger=PropertyChanged}"

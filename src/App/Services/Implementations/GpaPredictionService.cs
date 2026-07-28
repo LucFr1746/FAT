@@ -70,14 +70,15 @@ public sealed class GpaPredictionService : IGpaPredictionService
                     continue;
                 }
 
-                if (plan.ExpectedScore < AcademicRules.PassScore)
+                if (plan.ExpectedScore < 0m || plan.ExpectedScore > 10m)
                 {
-                    // A score below the pass mark does not earn the subject, so
-                    // it cannot enter the GPA - the same rule the real
-                    // calculation applies.
-                    continue;
+                    throw new ArgumentOutOfRangeException(
+                        nameof(plannedGrades),
+                        $"Điểm dự kiến của môn học phải nằm trong khoảng 0 đến 10.");
                 }
 
+                // A predicted Failed result still enters the GPA with its real
+                // score and credits. It simply earns no completed credits.
                 projectedRows.Add((plan.ExpectedScore, course.Credits));
             }
         }
@@ -176,13 +177,21 @@ public sealed class GpaPredictionService : IGpaPredictionService
     }
 
     /// <summary>
-    /// DISTINCT subjects retaken - the input to the classification penalty.
-    /// Subjects, not attempts: three tries at one subject is one retaken subject.
+    /// DISTINCT subjects whose current official final score is exactly zero.
+    /// This is the "môn học lại" rule used by the prediction screen. A registered
+    /// student's aggregate is trusted only after every component grade exists,
+    /// matching the GPA calculation and avoiding placeholder zeroes.
     /// </summary>
     private async Task<int> CountRetakenSubjectsAsync(int studentId, CancellationToken cancellationToken)
         => await _db.Enrollments
             .AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.AttemptNo > 1)
+            .Where(e => e.StudentId == studentId
+                        && e.IsCounted
+                        && e.FinalScore == 0m
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => e.CourseId)
             .Distinct()
             .CountAsync(cancellationToken);

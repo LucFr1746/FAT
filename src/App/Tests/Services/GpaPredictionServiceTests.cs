@@ -78,11 +78,11 @@ public class GpaPredictionServiceTests
     }
 
     /// <summary>
-    /// A planned score below the pass mark does not earn the subject, so it
-    /// cannot enter the GPA - the same rule the real calculation applies.
+    /// A planned score below the pass mark earns no credits but still enters
+    /// the GPA, matching a real completed Failed result.
     /// </summary>
     [Fact]
-    public async Task PredictAsync_ignores_a_planned_score_below_the_pass_mark()
+    public async Task PredictAsync_includes_a_planned_score_below_the_pass_mark()
     {
         using var db = TestDb.CreateWithReferenceData();
         var (student, _) = SeedPassedStudent(db);
@@ -91,7 +91,9 @@ public class GpaPredictionServiceTests
         var prediction = await CreateService(db, student.StudentId).PredictAsync(
             student.StudentId, [new PlannedGradeDto(planned.CourseId, 4.0m)]);
 
-        prediction.PredictedGpa.Should().Be(7.90m, "a failed subject does not join the average");
+        // Existing weighted total 79 plus 4*3, over 10+3 credits = 7.00.
+        prediction.PredictedGpa.Should().Be(7.00m);
+        prediction.ProjectedEarnedCredits.Should().Be(10);
     }
 
     /// <summary>
@@ -177,11 +179,10 @@ public class GpaPredictionServiceTests
     }
 
     /// <summary>
-    /// The penalty counts SUBJECTS, not attempts: failing one subject three
-    /// times is one retaken subject.
+    /// The counter counts DISTINCT zero-score subjects, not enrollment rows.
     /// </summary>
     [Fact]
-    public async Task PredictAsync_counts_retaken_subjects_not_attempts()
+    public async Task PredictAsync_counts_distinct_zero_score_subjects()
     {
         using var db = TestDb.CreateWithReferenceData();
         var (student, _) = SeedPassedStudent(db);
@@ -191,14 +192,92 @@ public class GpaPredictionServiceTests
         var s3 = db.AddSemester("FA25", 3);
 
         db.AddEnrollment(student.StudentId, course.CourseId, s2.SemesterId,
-            EnrollmentStatus.Failed, 3.0m, isCounted: false, attemptNo: 2);
+            EnrollmentStatus.Failed, 0m, isCounted: false, attemptNo: 1);
         db.AddEnrollment(student.StudentId, course.CourseId, s3.SemesterId,
-            EnrollmentStatus.Failed, 4.0m, isCounted: false, attemptNo: 3);
+            EnrollmentStatus.Failed, 0m, isCounted: true, attemptNo: 2);
 
         var prediction = await CreateService(db, student.StudentId).PredictAsync(student.StudentId);
 
-        prediction.RetakenSubjectCount.Should().Be(1, "three attempts at one subject is one retaken subject");
+        prediction.RetakenSubjectCount.Should().Be(1, "two rows for one zero-score subject count once");
         prediction.IsDemoted.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task PredictAsync_does_not_treat_a_nonzero_failed_score_as_a_retake()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var (student, _) = SeedPassedStudent(db);
+        var course = db.AddCourse("FAILED4", credits: 3);
+        var semester = db.AddSemester("SU25", 2);
+
+        db.AddEnrollment(student.StudentId, course.CourseId, semester.SemesterId,
+            EnrollmentStatus.Failed, 4.0m, isCounted: true, attemptNo: 2);
+
+        var prediction = await CreateService(db, student.StudentId).PredictAsync(student.StudentId);
+
+        prediction.RetakenSubjectCount.Should().Be(0,
+            "the agreed prediction rule counts only subjects whose final score is exactly zero");
+    }
+
+    [Fact]
+    public async Task PredictAsync_counts_every_complete_zero_score_subject_for_a_registered_student()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor("SE");
+        var student = db.AddStudent(major.MajorId);
+        student.CurrentTermNo = 1;
+        var semester = db.AddSemester("SP24", 1);
+
+        foreach (var code in new[] { "ZERO01", "ZERO02" })
+        {
+            var course = db.AddCourse(code, credits: 3);
+            var assessment = new Domain.Entities.Assessment
+            {
+                CourseId = course.CourseId,
+                Name = "Final Exam",
+                Weight = 1m,
+                DisplayOrder = 1
+            };
+            db.Assessments.Add(assessment);
+            db.SaveChanges();
+
+            var enrollment = db.AddEnrollment(
+                student.StudentId,
+                course.CourseId,
+                semester.SemesterId,
+                EnrollmentStatus.Failed,
+                finalScore: 0m);
+            db.Grades.Add(new Domain.Entities.Grade
+            {
+                EnrollmentId = enrollment.EnrollmentId,
+                AssessmentId = assessment.AssessmentId,
+                Score = 0m,
+                UpdatedAt = DateTime.UtcNow
+            });
+        }
+
+        // A zero aggregate without its component grade is still only a
+        // placeholder and must not become a third retake.
+        var ungraded = db.AddCourse("UNGRD0", credits: 3);
+        db.Assessments.Add(new Domain.Entities.Assessment
+        {
+            CourseId = ungraded.CourseId,
+            Name = "Final Exam",
+            Weight = 1m,
+            DisplayOrder = 1
+        });
+        db.SaveChanges();
+        db.AddEnrollment(
+            student.StudentId,
+            ungraded.CourseId,
+            semester.SemesterId,
+            EnrollmentStatus.Failed,
+            finalScore: 0m);
+        db.SaveChanges();
+
+        var prediction = await CreateService(db, student.StudentId).PredictAsync(student.StudentId);
+
+        prediction.RetakenSubjectCount.Should().Be(2);
     }
 
     // =========================================================================
@@ -251,16 +330,20 @@ public class GpaPredictionServiceTests
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
 
-    /// <summary>Adds <paramref name="count"/> DISTINCT subjects each on a second attempt.</summary>
+    /// <summary>
+    /// Adds distinct current subjects with a zero final score. These fixtures
+    /// do not count toward GPA so the classification-penalty tests isolate that
+    /// rule; GPA tests cover zero-score courses with normal credits separately.
+    /// </summary>
     private static void AddRetakenSubjects(FAT_DBContext db, int studentId, int count)
     {
         for (var i = 0; i < count; i++)
         {
-            var course = db.AddCourse($"RTK{i:D3}", credits: 3);
+            var course = db.AddCourse($"RTK{i:D3}", credits: 3, countsTowardGpa: false);
             var semester = db.AddSemester($"RS{i:D2}", 10 + i);
 
             db.AddEnrollment(studentId, course.CourseId, semester.SemesterId,
-                EnrollmentStatus.Failed, finalScore: 3.0m, isCounted: false, attemptNo: 2);
+                EnrollmentStatus.Failed, finalScore: 0m, isCounted: true);
         }
     }
 }

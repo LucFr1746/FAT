@@ -62,7 +62,12 @@ public sealed class AnalyticsService : IAnalyticsService
                 e.Course.Credits,
                 e.SemesterId,
                 e.Semester!.SemesterCode,
-                e.Semester.IsCurrent
+                e.Semester.IsCurrent,
+                RequiresComponentGrades = e.Student!.CurrentTermNo != null,
+                HasCompleteComponentGrades =
+                    e.Course.Assessments.Any()
+                    && e.Course.Assessments.All(a =>
+                        e.Grades.Any(g => g.AssessmentId == a.AssessmentId))
             })
             .ToListAsync(cancellationToken);
 
@@ -73,11 +78,17 @@ public sealed class AnalyticsService : IAnalyticsService
         var warnings = await GetAcademicWarningsAsync(studentId, cancellationToken);
 
         var officialAttempts = attempts
-            .Where(a => a.Status != EnrollmentStatus.Withdrawn)
+            .Where(a => a.Status != EnrollmentStatus.Withdrawn
+                        && (a.Status == EnrollmentStatus.Studying
+                            || !a.RequiresComponentGrades
+                            || a.HasCompleteComponentGrades))
             .ToList();
 
         var currentCourses = attempts
-            .Where(a => a.IsCurrent || a.Status == EnrollmentStatus.Studying)
+            .Where(a => (a.IsCurrent || a.Status == EnrollmentStatus.Studying)
+                        && (a.Status == EnrollmentStatus.Studying
+                            || !a.RequiresComponentGrades
+                            || a.HasCompleteComponentGrades))
             .OrderBy(a => a.CourseCode)
             .Select(a => new TranscriptItemDto(
                 a.EnrollmentId,
@@ -131,7 +142,11 @@ public sealed class AnalyticsService : IAnalyticsService
             .Where(e => e.StudentId == studentId
                         && e.IsCounted
                         && e.Status != EnrollmentStatus.Withdrawn
-                        && e.FinalScore != null)
+                        && e.FinalScore != null
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => e.LetterGrade ?? "N/A")
             .ToListAsync(cancellationToken);
 
@@ -190,7 +205,12 @@ public sealed class AnalyticsService : IAnalyticsService
             .AsNoTracking()
             .Where(e => e.StudentId == studentId
                         && e.IsCounted
-                        && e.Status != EnrollmentStatus.Withdrawn)
+                        && e.Status != EnrollmentStatus.Withdrawn
+                        && (e.Status == EnrollmentStatus.Studying
+                            || e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => new
             {
                 e.SemesterId,
@@ -257,7 +277,11 @@ public sealed class AnalyticsService : IAnalyticsService
             .Where(e => e.StudentId == studentId
                         && e.IsCounted
                         && e.Status != EnrollmentStatus.Withdrawn
-                        && e.FinalScore != null);
+                        && e.FinalScore != null
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))));
 
         query = descending
             ? query.OrderByDescending(e => e.FinalScore).ThenBy(e => e.Course!.CourseCode)

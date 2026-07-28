@@ -127,6 +127,129 @@ public class GradeServiceTests
         rows[0].FinalScoreDisplay.Should().Be("-");
     }
 
+    [Fact]
+    public async Task GetStudentGradesAsync_hides_aggregate_result_without_component_grades()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        student.CurrentTermNo = 1;
+        var course = db.AddCourse("PRF192");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+        var assessment = AddAssessment(db, course.CourseId, "Final exam", 1m);
+        var semester = db.AddSemester("SP25", 1, isCurrent: true);
+        var enrollment = db.AddEnrollment(
+            student.StudentId,
+            course.CourseId,
+            semester.SemesterId,
+            EnrollmentStatus.Passed,
+            finalScore: 8m);
+        await db.SaveChangesAsync();
+        var service = CreateService(db, student.StudentId);
+
+        var before = await service.GetStudentGradesAsync(student.StudentId);
+
+        before.Should().ContainSingle();
+        before[0].StatusDisplay.Should().Be("Not Graded");
+        before[0].FinalScore.Should().BeNull();
+
+        db.Grades.Add(new Grade
+        {
+            EnrollmentId = enrollment.EnrollmentId,
+            AssessmentId = assessment.AssessmentId,
+            Score = 8m,
+            UpdatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var after = await service.GetStudentGradesAsync(student.StudentId);
+        after[0].StatusDisplay.Should().Be("Passed");
+        after[0].FinalScore.Should().Be(8m);
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_includes_the_complete_nine_term_curriculum()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+
+        for (var termNo = 1; termNo <= 9; termNo++)
+        {
+            var course = db.AddCourse($"TERM{termNo}");
+            db.AddCurriculumItem(major.MajorId, course.CourseId, termNo);
+            AddAssessment(db, course.CourseId, "Final exam", 1m);
+        }
+
+        var rows = await CreateService(db, student.StudentId)
+            .GetStudentGradesAsync(student.StudentId);
+
+        rows.Should().HaveCount(9);
+        rows.Select(r => r.CurriculumTermNo).Should().BeEquivalentTo(
+            Enumerable.Range(1, 9));
+        rows.Should().OnlyContain(r => !r.IsEnrolled
+                                      && r.StatusDisplay == "Not Graded");
+        (await db.Enrollments.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UpsertStudentGradeAsync_creates_an_enrollment_for_a_curriculum_placeholder()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("NEW101");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+        var semester = db.AddSemester("SP25", 1, isCurrent: true);
+        var assessment = AddAssessment(db, course.CourseId, "Final exam", 1m);
+        var service = CreateService(db, student.StudentId);
+
+        var enrollmentId = await service.UpsertStudentGradeAsync(
+            student.StudentId,
+            enrollmentId: 0,
+            course.CourseId,
+            semester.SemesterId,
+            assessment.AssessmentId,
+            score: 8m);
+
+        enrollmentId.Should().BeGreaterThan(0);
+        (await db.Enrollments.SingleAsync()).StudentId.Should().Be(student.StudentId);
+        (await db.Grades.SingleAsync()).Score.Should().Be(8m);
+
+        var rows = await service.GetStudentGradesAsync(student.StudentId);
+        rows.Should().ContainSingle();
+        rows[0].IsEnrolled.Should().BeTrue();
+        rows[0].FinalScore.Should().Be(8m);
+    }
+
+    [Theory]
+    [InlineData(-0.01)]
+    [InlineData(10.01)]
+    public async Task UpsertStudentGradeAsync_does_not_create_an_enrollment_for_an_invalid_score(
+        decimal score)
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("NEW101");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+        var semester = db.AddSemester("SP25", 1, isCurrent: true);
+        var assessment = AddAssessment(db, course.CourseId, "Final exam", 1m);
+
+        var act = () => CreateService(db, student.StudentId)
+            .UpsertStudentGradeAsync(
+                student.StudentId,
+                enrollmentId: 0,
+                course.CourseId,
+                semester.SemesterId,
+                assessment.AssessmentId,
+                score);
+
+        await act.Should().ThrowAsync<ArgumentOutOfRangeException>();
+        (await db.Enrollments.CountAsync()).Should().Be(0);
+        (await db.Grades.CountAsync()).Should().Be(0);
+    }
+
     private static GradeService CreateService(FAT_DBContext db, int studentId)
         => new(
             db,
