@@ -22,7 +22,7 @@ public sealed partial class FlmImportService : IFlmImportService
     private readonly IReadOnlyList<IFlmDataReader> _readers;
 
     public FlmImportService(FAT_DBContext db, ICurrentUserContext currentUser)
-        : this(db, currentUser, [new XlsxFlmDataReader(), new JsonFlmDataReader()])
+        : this(db, currentUser, [new XlsxFlmDataReader(), new JsonFlmDataReader(), new SingleCurriculumJsonDataReader()])
     {
     }
 
