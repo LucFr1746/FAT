@@ -156,17 +156,15 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             myEnrollments.TryGetValue(item.CourseId, out var standing);
 
             var canTake = !eligibility.TryGetValue(item.CourseId, out var check) || check.CanEnroll;
-
-            // HIDDEN, not disabled - the rule as specified. A subject the student
-            // has already passed or is sitting stays visible regardless, because
-            // removing their own history would be far more confusing than the
-            // lock it is meant to express.
             var alreadyEngaged = standing is not null;
 
-            if (!canTake && !alreadyEngaged)
+            // All subjects remain visible in the term list. Subjects with unmet prerequisites
+            // are marked with IsEligible = false so they display greyed out in the UI.
+            var isEligible = canTake || alreadyEngaged;
+
+            if (!isEligible)
             {
                 hiddenCodes.Add(item.CourseCode);
-                continue;
             }
 
             visible.Add(new StudentSubjectDto(
@@ -184,7 +182,8 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
                 MyFinalScore: standing?.FinalScore,
                 MyAttemptCount: standing?.AttemptCount ?? 0,
                 MaterialCount: item.MaterialCount,
-                AssessmentCount: item.AssessmentCount));
+                AssessmentCount: item.AssessmentCount,
+                IsEligible: isEligible));
         }
 
         return new StudentTermCurriculumDto(
@@ -194,8 +193,8 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             termNo,
             termName,
             visible,
-            hiddenCodes.Count,
-            hiddenCodes,
+            0,
+            [],
             progress);
     }
 

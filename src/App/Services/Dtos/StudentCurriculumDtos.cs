@@ -20,12 +20,14 @@ public sealed record StudentSubjectDto(
     decimal? MyFinalScore,
     int MyAttemptCount,
     int MaterialCount,
-    int AssessmentCount)
+    int AssessmentCount,
+    bool IsEligible = true)
 {
     public bool IsPassed => MyStatus == EnrollmentStatus.Passed;
     public bool IsFailed => MyStatus == EnrollmentStatus.Failed;
     public bool IsStudying => MyStatus == EnrollmentStatus.Studying;
-    public bool IsUncompleted => !IsPassed && !IsFailed && !IsStudying;
+    public bool IsIneligible => !IsEligible;
+    public bool IsUncompleted => !IsPassed && !IsFailed && !IsStudying && IsEligible;
     public bool IsRetake => MyAttemptCount > 1;
 
     /// <summary>"Có"/"Không", matching the wording FLM uses.</summary>

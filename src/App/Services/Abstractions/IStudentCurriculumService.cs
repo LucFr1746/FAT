@@ -10,16 +10,13 @@ namespace Services.Abstractions;
 ///   each with its credits, GPA flag, grade structure, materials, timeline and
 ///   prerequisites.
 ///
-/// THE PREREQUISITE RULE: a subject whose prerequisites are unmet is REMOVED
-/// from the list, not shown greyed out. That is the requirement as written, and
-/// it is why <see cref="GetTermCurriculumAsync"/> also returns a count of what
-/// it hid - a silently shorter list would otherwise look like missing data.
+/// THE PREREQUISITE RULE: subjects with unmet prerequisites are shown in the list
+/// but marked as ineligible so they appear greyed out.
 /// </summary>
 public interface IStudentCurriculumService
 {
     /// <summary>
-    /// The subjects of one kỳ that the student may take, with locked ones
-    /// omitted and counted.
+    /// The subjects of one kỳ, with ineligible ones marked.
     /// </summary>
     Task<StudentTermCurriculumDto> GetTermCurriculumAsync(
         int studentId, int termNo, CancellationToken cancellationToken = default);

@@ -48,11 +48,11 @@ public class StudentCurriculumServiceTests
     }
 
     /// <summary>
-    /// THE RULE: hide, do not disable. The locked subject must be absent from
-    /// the list entirely.
+    /// THE RULE: All term subjects remain in the list, but those with unmet prerequisites
+    /// are marked with IsEligible = false.
     /// </summary>
     [Fact]
-    public async Task GetTermCurriculumAsync_hides_a_subject_with_an_unmet_prerequisite()
+    public async Task GetTermCurriculumAsync_marks_a_subject_with_an_unmet_prerequisite_as_ineligible()
     {
         using var db = TestDb.CreateWithReferenceData();
         var major = db.AddMajor("SE");
@@ -67,31 +67,13 @@ public class StudentCurriculumServiceTests
         var result = await CreateService(db, student.StudentId)
             .GetTermCurriculumAsync(student.StudentId, termNo: 2);
 
-        result.Subjects.Select(s => s.CourseCode).Should().NotContain("PRO192");
-        result.Subjects.Select(s => s.CourseCode).Should().Contain("PRF192");
-    }
+        result.Subjects.Should().HaveCount(2);
+        var proSubject = result.Subjects.First(s => s.CourseCode == "PRO192");
+        proSubject.IsEligible.Should().BeFalse();
+        proSubject.IsIneligible.Should().BeTrue();
 
-    /// <summary>
-    /// A silently shorter list looks like missing data, so what was hidden is
-    /// counted and named.
-    /// </summary>
-    [Fact]
-    public async Task GetTermCurriculumAsync_reports_what_it_hid()
-    {
-        using var db = TestDb.CreateWithReferenceData();
-        var major = db.AddMajor("SE");
-        var student = db.AddStudent(major.MajorId);
-        var prf = db.AddCourse("PRF192");
-        var pro = db.AddCourse("PRO192");
-        db.AddPrerequisite(pro.CourseId, prf.CourseId);
-        db.AddCurriculumItem(major.MajorId, pro.CourseId, 2);
-
-        var result = await CreateService(db, student.StudentId)
-            .GetTermCurriculumAsync(student.StudentId, termNo: 2);
-
-        result.HiddenByPrerequisiteCount.Should().Be(1);
-        result.HiddenSubjectCodes.Should().Contain("PRO192");
-        result.HasHiddenSubjects.Should().BeTrue();
+        var prfSubject = result.Subjects.First(s => s.CourseCode == "PRF192");
+        prfSubject.IsEligible.Should().BeTrue();
     }
 
     [Fact]
