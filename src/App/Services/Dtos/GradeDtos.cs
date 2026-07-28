@@ -21,9 +21,26 @@ public sealed record GradeAssessmentDto(
     public string MinimumDisplay => MinScoreToPass?.ToString("0.##") ?? "-";
 }
 
+/// <summary>A programme-term filter used by both grade screens.</summary>
+public sealed record GradeTermOptionDto(int? TermNo, string Display);
+
+/// <summary>A real calendar semester available when registering a missing course.</summary>
+public sealed record GradeSemesterOptionDto(
+    int SemesterId,
+    string SemesterCode,
+    string SemesterName,
+    int DisplayOrder,
+    bool IsCurrent)
+{
+    public string Display => IsCurrent
+        ? $"{SemesterCode} — {SemesterName} (hiện tại)"
+        : $"{SemesterCode} — {SemesterName}";
+}
+
 /// <summary>
-/// One enrollment with all existing assessments, including components that have
-/// not received a grade yet.
+/// One curriculum course or enrollment attempt with all existing assessments.
+/// EnrollmentId = 0 represents a curriculum course that has not been registered
+/// yet; it exists only in the application layer until the first score is saved.
 /// </summary>
 public sealed record GradeCourseDto(
     int EnrollmentId,
@@ -43,21 +60,35 @@ public sealed record GradeCourseDto(
     bool CountsTowardGpa,
     bool IsCounted,
     int AttemptNo,
-    IReadOnlyList<GradeAssessmentDto> Assessments)
+    IReadOnlyList<GradeAssessmentDto> Assessments,
+    int CurriculumTermNo = 0)
 {
+    public bool IsEnrolled => EnrollmentId > 0;
     public bool HasAnyGrade => Assessments.Any(a => a.HasScore);
     public bool IsFullyGraded => Assessments.Count > 0 && Assessments.All(a => a.HasScore);
-    public bool CanManageGrades => Status != EnrollmentStatus.Withdrawn;
+    public bool CanManageGrades => !IsEnrolled || Status != EnrollmentStatus.Withdrawn;
+    public bool CanChooseSemester => !IsEnrolled;
 
-    public string StatusDisplay => Status switch
-    {
-        EnrollmentStatus.Passed => "Passed",
-        EnrollmentStatus.Failed => "Failed",
-        EnrollmentStatus.Withdrawn => "Withdrawn",
-        _ when !HasAnyGrade => "Not Graded",
-        _ => "Studying"
-    };
+    public string StatusDisplay => !IsEnrolled
+        ? "Not Graded"
+        : Status switch
+        {
+            EnrollmentStatus.Passed => "Passed",
+            EnrollmentStatus.Failed => "Failed",
+            EnrollmentStatus.Withdrawn => "Withdrawn",
+            _ when !HasAnyGrade => "Not Graded",
+            _ => "Studying"
+        };
 
     public string FinalScoreDisplay => FinalScore?.ToString("0.0") ?? "-";
     public string GradePointDisplay => GradePoint?.ToString("0.00") ?? "-";
+    public string CurriculumTermDisplay => CurriculumTermNo is >= 1 and <= 9
+        ? $"Kỳ {CurriculumTermNo}"
+        : "Ngoài chương trình";
+    public string TermAndSemesterDisplay => string.IsNullOrWhiteSpace(SemesterCode)
+        ? CurriculumTermDisplay
+        : $"{CurriculumTermDisplay} • {SemesterCode}";
+    public string AttemptDisplay => IsEnrolled
+        ? $"Lần học {Math.Max(1, AttemptNo)}"
+        : "Chưa đăng ký";
 }

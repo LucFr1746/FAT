@@ -1,4 +1,5 @@
 using Data;
+using Domain.Entities;
 using Domain.Enums;
 using FluentAssertions;
 using Services.Implementations;
@@ -69,6 +70,40 @@ public class AnalyticsServiceTests
         dashboard.FailedCourses.Should().Be(0);
         dashboard.GpaTrend.Should().BeEmpty();
         dashboard.GradeDistribution.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetDashboardAsync_ignores_unverified_aggregate_scores_for_registered_student()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        student.CurrentTermNo = 1;
+        var semester = db.AddSemester("SP25", 1, isCurrent: true);
+        var course = db.AddCourse("PRF192", 3);
+        db.Assessments.Add(new Assessment
+        {
+            CourseId = course.CourseId,
+            Name = "Final exam",
+            Weight = 1m,
+            DisplayOrder = 1
+        });
+        db.AddEnrollment(
+            student.StudentId,
+            course.CourseId,
+            semester.SemesterId,
+            EnrollmentStatus.Passed,
+            finalScore: 8m);
+        await db.SaveChangesAsync();
+
+        var dashboard = await CreateService(db, student.StudentId)
+            .GetDashboardAsync(student.StudentId);
+
+        dashboard.CumulativeGpa.Should().BeNull();
+        dashboard.AverageFinalScore.Should().BeNull();
+        dashboard.PassedCourses.Should().Be(0);
+        dashboard.TotalCourses.Should().Be(0);
+        dashboard.EarnedCredits.Should().Be(0);
     }
 
     [Fact]

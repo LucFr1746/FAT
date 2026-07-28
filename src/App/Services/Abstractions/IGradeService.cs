@@ -19,6 +19,10 @@ public interface IGradeService
     Task<IReadOnlyList<GradeCourseDto>> GetStudentGradesAsync(
         int studentId, CancellationToken cancellationToken = default);
 
+    /// <summary>All real calendar semesters available for a new enrollment.</summary>
+    Task<IReadOnlyList<GradeSemesterOptionDto>> GetSemesterOptionsAsync(
+        CancellationToken cancellationToken = default);
+
     /// <summary>The components and current scores of one course attempt.</summary>
     Task<IReadOnlyList<Grade>> GetGradesAsync(int enrollmentId, CancellationToken cancellationToken = default);
 
@@ -31,6 +35,20 @@ public interface IGradeService
     /// different numbers.
     /// </summary>
     Task UpsertGradeAsync(int enrollmentId, int assessmentId, decimal score, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves a score for either an existing attempt or a curriculum placeholder.
+    /// For a placeholder, a real Enrollment is created first using the existing
+    /// prerequisite rules. Returns the real EnrollmentId.
+    /// </summary>
+    Task<int> UpsertStudentGradeAsync(
+        int studentId,
+        int enrollmentId,
+        int courseId,
+        int semesterId,
+        int assessmentId,
+        decimal score,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes one recorded component score and returns the enrollment to an

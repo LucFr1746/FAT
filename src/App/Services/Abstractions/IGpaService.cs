@@ -11,16 +11,16 @@ namespace Services.Abstractions;
 /// working version FIRST, before anything else, or Member 3 is blocked.
 ///
 /// Rules every implementation must honour:
-///   - Count only rows with Status = Passed AND IsCounted = true.
+///   - Count completed rows with Status = Passed or Failed and IsCounted = true.
 ///   - Weight by credits: SUM(FinalScore * Credits) / SUM(Credits).
-///   - Failed / Withdrawn / Studying contribute to neither numerator nor
-///     denominator.
+///   - Failed contributes with its real score and credits; Withdrawn, Studying
+///     and Not Graded contribute to neither numerator nor denominator.
 ///   - A retaken course counts once, via its latest attempt - that is exactly
 ///     what IsCounted encodes.
 /// </summary>
 public interface IGpaService
 {
-    /// <summary>Cumulative GPA. Null when nothing has been passed yet (NOT zero).</summary>
+    /// <summary>Cumulative GPA. Null when no completed result qualifies (NOT zero).</summary>
     Task<decimal?> GetCumulativeGpaAsync(int studentId, CancellationToken cancellationToken = default);
 
     Task<GpaSummaryDto> GetGpaSummaryAsync(int studentId, CancellationToken cancellationToken = default);

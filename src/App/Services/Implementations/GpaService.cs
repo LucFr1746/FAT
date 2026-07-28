@@ -13,10 +13,10 @@ namespace Services.Implementations;
 /// THE RULES, all in one place because the dashboard, the transcript, the
 /// progress screen and the prediction screen must all produce the same number:
 ///
-///   1. Only Status = Passed AND IsCounted = true contributes.
+///   1. Status = Passed or Failed AND IsCounted = true contributes.
 ///   2. Weighted by credits: SUM(FinalScore * Credits) / SUM(Credits).
-///   3. Failed, Withdrawn and Studying contribute to NEITHER side of that
-///      fraction - not even to the denominator.
+///   3. Failed contributes with its real score and credits. Withdrawn, Studying
+///      and Not Graded contribute to neither side of the fraction.
 ///   4. A retaken subject counts ONCE, through its latest attempt. That is
 ///      exactly what IsCounted encodes; ignoring it is the classic bug that
 ///      produces a suspiciously high GPA.
@@ -58,17 +58,24 @@ public sealed class GpaService : IGpaService
     public async Task<IReadOnlyList<SemesterGpaDto>> GetGpaBySemesterAsync(
         int studentId, CancellationToken cancellationToken = default)
     {
-        // Every passed attempt, including the ones that no longer count toward
-        // the GPA: earned credits and GPA answer different questions, and the
-        // two are separated below rather than in two round trips.
+        // Passed and Failed are both completed results and both enter GPA.
+        // Earned credits still come only from Passed, so the two figures are
+        // separated below rather than calculated in separate round trips.
         var rows = await _db.Enrollments
             .AsNoTracking()
-            .Where(e => e.StudentId == studentId && e.Status == EnrollmentStatus.Passed)
+            .Where(e => e.StudentId == studentId
+                        && (e.Status == EnrollmentStatus.Passed
+                            || e.Status == EnrollmentStatus.Failed)
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course!.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => new
             {
                 e.SemesterId,
                 e.Semester!.SemesterCode,
                 e.Semester.DisplayOrder,
+                e.Status,
                 e.IsCounted,
                 e.FinalScore,
                 e.Course!.Credits,
@@ -86,9 +93,9 @@ public sealed class GpaService : IGpaService
                 CalculateGpa(g
                     .Where(r => r.IsCounted && r.CountsTowardGpa && r.FinalScore.HasValue)
                     .Select(r => (r.FinalScore!.Value, r.Credits))),
-                // Credits are earned by every passed attempt that still counts,
-                // whether or not the subject feeds the GPA.
-                g.Where(r => r.IsCounted).Sum(r => r.Credits),
+                // Failed rows affect GPA but do not earn credits.
+                g.Where(r => r.IsCounted && r.Status == EnrollmentStatus.Passed)
+                    .Sum(r => r.Credits),
                 g.Where(r => r.IsCounted && r.CountsTowardGpa && r.FinalScore.HasValue)
                     .Sum(r => r.Credits)))
             .ToList();
@@ -100,7 +107,17 @@ public sealed class GpaService : IGpaService
         var rows = await _db.Enrollments
             .AsNoTracking()
             .Where(e => e.StudentId == studentId)
-            .Select(e => new { e.Status, e.IsCounted, e.Course!.Credits })
+            .Select(e => new
+            {
+                e.Status,
+                e.IsCounted,
+                e.Course!.Credits,
+                RequiresComponentGrades = e.Student!.CurrentTermNo != null,
+                HasCompleteComponentGrades =
+                    e.Course.Assessments.Any()
+                    && e.Course.Assessments.All(a =>
+                        e.Grades.Any(g => g.AssessmentId == a.AssessmentId))
+            })
             .ToListAsync(cancellationToken);
 
         var requiredCredits = await _db.Students
@@ -110,10 +127,18 @@ public sealed class GpaService : IGpaService
             .FirstOrDefaultAsync(cancellationToken);
 
         return new CreditSummaryDto(
-            EarnedCredits: rows.Where(r => r.Status == EnrollmentStatus.Passed && r.IsCounted).Sum(r => r.Credits),
+            EarnedCredits: rows.Where(r =>
+                    r.Status == EnrollmentStatus.Passed
+                    && r.IsCounted
+                    && (!r.RequiresComponentGrades || r.HasCompleteComponentGrades))
+                .Sum(r => r.Credits),
             InProgressCredits: rows.Where(r => r.Status == EnrollmentStatus.Studying).Sum(r => r.Credits),
             RequiredCredits: requiredCredits,
-            FailedCredits: rows.Where(r => r.Status == EnrollmentStatus.Failed && r.IsCounted).Sum(r => r.Credits));
+            FailedCredits: rows.Where(r =>
+                    r.Status == EnrollmentStatus.Failed
+                    && r.IsCounted
+                    && (!r.RequiresComponentGrades || r.HasCompleteComponentGrades))
+                .Sum(r => r.Credits));
     }
 
     /// <summary>
@@ -126,10 +151,15 @@ public sealed class GpaService : IGpaService
         => await _db.Enrollments
             .AsNoTracking()
             .Where(e => e.StudentId == studentId
-                        && e.Status == EnrollmentStatus.Passed
+                        && (e.Status == EnrollmentStatus.Passed
+                            || e.Status == EnrollmentStatus.Failed)
                         && e.IsCounted
                         && e.Course!.CountsTowardGpa
-                        && e.FinalScore != null)
+                        && e.FinalScore != null
+                        && (e.Student!.CurrentTermNo == null
+                            || (e.Course.Assessments.Any()
+                                && e.Course.Assessments.All(a =>
+                                    e.Grades.Any(g => g.AssessmentId == a.AssessmentId)))))
             .Select(e => new ValueTuple<decimal, int>(e.FinalScore!.Value, e.Course!.Credits))
             .ToListAsync(cancellationToken);
 

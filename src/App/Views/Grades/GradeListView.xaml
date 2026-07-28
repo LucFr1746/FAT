@@ -42,8 +42,8 @@
                              Style="{StaticResource CatalogSearchBoxStyle}"
                              materialDesign:HintAssist.Hint="Tìm theo mã hoặc tên môn..." />
                     <ComboBox Grid.Column="2"
-                              ItemsSource="{Binding Semesters}"
-                              SelectedItem="{Binding SelectedSemester}"
+                              ItemsSource="{Binding Terms}"
+                              SelectedItem="{Binding SelectedTerm}"
                               DisplayMemberPath="Display"
                               Style="{StaticResource CatalogComboBoxStyle}" />
                 </Grid>
@@ -81,9 +81,9 @@
                                                                FontSize="16" Foreground="{StaticResource TextBrush}" />
                                                 </StackPanel>
                                                 <TextBlock Foreground="{StaticResource MutedTextBrush}" Margin="0,4,0,0">
-                                                    <Run Text="{Binding SemesterCode, Mode=OneWay}" />
+                                                    <Run Text="{Binding TermAndSemesterDisplay, Mode=OneWay}" />
                                                     <Run Text="{Binding Credits, Mode=OneWay, StringFormat= • {0} tín chỉ}" />
-                                                    <Run Text="{Binding AttemptNo, Mode=OneWay, StringFormat= • Lần học {0}}" />
+                                                    <Run Text="{Binding AttemptDisplay, Mode=OneWay, StringFormat= • {0}}" />
                                                 </TextBlock>
                                             </StackPanel>
                                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

@@ -29,7 +29,9 @@ public partial class GpaCalculatorViewModel : ViewModelBase, INavigationAware
     public int InProgressCredits => Credits?.InProgressCredits ?? 0;
     public bool IsEmpty => !IsBusy && !HasError && Semesters.Count == 0;
 
-    public GpaCalculatorViewModel(IGpaService gpaService, ICurrentUserContext currentUser)
+    public GpaCalculatorViewModel(
+        IGpaService gpaService,
+        ICurrentUserContext currentUser)
     {
         _gpaService = gpaService ?? throw new ArgumentNullException(nameof(gpaService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));

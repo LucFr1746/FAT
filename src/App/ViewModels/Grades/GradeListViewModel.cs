@@ -7,8 +7,6 @@ using Services.Dtos;
 
 namespace App.ViewModels.Grades;
 
-public sealed record GradeSemesterOption(int? SemesterId, string Display);
-
 /// <summary>Read-only list of the signed-in student's course and component grades.</summary>
 public partial class GradeListViewModel : ViewModelBase, INavigationAware
 {
@@ -20,10 +18,10 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     private ObservableCollection<GradeCourseDto> _grades = [];
 
     [ObservableProperty]
-    private ObservableCollection<GradeSemesterOption> _semesters = [];
+    private ObservableCollection<GradeTermOptionDto> _terms = [];
 
     [ObservableProperty]
-    private GradeSemesterOption? _selectedSemester;
+    private GradeTermOptionDto? _selectedTerm;
 
     [ObservableProperty]
     private string _searchKeyword = string.Empty;
@@ -34,7 +32,9 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
     public bool IsEmpty => !IsBusy && !HasError && Grades.Count == 0;
 
-    public GradeListViewModel(IGradeService gradeService, ICurrentUserContext currentUser)
+    public GradeListViewModel(
+        IGradeService gradeService,
+        ICurrentUserContext currentUser)
     {
         _gradeService = gradeService ?? throw new ArgumentNullException(nameof(gradeService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
@@ -44,7 +44,7 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
     public Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
         => RefreshAsync(cancellationToken);
 
-    partial void OnSelectedSemesterChanged(GradeSemesterOption? value) => ApplyFilters();
+    partial void OnSelectedTermChanged(GradeTermOptionDto? value) => ApplyFilters();
 
     partial void OnSearchKeywordChanged(string value) => ApplyFilters();
 
@@ -59,27 +59,28 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
             return;
         }
 
-        var selectedSemesterId = SelectedSemester?.SemesterId;
+        var selectedTermNo = SelectedTerm?.TermNo;
 
         await RunBusyAsync(async () =>
         {
             _allGrades = await _gradeService.GetStudentGradesAsync(studentId, cancellationToken);
 
-            Semesters.Clear();
-            Semesters.Add(new GradeSemesterOption(null, "Tất cả học kỳ"));
-            foreach (var semester in _allGrades
-                         .GroupBy(g => new { g.SemesterId, g.SemesterCode, g.SemesterDisplayOrder })
-                         .OrderByDescending(g => g.Key.SemesterDisplayOrder))
+            Terms.Clear();
+            Terms.Add(new GradeTermOptionDto(null, "Tất cả 9 kỳ"));
+            for (var termNo = 1; termNo <= 9; termNo++)
             {
-                Semesters.Add(new GradeSemesterOption(
-                    semester.Key.SemesterId,
-                    semester.Key.SemesterCode));
+                Terms.Add(new GradeTermOptionDto(termNo, $"Kỳ {termNo}"));
             }
 
-            SelectedSemester = Semesters.FirstOrDefault(s => s.SemesterId == selectedSemesterId)
-                               ?? Semesters.FirstOrDefault();
+            SelectedTerm = Terms.FirstOrDefault(t => t.TermNo == selectedTermNo)
+                           ?? Terms.FirstOrDefault();
             ApplyFilters();
-            StatusMessage = $"Đã tải {_allGrades.Count} lượt học.";
+
+            var enrolledAttempts = _allGrades.Count(g => g.IsEnrolled);
+            var curriculumCourses = _allGrades.Select(g => g.CourseId).Distinct().Count();
+            StatusMessage =
+                $"Đã tải {curriculumCourses} môn thuộc 9 kỳ " +
+                $"({enrolledAttempts} lượt học đã đăng ký).";
         });
 
         OnPropertyChanged(nameof(IsEmpty));
@@ -90,9 +91,9 @@ public partial class GradeListViewModel : ViewModelBase, INavigationAware
         var keyword = SearchKeyword?.Trim();
         var query = _allGrades.AsEnumerable();
 
-        if (SelectedSemester?.SemesterId is int semesterId)
+        if (SelectedTerm?.TermNo is int termNo)
         {
-            query = query.Where(g => g.SemesterId == semesterId);
+            query = query.Where(g => g.CurriculumTermNo == termNo);
         }
 
         if (!string.IsNullOrWhiteSpace(keyword))
