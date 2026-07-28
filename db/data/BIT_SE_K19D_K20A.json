@@ -2328,7 +2328,7 @@
             "code": "SWP391",
             "name_en": "Software Development Project",
             "name_vi": "Dự án phát triển phần mềm",
-            "semester": 6,
+            "semester": 5,
             "credit": 3,
             "prerequisite": "PRJ301, SWE201c, pass LAB211",
             "assessment_plan": [

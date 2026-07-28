@@ -32,7 +32,7 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
     private DateTime? _dateOfBirth;
 
     [ObservableProperty]
-    private string _selectedSemester = "Kỳ 5";
+    private string _selectedSemester = "Kỳ 1";
 
     [ObservableProperty]
     private string _selectedMajor = "Software Engineering";
@@ -126,8 +126,8 @@ public partial class ProfileViewModel : ViewModelBase, INavigationAware
                 DateOfBirth = Profile.DateOfBirth ?? new DateTime(2003, 1, 1);
                 SelectedMajor = string.IsNullOrWhiteSpace(Profile.MajorName) ? "Software Engineering" : Profile.MajorName;
                 Username = Profile.Username;
-                SelectedSemester = Profile.CurrentSemester ?? "Kỳ 5";
-                SelectedCampus = string.IsNullOrWhiteSpace(Profile.Campus) ? "Hồ Chí Minh" : Profile.Campus;
+                SelectedSemester = Profile.CurrentSemester ?? Domain.Constants.CatalogRules.GetTermName(Profile.CurrentTermNo ?? 1);
+                SelectedCampus = string.IsNullOrWhiteSpace(Profile.Campus) ? "Đà Nẵng" : Profile.Campus;
             }
         });
     }

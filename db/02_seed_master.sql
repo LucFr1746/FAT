@@ -1,13 +1,8 @@
-/* =============================================================================
+﻿/* =============================================================================
    FAT - FPT Academic Tracker
    02_seed_master.sql : reference data (Role, GradeScale, Major, Semester,
-                        Course, Assessment, Prerequisite, Curriculum).
-
-   Run AFTER 01_schema.sql.
-
-   Everything below resolves keys by CODE (CourseCode, MajorCode, ...) instead
-   of hard-coding ids, so inserting or removing a row above does not silently
-   shift every row below it.
+                         Course, Assessment, Prerequisite, Curriculum).
+   AUTO-GENERATED EXCLUSIVELY FROM db/data/BIT_SE_K19D_K20A.json
    ============================================================================= */
 
 SET NOCOUNT ON;
@@ -30,11 +25,7 @@ INSERT INTO dbo.Role (RoleName, Description) VALUES
 GO
 
 /* -----------------------------------------------------------------------------
-   GradeScale - 10-point score to letter grade and 4-point value
-
-   Half-open bands: MinScore <= Score < MaxScore.
-   The A band uses MaxScore = 10.01 so that a perfect 10.00 still falls inside.
-   The pass mark is 5.0, so D+ and above pass while D and F fail.
+   GradeScale
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.GradeScale (MinScore, MaxScore, LetterGrade, GradePoint, Description) VALUES
     (8.50, 10.01, N'A',  4.00, N'Very good'),
@@ -49,20 +40,13 @@ GO
 
 /* -----------------------------------------------------------------------------
    Major
-
-   RequiredCredits = 107, which is exactly the total credits of the curriculum
-   defined below. A self-check at the end of this script enforces that, so a
-   mismatch fails here rather than showing a wrong graduation percentage later.
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.Major (MajorCode, MajorName, RequiredCredits, TotalTerms) VALUES
-    (N'SE', N'Software Engineering', 107, 9);
+    (N'SE', N'Software Engineering', 145, 9);
 GO
 
 /* -----------------------------------------------------------------------------
-   Semester - Spring 2024 through Spring 2027
-
-   DisplayOrder is the real chronological order. Do NOT sort by SemesterCode:
-   alphabetically "FA25" precedes "SP26", but FA25 actually happens first.
+   Semester
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.Semester (SemesterCode, SemesterName, StartDate, EndDate, DisplayOrder, IsCurrent) VALUES
     (N'SP24', N'Spring 2024', '2024-01-08', '2024-04-28',  1, 0),
@@ -72,140 +56,524 @@ INSERT INTO dbo.Semester (SemesterCode, SemesterName, StartDate, EndDate, Displa
     (N'SU25', N'Summer 2025', '2025-05-05', '2025-08-24',  5, 0),
     (N'FA25', N'Fall 2025',   '2025-09-01', '2025-12-21',  6, 0),
     (N'SP26', N'Spring 2026', '2026-01-05', '2026-04-26',  7, 0),
-    (N'SU26', N'Summer 2026', '2026-05-04', '2026-08-23',  8, 1),   -- current term
+    (N'SU26', N'Summer 2026', '2026-05-04', '2026-08-23',  8, 1),
     (N'FA26', N'Fall 2026',   '2026-08-31', '2026-12-20',  9, 0),
     (N'SP27', N'Spring 2027', '2027-01-04', '2027-04-25', 10, 0);
 GO
 
 /* -----------------------------------------------------------------------------
-   Course - 31 courses of the Software Engineering programme
+   Course - parsed from BIT_SE_K19D_K20A.json
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.Course (CourseCode, CourseName, Credits, Description) VALUES
-    -- Term 1
-    (N'CSI104',  N'Introduction to Computer Science',               3, N'Foundations of computing'),
-    (N'PRF192',  N'Programming Fundamentals (C)',                   3, N'Basic programming in C'),
-    (N'MAE101',  N'Mathematics for Engineering',                    3, N'Engineering mathematics'),
-    (N'CEA201',  N'Computer Organization and Architecture',         3, N'Computer architecture'),
-    (N'SSL101c', N'Academic Skills for University Success',         3, N'University study skills'),
-    -- Term 2
-    (N'PRO192',  N'Object-Oriented Programming (Java)',             3, N'OOP with Java'),
-    (N'MAD101',  N'Discrete Mathematics',                           3, N'Discrete structures'),
-    (N'OSG202',  N'Operating Systems',                              3, N'Operating system principles'),
-    (N'NWC204',  N'Computer Networking',                            3, N'Networking fundamentals'),
-    (N'SSG104',  N'Communication and In-Group Working Skills',      3, N'Teamwork and communication'),
-    -- Term 3
-    (N'CSD201',  N'Data Structures and Algorithms',                 3, N'Data structures and algorithms'),
-    (N'DBI202',  N'Database Systems',                               3, N'Relational database systems'),
-    (N'LAB211',  N'OOP with Java Lab',                              3, N'Hands-on OOP lab'),
-    (N'WED201c', N'Web Design',                                     3, N'Web design fundamentals'),
-    (N'IOT102',  N'Internet of Things',                             3, N'IoT fundamentals'),
-    -- Term 4
-    (N'PRJ301',  N'Java Web Application Development',               3, N'Java web development'),
-    (N'SWE201c', N'Introduction to Software Engineering',           3, N'Software engineering principles'),
-    (N'MAS291',  N'Statistics and Probability',                     3, N'Probability and statistics'),
-    (N'ITE302c', N'Ethics in IT',                                   3, N'Professional ethics in IT'),
-    -- Term 5
-    (N'PRN212',  N'Basic Cross-Platform Application Programming',   3, N'Cross-platform basics with .NET'),
-    (N'SWP391',  N'Software Development Project',                   3, N'Team software project'),
-    (N'SWT301',  N'Software Testing',                               3, N'Software testing'),
-    -- Term 6
-    (N'PRN222',  N'Advanced Cross-Platform Application Programming', 3, N'Advanced cross-platform development'),
-    (N'SWR302',  N'Software Requirement',                           3, N'Requirements engineering'),
-    (N'SDN302',  N'Software Development with .NET',                 3, N'Building software with .NET'),
-    -- Term 7
-    (N'PMG201c', N'Project Management',                             3, N'Project management'),
-    (N'EXE101',  N'Experiential Entrepreneurship 1',                3, N'Entrepreneurship part 1'),
-    (N'MLN111',  N'Philosophy of Marxism - Leninism',               3, N'Philosophy'),
-    -- Term 8
-    (N'OJT202',  N'On-the-Job Training',                           10, N'Industry internship'),
-    -- Term 9
-    (N'SEP490',  N'Software Engineering Capstone Project',         10, N'Capstone project'),
-    (N'EXE201',  N'Experiential Entrepreneurship 2',                3, N'Entrepreneurship part 2');
+    (N'OTP101', N'Định hướng và Rèn luyện tập trung', 0, N'Định hướng và Rèn luyện tập trung'),
+    (N'PEN', N'Tiếng Anh chuẩn bị', 0, N'Tiếng Anh chuẩn bị'),
+    (N'PHE_COM*1', N'Giáo dục thể chất 1', 2, N'Giáo dục thể chất 1'),
+    (N'TMI_ELE', N'Nhạc cụ truyền thống', 3, N'Nhạc cụ truyền thống'),
+    (N'CEA201', N'Tổ chức và Kiến trúc máy tính', 3, N'Tổ chức và Kiến trúc máy tính'),
+    (N'CSI106', N'Nhập môn khoa học máy tính', 3, N'Nhập môn khoa học máy tính'),
+    (N'MAE101', N'Toán cho ngành kỹ thuật', 3, N'Toán cho ngành kỹ thuật'),
+    (N'PHE_COM*2', N'Giáo dục thể chất 2', 2, N'Giáo dục thể chất 2'),
+    (N'PRF192', N'Cơ sở lập trình', 3, N'Cơ sở lập trình'),
+    (N'SSL101c', N'Kỹ năng học tập đại học', 3, N'Kỹ năng học tập đại học'),
+    (N'MAD101', N'Toán rời rạc', 3, N'Toán rời rạc'),
+    (N'NWC204', N'Mạng máy tính', 3, N'Mạng máy tính'),
+    (N'OSG202', N'Hệ điều hành', 3, N'Hệ điều hành'),
+    (N'PHE_COM*3', N'Giáo dục thể chất 3', 2, N'Giáo dục thể chất 3'),
+    (N'PRO192', N'Lập trình hướng đối tượng', 3, N'Lập trình hướng đối tượng'),
+    (N'WED201c', N'Thiết kế web', 3, N'Thiết kế web'),
+    (N'CSD201', N'Cấu trúc dữ liệu và giải thuật', 3, N'Cấu trúc dữ liệu và giải thuật'),
+    (N'DBI202', N'Các hệ cơ sở dữ liệu', 3, N'Các hệ cơ sở dữ liệu'),
+    (N'JPD113', N'Tiếng Nhật sơ cấp 1-A1.1', 3, N'Tiếng Nhật sơ cấp 1-A1.1'),
+    (N'LAB211', N'Thực hành OOP với Java', 3, N'Thực hành OOP với Java'),
+    (N'MAS291', N'Xác suất thống kê', 3, N'Xác suất thống kê'),
+    (N'IOT102', N'Internet vạn vật', 3, N'Internet vạn vật'),
+    (N'JPD123', N'Tiếng Nhật sơ cấp 1-A1.2', 3, N'Tiếng Nhật sơ cấp 1-A1.2'),
+    (N'PRJ301', N'Phát triển ứng dụng Java web', 3, N'Phát triển ứng dụng Java web'),
+    (N'SSG104', N'Kỹ năng giao tiếp và cộng tác', 3, N'Kỹ năng giao tiếp và cộng tác'),
+    (N'SWE202c', N'Nhập môn kĩ thuật phần mềm', 3, N'Nhập môn kĩ thuật phần mềm'),
+    (N'SE_COM*1', N'Học phần 1 của combo*', 3, N'Học phần 1 của combo*'),
+    (N'SWP391', N'Dự án phát triển phần mềm', 3, N'Dự án phát triển phần mềm'),
+    (N'SWR302', N'Yêu cầu phần mềm', 3, N'Yêu cầu phần mềm'),
+    (N'SWT301', N'Kiểm thử phần mềm', 3, N'Kiểm thử phần mềm'),
+    (N'WDU203c', N'Thiết kế trải nghiệm người dùng', 3, N'Thiết kế trải nghiệm người dùng'),
+    (N'ENW493c', N'Phương pháp nghiên cứu & Kỹ năng viết học thuật', 3, N'Phương pháp nghiên cứu & Kỹ năng viết học thuật'),
+    (N'OJT202', N'Đào tạo trong môi trường thực tế', 10, N'Đào tạo trong môi trường thực tế'),
+    (N'EXE101', N'Trải nghiệm khởi nghiệp 1', 3, N'Trải nghiệm khởi nghiệp 1'),
+    (N'PMG201c', N'Quản lý dự án', 3, N'Quản lý dự án'),
+    (N'SE_COM*2', N'Học phần 2 của combo*', 3, N'Học phần 2 của combo*'),
+    (N'SE_COM*3', N'Học phần 3 của combo*', 3, N'Học phần 3 của combo*'),
+    (N'SWD392', N'Kiến trúc và thiết kế phần mềm', 3, N'Kiến trúc và thiết kế phần mềm'),
+    (N'EXE201', N'Trải nghiệm khởi nghiệp 2', 3, N'Trải nghiệm khởi nghiệp 2'),
+    (N'ITE302c', N'Đạo đức trong CNTT', 3, N'Đạo đức trong CNTT'),
+    (N'MLN111', N'Triết học Mác - Lê-nin', 3, N'Triết học Mác - Lê-nin'),
+    (N'MLN122', N'Kinh tế chính trị Mác - Lê-nin', 2, N'Kinh tế chính trị Mác - Lê-nin'),
+    (N'PRM393', N'Lập trình di động', 3, N'Lập trình di động'),
+    (N'SE_COM*4_ELE', N'Học phần 4 của combo SE', 3, N'Học phần 4 của combo SE'),
+    (N'HCM202', N'Tư tưởng Hồ Chí Minh', 2, N'Tư tưởng Hồ Chí Minh'),
+    (N'MLN131', N'Chủ nghĩa xã hội khoa học', 2, N'Chủ nghĩa xã hội khoa học'),
+    (N'SE_GRA_ELE', N'Học phần lựa chọn Đồ án tốt nghiệp chuyên ngành Kỹ thuật phần mềm', 10, N'Học phần lựa chọn Đồ án tốt nghiệp chuyên ngành Kỹ thuật phần mềm'),
+    (N'VNR202', N'Lịch sử Đảng Cộng sản Việt Nam', 2, N'Lịch sử Đảng Cộng sản Việt Nam')
+;
 GO
 
 /* -----------------------------------------------------------------------------
-   Assessment - grade components per course
-
-   Written as INSERT ... SELECT rather than 31 x 4 hand-typed rows: shorter, and
-   more importantly it makes it impossible to mistype a weight on one course.
-
-   Weights sum to 1.00 per course. The final exam carries a minimum of 4.0:
-   score below that and the course is failed even if the weighted total is 5.0
-   or higher.
+   Assessment - parsed from BIT_SE_K19D_K20A.json
    ----------------------------------------------------------------------------- */
-
--- Regular lecture and lab courses (29 of them)
 INSERT INTO dbo.Assessment (CourseId, Name, Weight, MinScoreToPass, DisplayOrder)
-SELECT c.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder
-FROM dbo.Course c
-CROSS JOIN (VALUES
-    (N'Assignment',     CAST(0.20 AS DECIMAL(5,4)), CAST(NULL AS DECIMAL(4,2)), 1),
-    (N'Progress Test',  CAST(0.20 AS DECIMAL(5,4)), CAST(NULL AS DECIMAL(4,2)), 2),
-    (N'Practical Exam', CAST(0.20 AS DECIMAL(5,4)), CAST(NULL AS DECIMAL(4,2)), 3),
-    (N'Final Exam',     CAST(0.40 AS DECIMAL(5,4)), CAST(4.00 AS DECIMAL(4,2)), 4)
-) AS a(Name, Weight, MinScoreToPass, DisplayOrder)
-WHERE c.CourseCode NOT IN (N'OJT202', N'SEP490');
-GO
-
--- Project and internship courses: supervisor assessment plus a defence
-INSERT INTO dbo.Assessment (CourseId, Name, Weight, MinScoreToPass, DisplayOrder)
-SELECT c.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder
-FROM dbo.Course c
-CROSS JOIN (VALUES
-    (N'Supervisor Evaluation', CAST(0.40 AS DECIMAL(5,4)), CAST(NULL AS DECIMAL(4,2)), 1),
-    (N'Final Defense',         CAST(0.60 AS DECIMAL(5,4)), CAST(4.00 AS DECIMAL(4,2)), 2)
-) AS a(Name, Weight, MinScoreToPass, DisplayOrder)
-WHERE c.CourseCode IN (N'OJT202', N'SEP490');
+SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*1'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+UNION ALL
+SELECT CourseId, N'Participation', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.7, 4, 3 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CEA201'
+UNION ALL
+SELECT CourseId, N'Exercises', 0.4, 0, 2 FROM dbo.Course WHERE CourseCode = N'CEA201'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'CEA201'
+UNION ALL
+SELECT CourseId, N'Group presentation', 0.1, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSI106'
+UNION ALL
+SELECT CourseId, N'Lab', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSI106'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSI106'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSI106'
+UNION ALL
+SELECT CourseId, N'Assignments/Exercises', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAE101'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAE101'
+UNION ALL
+SELECT CourseId, N'Final Exam', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'MAE101'
+UNION ALL
+SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*2'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRF192'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRF192'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRF192'
+UNION ALL
+SELECT CourseId, N'Workshop', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRF192'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRF192'
+UNION ALL
+SELECT CourseId, N'Theoretical Exam (TE)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'SSL101c'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAD101'
+UNION ALL
+SELECT CourseId, N'Assignments/Exercises', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAD101'
+UNION ALL
+SELECT CourseId, N'Programming Assignment', 0.1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAD101'
+UNION ALL
+SELECT CourseId, N'Final Exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAD101'
+UNION ALL
+SELECT CourseId, N'Lab', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'NWC204'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'NWC204'
+UNION ALL
+SELECT CourseId, N'Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'NWC204'
+UNION ALL
+SELECT CourseId, N'Final Exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'NWC204'
+UNION ALL
+SELECT CourseId, N'Lab', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'OSG202'
+UNION ALL
+SELECT CourseId, N'Presentation', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'OSG202'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'OSG202'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'OSG202'
+UNION ALL
+SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*3'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRO192'
+UNION ALL
+SELECT CourseId, N'Lab', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRO192'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRO192'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRO192'
+UNION ALL
+SELECT CourseId, N'Final Exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRO192'
+UNION ALL
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'WED201c'
+UNION ALL
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'WED201c'
+UNION ALL
+SELECT CourseId, N'Progress test (PT)', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSD201'
+UNION ALL
+SELECT CourseId, N'Assignment (AS)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSD201'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSD201'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSD201'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'DBI202'
+UNION ALL
+SELECT CourseId, N'Lab', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'DBI202'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'DBI202'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'DBI202'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'DBI202'
+UNION ALL
+SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD113'
+UNION ALL
+SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD113'
+UNION ALL
+SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD113'
+UNION ALL
+SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD113'
+UNION ALL
+SELECT CourseId, N'Course Completion', 1.0, NULL, 1 FROM dbo.Course WHERE CourseCode = N'LAB211'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAS291'
+UNION ALL
+SELECT CourseId, N'Computer Project', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAS291'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAS291'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.35, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAS291'
+UNION ALL
+SELECT CourseId, N'Active learning', 0.1, 0, 1 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'Final Project Presentation', 0.2, 4, 2 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'On-Going Project Assessment', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'Presentation', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'Progress test (Practice/Exercises/Quiz)', 0.1, 0, 5 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.2, 4, 6 FROM dbo.Course WHERE CourseCode = N'IOT102'
+UNION ALL
+SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD123'
+UNION ALL
+SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD123'
+UNION ALL
+SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD123'
+UNION ALL
+SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD123'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Progress Test 1', 0.05, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Progress Test 2', 0.05, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Workshop 1', 0.05, 0, 5 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Workshop 2', 0.05, 0, 6 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Final Exam', 0.2, 4, 7 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+UNION ALL
+SELECT CourseId, N'Activity', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'Group assignment (Group asm)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'Group Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'Quiz', 0.05, 0, 5 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.2, 4, 6 FROM dbo.Course WHERE CourseCode = N'SSG104'
+UNION ALL
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'SWE202c'
+UNION ALL
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'SWE202c'
+UNION ALL
+SELECT CourseId, N'Assessment 1 (Week 3)', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWP391'
+UNION ALL
+SELECT CourseId, N'Assessment 2 (Week 8)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWP391'
+UNION ALL
+SELECT CourseId, N'Assessment 3 (Week 10)', 0.25, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWP391'
+UNION ALL
+SELECT CourseId, N'Final Project Presentation', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWP391'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWR302'
+UNION ALL
+SELECT CourseId, N'LAB', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWR302'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWR302'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.25, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWR302'
+UNION ALL
+SELECT CourseId, N'Theory Exam', 0.25, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWR302'
+UNION ALL
+SELECT CourseId, N'Lab', 0.25, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWT301'
+UNION ALL
+SELECT CourseId, N'Presentation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWT301'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWT301'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.25, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWT301'
+UNION ALL
+SELECT CourseId, N'Theory Exam', 0.25, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWT301'
+UNION ALL
+SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'WDU203c'
+UNION ALL
+SELECT CourseId, N'Final Exam', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'ENW493c'
+UNION ALL
+SELECT CourseId, N'Professional knowledge and skills', 0.4, 4, 1 FROM dbo.Course WHERE CourseCode = N'OJT202'
+UNION ALL
+SELECT CourseId, N'Soft skills', 0.3, 4, 2 FROM dbo.Course WHERE CourseCode = N'OJT202'
+UNION ALL
+SELECT CourseId, N'Attitude', 0.3, 4, 3 FROM dbo.Course WHERE CourseCode = N'OJT202'
+UNION ALL
+SELECT CourseId, N'Constructivism Presentations', 0.15, 5, 1 FROM dbo.Course WHERE CourseCode = N'EXE101'
+UNION ALL
+SELECT CourseId, N'Group Assignment 1 (Checkpoint 1)', 0.1, 5, 2 FROM dbo.Course WHERE CourseCode = N'EXE101'
+UNION ALL
+SELECT CourseId, N'Group Assignment 2 (Checkpoint 2)', 0.2, 5, 3 FROM dbo.Course WHERE CourseCode = N'EXE101'
+UNION ALL
+SELECT CourseId, N'Group Assignment 3 (Checkpoint 3)', 0.15, 5, 4 FROM dbo.Course WHERE CourseCode = N'EXE101'
+UNION ALL
+SELECT CourseId, N'Presentation (Checkpoint 4)', 0.4, 5, 5 FROM dbo.Course WHERE CourseCode = N'EXE101'
+UNION ALL
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'PMG201c'
+UNION ALL
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'PMG201c'
+UNION ALL
+SELECT CourseId, N'Course Project', 0.25, 5, 1 FROM dbo.Course WHERE CourseCode = N'SWD392'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWD392'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.2, 4, 3 FROM dbo.Course WHERE CourseCode = N'SWD392'
+UNION ALL
+SELECT CourseId, N'Theory Exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWD392'
+UNION ALL
+SELECT CourseId, N'Outcome 1 (Product/Service)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'EXE201'
+UNION ALL
+SELECT CourseId, N'Outcome 2 (Presentation)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'EXE201'
+UNION ALL
+SELECT CourseId, N'Outcome 3 (Sales Results)', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'EXE201'
+UNION ALL
+SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'ITE302c'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN111'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN111'
+UNION ALL
+SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN111'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN111'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN122'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN122'
+UNION ALL
+SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN122'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN122'
+UNION ALL
+SELECT CourseId, N'Practical Exam', 0.25, 4, 1 FROM dbo.Course WHERE CourseCode = N'PRM393'
+UNION ALL
+SELECT CourseId, N'Progress Test', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRM393'
+UNION ALL
+SELECT CourseId, N'Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRM393'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'PRM393'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'HCM202'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'HCM202'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'HCM202'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'HCM202'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN131'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN131'
+UNION ALL
+SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN131'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN131'
+UNION ALL
+SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'VNR202'
+UNION ALL
+SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'VNR202'
+UNION ALL
+SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'VNR202'
+UNION ALL
+SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'VNR202'
+;
 GO
 
 /* -----------------------------------------------------------------------------
-   Prerequisite
-
-   The chain PRF192 -> PRO192 -> PRN212 -> PRN222 is four levels deep on
-   purpose, to give the recursive prerequisite resolver real data to work on.
+   Prerequisite - parsed from BIT_SE_K19D_K20A.json
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.Prerequisite (CourseId, RequiredCourseId, Type)
-SELECT c.CourseId, r.CourseId, N'Prerequisite'
-FROM (VALUES
-    (N'PRO192',  N'PRF192'),
-    (N'CSD201',  N'PRO192'),
-    (N'LAB211',  N'PRO192'),
-    (N'MAD101',  N'MAE101'),
-    (N'MAS291',  N'MAE101'),
-    (N'IOT102',  N'CEA201'),
-    (N'PRJ301',  N'PRO192'),
-    (N'PRJ301',  N'DBI202'),
-    (N'PRN212',  N'PRO192'),
-    (N'PRN222',  N'PRN212'),
-    (N'SDN302',  N'PRN212'),
-    (N'SWT301',  N'SWE201c'),
-    (N'SWR302',  N'SWE201c'),
-    (N'SWP391',  N'SWE201c'),
-    (N'SWP391',  N'DBI202'),
-    (N'OJT202',  N'SWP391'),
-    (N'SEP490',  N'SWP391'),
-    (N'SEP490',  N'OJT202'),
-    (N'EXE201',  N'EXE101')
-) AS p(CourseCode, RequiredCode)
-JOIN dbo.Course c ON c.CourseCode = p.CourseCode
-JOIN dbo.Course r ON r.CourseCode = p.RequiredCode;
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'PRO192' AND r.CourseCode = N'Pass'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'PRO192' AND r.CourseCode = N'PRF192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'CSD201' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'JPD113' AND r.CourseCode = N'Không'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'LAB211' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'MAS291' AND r.CourseCode = N'MAE101'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'MAS291' AND r.CourseCode = N'MAC101'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'JPD123' AND r.CourseCode = N'JPD113'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'PRJ301' AND r.CourseCode = N'DBI202'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'PRJ301' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWE202c' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWP391' AND r.CourseCode = N'PRJ301'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWP391' AND r.CourseCode = N'SWE201c'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWP391' AND r.CourseCode = N'pass'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWP391' AND r.CourseCode = N'LAB211'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWR302' AND r.CourseCode = N'SWE102'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWR302' AND r.CourseCode = N'SWE201c'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWT301' AND r.CourseCode = N'SWE102'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWT301' AND r.CourseCode = N'SWE201c'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Students'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'attained'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'90%'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'the'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'total'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'credits'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'prior'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'the'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'OJT'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'term'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'(excluding'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Physical'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Education'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'and'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'OTP'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Programs)'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Students'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'choosing'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'combo'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'(Japanese'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Bridge'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'Engineer)'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'have'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'pass'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'OJT202' AND r.CourseCode = N'JPD133'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWD392' AND r.CourseCode = N'SWE201c'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'SWD392' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'EXE201' AND r.CourseCode = N'EXE101'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'PRM393' AND r.CourseCode = N'PRO192'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'HCM202' AND r.CourseCode = N'MLN111'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'HCM202' AND r.CourseCode = N'MLN122'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'MLN131' AND r.CourseCode = N'MLN111'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'MLN131' AND r.CourseCode = N'MLN122'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'VNR202' AND r.CourseCode = N'MLN111'
+UNION ALL
+SELECT c.CourseId, r.CourseId, N'Prerequisite' FROM dbo.Course c CROSS JOIN dbo.Course r WHERE c.CourseCode = N'VNR202' AND r.CourseCode = N'MLN122'
+;
 GO
 
 /* -----------------------------------------------------------------------------
-   Curriculum - the Software Engineering study path
+   Curriculum - parsed from BIT_SE_K19D_K20A.json
    ----------------------------------------------------------------------------- */
 INSERT INTO dbo.Curriculum (MajorId, CourseId, TermNo, IsMandatory)
 SELECT m.MajorId, c.CourseId, k.TermNo, 1
 FROM (VALUES
-    (N'CSI104', 1), (N'PRF192', 1), (N'MAE101', 1), (N'CEA201', 1), (N'SSL101c',1),
-    (N'PRO192', 2), (N'MAD101', 2), (N'OSG202', 2), (N'NWC204', 2), (N'SSG104', 2),
-    (N'CSD201', 3), (N'DBI202', 3), (N'LAB211', 3), (N'WED201c',3), (N'IOT102', 3),
-    (N'PRJ301', 4), (N'SWE201c',4), (N'MAS291', 4), (N'ITE302c',4),
-    (N'PRN212', 5), (N'SWP391', 5), (N'SWT301', 5),
-    (N'PRN222', 6), (N'SWR302', 6), (N'SDN302', 6),
-    (N'PMG201c',7), (N'EXE101', 7), (N'MLN111', 7),
-    (N'OJT202', 8),
-    (N'SEP490', 9), (N'EXE201', 9)
+    (N'OTP101', 0),
+    (N'PEN', 0),
+    (N'PHE_COM*1', 0),
+    (N'TMI_ELE', 0),
+    (N'CEA201', 1),
+    (N'CSI106', 1),
+    (N'MAE101', 1),
+    (N'PHE_COM*2', 1),
+    (N'PRF192', 1),
+    (N'SSL101c', 1),
+    (N'MAD101', 2),
+    (N'NWC204', 2),
+    (N'OSG202', 2),
+    (N'PHE_COM*3', 2),
+    (N'PRO192', 2),
+    (N'WED201c', 2),
+    (N'CSD201', 3),
+    (N'DBI202', 3),
+    (N'JPD113', 3),
+    (N'LAB211', 3),
+    (N'MAS291', 3),
+    (N'IOT102', 4),
+    (N'JPD123', 4),
+    (N'PRJ301', 4),
+    (N'SSG104', 4),
+    (N'SWE202c', 4),
+    (N'SE_COM*1', 5),
+    (N'SWP391', 5),
+    (N'SWR302', 5),
+    (N'SWT301', 5),
+    (N'WDU203c', 5),
+    (N'ENW493c', 6),
+    (N'OJT202', 6),
+    (N'EXE101', 7),
+    (N'PMG201c', 7),
+    (N'SE_COM*2', 7),
+    (N'SE_COM*3', 7),
+    (N'SWD392', 7),
+    (N'EXE201', 8),
+    (N'ITE302c', 8),
+    (N'MLN111', 8),
+    (N'MLN122', 8),
+    (N'PRM393', 8),
+    (N'SE_COM*4_ELE', 8),
+    (N'HCM202', 9),
+    (N'MLN131', 9),
+    (N'SE_GRA_ELE', 9),
+    (N'VNR202', 9)
 ) AS k(CourseCode, TermNo)
 JOIN dbo.Course c ON c.CourseCode = k.CourseCode
 CROSS JOIN dbo.Major m
@@ -215,53 +583,3 @@ GO
 COMMIT TRANSACTION;
 GO
 
-/* =============================================================================
-   Self-checks - far better to fail loudly here than to render wrong numbers
-   ============================================================================= */
-
--- 1. Assessment weights of EVERY course must add up to exactly 1.00
-IF EXISTS (
-    SELECT 1 FROM dbo.Assessment
-    GROUP BY CourseId
-    HAVING ABS(SUM(Weight) - 1.0) > 0.0001
-)
-BEGIN
-    THROW 50001, N'[02_seed] FAILED: a course has assessment weights that do not sum to 1.00.', 1;
-END
-
--- 2. Major.RequiredCredits must equal the total credits of its curriculum
-IF EXISTS (
-    SELECT 1
-    FROM dbo.Major m
-    JOIN (
-        SELECT cu.MajorId, SUM(c.Credits) AS TotalCredits
-        FROM dbo.Curriculum cu
-        JOIN dbo.Course c ON c.CourseId = cu.CourseId
-        GROUP BY cu.MajorId
-    ) t ON t.MajorId = m.MajorId
-    WHERE t.TotalCredits <> m.RequiredCredits
-)
-BEGIN
-    THROW 50002, N'[02_seed] FAILED: Major.RequiredCredits does not match the curriculum total.', 1;
-END
-
--- 3. The grade scale must cover [0, 10] with no gap and no overlap
-IF EXISTS (
-    SELECT 1
-    FROM dbo.GradeScale g
-    LEFT JOIN dbo.GradeScale n ON n.MinScore = g.MaxScore
-    WHERE g.MaxScore <= 10.00 AND n.GradeScaleId IS NULL
-)
-BEGIN
-    THROW 50003, N'[02_seed] FAILED: the grade scale has a gap or an overlap.', 1;
-END
-
--- 4. Exactly one semester may be flagged as current
-IF (SELECT COUNT(*) FROM dbo.Semester WHERE IsCurrent = 1) <> 1
-BEGIN
-    THROW 50004, N'[02_seed] FAILED: exactly one semester must have IsCurrent = 1.', 1;
-END
-GO
-
-PRINT '[02_seed_master] OK - reference data loaded and 4 self-checks passed.';
-GO

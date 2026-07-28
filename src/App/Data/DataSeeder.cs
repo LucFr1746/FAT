@@ -15,15 +15,15 @@ namespace Data;
 /// </summary>
 public static class DataSeeder
 {
-    public static async Task SeedCurriculumIfEmptyAsync(FAT_DBContext db, CancellationToken cancellationToken = default)
+    public static async Task SeedCurriculumIfEmptyAsync(FAT_DBContext db, bool forceImport = false, CancellationToken cancellationToken = default)
     {
         if (db == null)
         {
             return;
         }
 
-        // Seeder condition: Only run when no curriculum items exist in database
-        if (await db.CurriculumItems.AnyAsync(cancellationToken))
+        // Seeder condition: Only run when no curriculum items exist in database (unless forceImport is true)
+        if (!forceImport && await db.CurriculumItems.CountAsync(cancellationToken) > 35)
         {
             return;
         }

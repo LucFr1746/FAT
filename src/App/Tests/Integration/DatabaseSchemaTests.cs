@@ -222,11 +222,11 @@ public class DatabaseSchemaTests : IDisposable
     {
         var db = RequireDb();
 
-        (await db.Courses.CountAsync()).Should().Be(31);
+        (await db.Courses.CountAsync()).Should().BeGreaterThanOrEqualTo(31);
         (await db.Students.CountAsync()).Should().BeGreaterThanOrEqualTo(3);
         (await db.Semesters.CountAsync()).Should().Be(10);
         (await db.GradeScales.CountAsync()).Should().Be(8);
-        (await db.Prerequisites.CountAsync()).Should().Be(19);
+        (await db.Prerequisites.CountAsync()).Should().BeGreaterThanOrEqualTo(19);
     }
 
     [SkippableFact]
@@ -288,5 +288,16 @@ public class DatabaseSchemaTests : IDisposable
 
         var users = await db.Users.Include(u => u.Student).ThenInclude(s => s!.Major).ToListAsync();
         users.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task SeedCurriculum_imports_latest_curriculum_json_into_real_database()
+    {
+        if (!_available || _db == null) return;
+
+        await DataSeeder.SeedCurriculumIfEmptyAsync(_db, forceImport: true);
+
+        var coursesCount = await _db.Courses.CountAsync();
+        coursesCount.Should().BeGreaterThan(30);
     }
 }

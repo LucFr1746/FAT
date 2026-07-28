@@ -32,6 +32,19 @@ public class UserService : IUserService
             return null;
         }
 
+        int termNo = student.CurrentTermNo ?? 1;
+        if (!student.CurrentTermNo.HasValue && !string.IsNullOrWhiteSpace(student.CurrentSemester) &&
+            student.CurrentSemester.StartsWith("Kỳ ", StringComparison.OrdinalIgnoreCase) &&
+            int.TryParse(student.CurrentSemester.Substring(3).Trim(), out var parsedTerm) &&
+            parsedTerm >= 1 && parsedTerm <= 9)
+        {
+            termNo = parsedTerm;
+        }
+
+        var semesterStr = !string.IsNullOrWhiteSpace(student.CurrentSemester)
+            ? student.CurrentSemester
+            : CatalogRules.GetTermName(termNo);
+
         return new StudentProfileDto(
             StudentId: student.StudentId,
             StudentCode: student.StudentCode,
@@ -46,10 +59,10 @@ public class UserService : IUserService
             MajorName: student.Major?.MajorName ?? string.Empty,
             Status: student.Status,
             Username: student.User?.Username ?? student.StudentCode,
-            CurrentSemester: string.IsNullOrWhiteSpace(student.CurrentSemester) ? "Kỳ 5" : student.CurrentSemester,
+            CurrentSemester: semesterStr,
             Campus: string.IsNullOrWhiteSpace(student.Campus) ? "Hồ Chí Minh" : student.Campus,
             IsProfileCompleted: student.IsProfileCompleted,
-            CurrentTermNo: student.CurrentTermNo ?? 1
+            CurrentTermNo: termNo
         );
     }
 

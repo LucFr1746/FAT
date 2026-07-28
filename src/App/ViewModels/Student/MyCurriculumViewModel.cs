@@ -140,7 +140,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
             }
         });
 
-        await LoadCurriculumAsync(cancellationToken);
+        await LoadCurriculumForTermAsync(requestedTermNo: 0, cancellationToken);
     }
 
     [ObservableProperty]
@@ -186,14 +186,9 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
     }
 
     /// <summary>
-    /// Loads the kỳ the student is currently in.
-    ///
-    /// The student's own major and kỳ are read from their profile rather than
-    /// passed in as navigation parameters - a screen that decides whose data it
-    /// shows is one wrong argument away from exposing another student's record.
+    /// Loads the kỳ requested (or student profile term if 0).
     /// </summary>
-    [RelayCommand]
-    private async Task LoadCurriculumAsync(CancellationToken cancellationToken = default)
+    private async Task LoadCurriculumForTermAsync(int requestedTermNo = 0, CancellationToken cancellationToken = default)
     {
         if (_currentUser.StudentId is not int studentId)
         {
@@ -208,7 +203,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
                 StatusMessage = null;
 
                 var curriculum = await _studentCurriculum.GetTermCurriculumAsync(
-                    studentId, SelectedTermNo, cancellationToken);
+                    studentId, requestedTermNo, cancellationToken);
 
                 Curriculum = curriculum;
                 Progress = curriculum.Progress;
@@ -234,6 +229,12 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
         });
 
         OnPropertyChanged(nameof(IsEmpty));
+    }
+
+    [RelayCommand]
+    private async Task LoadCurriculumAsync(CancellationToken cancellationToken = default)
+    {
+        await LoadCurriculumForTermAsync(SelectedTermNo, cancellationToken);
     }
 
     [RelayCommand]
@@ -267,11 +268,10 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
         await RunBusyAsync(async () =>
         {
             await _studentCurriculum.SetMajorAsync(studentId, SelectedMajor.MajorId);
-            SelectedTermNo = 0;
             StatusMessage = $"Đã chuyển sang ngành '{SelectedMajor.MajorCode}'.";
         });
 
-        await LoadCurriculumAsync();
+        await LoadCurriculumForTermAsync(requestedTermNo: 0);
     }
 
     [RelayCommand]
@@ -282,8 +282,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
             return;
         }
 
-        await RunBusyAsync(() => _studentCurriculum.SetCurrentTermAsync(studentId, SelectedTermNo));
-        await LoadCurriculumAsync();
+        await LoadCurriculumForTermAsync(SelectedTermNo);
     }
 
     [RelayCommand]
