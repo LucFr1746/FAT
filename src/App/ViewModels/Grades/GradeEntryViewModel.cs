@@ -35,12 +35,6 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
     private GradeAssessmentDto? _selectedAssessment;
 
     [ObservableProperty]
-    private ObservableCollection<GradeSemesterOptionDto> _semesters = [];
-
-    [ObservableProperty]
-    private GradeSemesterOptionDto? _selectedSemester;
-
-    [ObservableProperty]
     private string _scoreText = string.Empty;
 
     [ObservableProperty]
@@ -62,7 +56,7 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
     {
         _gradeService = gradeService ?? throw new ArgumentNullException(nameof(gradeService));
         _currentUser = currentUser ?? throw new ArgumentNullException(nameof(currentUser));
-        Title = "Manage Grades";
+        Title = "Nhập điểm";
     }
 
     public Task OnNavigatedToAsync(object? parameter, CancellationToken cancellationToken = default)
@@ -83,10 +77,6 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
         }
 
         SelectedAssessment = Assessments.FirstOrDefault();
-        SelectedSemester = value?.IsEnrolled == true
-            ? Semesters.FirstOrDefault(s => s.SemesterId == value.SemesterId)
-            : Semesters.FirstOrDefault(s => s.IsCurrent)
-                ?? Semesters.FirstOrDefault();
         OnPropertyChanged(nameof(HasAssessments));
     }
 
@@ -134,12 +124,6 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
             return;
         }
 
-        if (SelectedSemester is null)
-        {
-            ValidationMessage = "Học kỳ thực tế không được để trống.";
-            return;
-        }
-
         if (!TryParseScore(ScoreText, out var score))
         {
             ValidationMessage = "Điểm phải là một số hợp lệ.";
@@ -162,7 +146,6 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
         var enrollmentId = SelectedCourse.EnrollmentId;
         var courseId = SelectedCourse.CourseId;
         var assessmentId = SelectedAssessment.AssessmentId;
-        var semesterId = SelectedSemester.SemesterId;
 
         await RunBusyAsync(async () =>
         {
@@ -170,7 +153,6 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
                 studentId,
                 enrollmentId,
                 courseId,
-                semesterId,
                 assessmentId,
                 score,
                 cancellationToken);
@@ -253,19 +235,13 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
                 .Where(c => c.CanManageGrades)
                 .ToList();
 
-            var semesterOptions = await _gradeService.GetSemesterOptionsAsync(cancellationToken);
-            Semesters.Clear();
-            foreach (var semester in semesterOptions)
-            {
-                Semesters.Add(semester);
-            }
-
+            var termOptions = await _gradeService.GetTermOptionsAsync(studentId, cancellationToken);
             var selectedTermNo = SelectedTerm?.TermNo;
             Terms.Clear();
-            Terms.Add(new GradeTermOptionDto(null, "Tất cả 9 kỳ"));
-            for (var termNo = 1; termNo <= 9; termNo++)
+            Terms.Add(GradeTermOptionDto.All);
+            foreach (var term in termOptions)
             {
-                Terms.Add(new GradeTermOptionDto(termNo, $"Kỳ {termNo}"));
+                Terms.Add(term);
             }
 
             SelectedTerm = Terms.FirstOrDefault(t => t.TermNo == selectedTermNo)
@@ -278,7 +254,8 @@ public partial class GradeEntryViewModel : ViewModelBase, INavigationAware
             ValidationMessage = null;
             StatusMessage = preserveStatus
                 ? existingStatus
-                : $"Đã tải {_allCourses.Select(c => c.CourseId).Distinct().Count()} môn thuộc 9 kỳ.";
+                : $"Đã tải {_allCourses.Select(c => c.CourseId).Distinct().Count()} môn " +
+                  $"thuộc {termOptions.Count} học kỳ.";
             OnPropertyChanged(nameof(HasCourses));
             OnPropertyChanged(nameof(HasAssessments));
         });

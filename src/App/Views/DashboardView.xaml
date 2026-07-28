@@ -181,15 +181,11 @@
                             </Border.Effect>
                             <StackPanel>
                                 <Button Command="{Binding SwitchTabCommand}" CommandParameter="ViewGrades"
-                                        Content="📋  View Grades" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                        Content="📋  Xem điểm" Style="{StaticResource PopupMenuItemButtonStyle}"/>
                                 <Button Command="{Binding SwitchTabCommand}" CommandParameter="ManageGrades"
-                                        Content="✏️  Manage Grades" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                        Content="✏️  Nhập điểm" Style="{StaticResource PopupMenuItemButtonStyle}"/>
                                 <Button Command="{Binding SwitchTabCommand}" CommandParameter="GpaCalculator"
-                                        Content="🧮  GPA Calculator" Style="{StaticResource PopupMenuItemButtonStyle}"/>
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Transcript"
-                                        Content="📜  Transcript" Style="{StaticResource PopupMenuItemButtonStyle}"/>
-                                <Button Command="{Binding SwitchTabCommand}" CommandParameter="Statistics"
-                                        Content="📊  Statistics" Style="{StaticResource PopupMenuItemButtonStyle}"/>
+                                        Content="🧮  GPA" Style="{StaticResource PopupMenuItemButtonStyle}"/>
                             </StackPanel>
                         </Border>
                     </Popup>

@@ -113,6 +113,29 @@ public class GradeServiceTests
     }
 
     [Fact]
+    public async Task GetGradesAsync_loads_only_the_assessment_metadata_needed_by_grade()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var setup = CreateEnrollment(db);
+        var assessment = AddAssessment(
+            db,
+            setup.CourseId,
+            "Final exam",
+            1m,
+            minScore: 4m);
+        var service = CreateService(db, setup.StudentId);
+        await service.UpsertGradeAsync(setup.EnrollmentId, assessment.AssessmentId, 8m);
+
+        var grade = (await service.GetGradesAsync(setup.EnrollmentId)).Single();
+
+        grade.Score.Should().Be(8m);
+        grade.Assessment.Should().NotBeNull();
+        grade.Assessment!.Name.Should().Be("Final exam");
+        grade.Assessment.Weight.Should().Be(1m);
+        grade.Assessment.MinScoreToPass.Should().Be(4m);
+    }
+
+    [Fact]
     public async Task GetStudentGradesAsync_is_null_safe_when_a_course_has_no_assessments()
     {
         using var db = TestDb.CreateWithReferenceData();
@@ -123,7 +146,7 @@ public class GradeServiceTests
 
         rows.Should().ContainSingle();
         rows[0].Assessments.Should().BeEmpty();
-        rows[0].StatusDisplay.Should().Be("Not Graded");
+        rows[0].StatusDisplay.Should().Be("Chưa có điểm");
         rows[0].FinalScoreDisplay.Should().Be("-");
     }
 
@@ -150,7 +173,7 @@ public class GradeServiceTests
         var before = await service.GetStudentGradesAsync(student.StudentId);
 
         before.Should().ContainSingle();
-        before[0].StatusDisplay.Should().Be("Not Graded");
+        before[0].StatusDisplay.Should().Be("Chưa có điểm");
         before[0].FinalScore.Should().BeNull();
 
         db.Grades.Add(new Grade
@@ -163,7 +186,7 @@ public class GradeServiceTests
         await db.SaveChangesAsync();
 
         var after = await service.GetStudentGradesAsync(student.StudentId);
-        after[0].StatusDisplay.Should().Be("Passed");
+        after[0].StatusDisplay.Should().Be("Đạt");
         after[0].FinalScore.Should().Be(8m);
     }
 
@@ -188,8 +211,84 @@ public class GradeServiceTests
         rows.Select(r => r.CurriculumTermNo).Should().BeEquivalentTo(
             Enumerable.Range(1, 9));
         rows.Should().OnlyContain(r => !r.IsEnrolled
-                                      && r.StatusDisplay == "Not Graded");
+                                      && r.StatusDisplay == "Chưa có điểm");
         (await db.Enrollments.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetTermOptionsAsync_reads_active_term_names_from_the_database()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var firstCourse = db.AddCourse("DBTERM1");
+        var secondCourse = db.AddCourse("DBTERM2");
+        db.AddCurriculumItem(major.MajorId, firstCourse.CourseId, termNo: 1);
+        db.AddCurriculumItem(major.MajorId, secondCourse.CourseId, termNo: 2);
+
+        (await db.Terms.SingleAsync(t => t.TermNo == 1)).TermName = "Giai đoạn nền tảng";
+        (await db.Terms.SingleAsync(t => t.TermNo == 2)).IsActive = false;
+        await db.SaveChangesAsync();
+
+        var options = await CreateService(db, student.StudentId)
+            .GetTermOptionsAsync(student.StudentId);
+
+        options.Should().ContainSingle();
+        options[0].TermNo.Should().Be(1);
+        options[0].Display.Should().Be("Giai đoạn nền tảng");
+    }
+
+    [Fact]
+    public async Task GetStudentGradesAsync_uses_the_term_name_stored_in_the_database()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("DBNAME1");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+
+        (await db.Terms.SingleAsync(t => t.TermNo == 1)).TermName = "Học kỳ cơ sở";
+        await db.SaveChangesAsync();
+
+        var row = (await CreateService(db, student.StudentId)
+                .GetStudentGradesAsync(student.StudentId))
+            .Single();
+
+        row.CurriculumTermDisplay.Should().Be("Học kỳ cơ sở");
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task Grade_screens_repair_utf8_term_zero_names_misread_as_windows1252(
+        int encodingPasses)
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("UTF8101");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 0);
+
+        const string expectedTermName = "Kỳ 0 (Định hướng)";
+        System.Text.Encoding.RegisterProvider(
+            System.Text.CodePagesEncodingProvider.Instance);
+        var windows1252 = System.Text.Encoding.GetEncoding(1252);
+        var mojibakeTermName = expectedTermName;
+        for (var pass = 0; pass < encodingPasses; pass++)
+        {
+            mojibakeTermName = windows1252.GetString(
+                System.Text.Encoding.UTF8.GetBytes(mojibakeTermName));
+        }
+
+        (await db.Terms.SingleAsync(t => t.TermNo == 0)).TermName = mojibakeTermName;
+        await db.SaveChangesAsync();
+        var service = CreateService(db, student.StudentId);
+
+        var option = (await service.GetTermOptionsAsync(student.StudentId)).Single();
+        var row = (await service.GetStudentGradesAsync(student.StudentId)).Single();
+
+        option.Display.Should().Be(expectedTermName);
+        row.CurriculumTermDisplay.Should().Be(expectedTermName);
     }
 
     [Fact]
@@ -220,6 +319,57 @@ public class GradeServiceTests
         rows.Should().ContainSingle();
         rows[0].IsEnrolled.Should().BeTrue();
         rows[0].FinalScore.Should().Be(8m);
+    }
+
+    [Fact]
+    public async Task Simplified_grade_entry_uses_the_current_database_semester()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("CURRENT1");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+        db.AddSemester("OLD24", 1);
+        var currentSemester = db.AddSemester("NOW25", 2, isCurrent: true);
+        var assessment = AddAssessment(db, course.CourseId, "Final exam", 1m);
+
+        var enrollmentId = await CreateService(db, student.StudentId)
+            .UpsertStudentGradeAsync(
+                student.StudentId,
+                enrollmentId: 0,
+                course.CourseId,
+                assessment.AssessmentId,
+                score: 8m);
+
+        enrollmentId.Should().BeGreaterThan(0);
+        (await db.Enrollments.SingleAsync()).SemesterId
+            .Should().Be(currentSemester.SemesterId);
+        (await db.Grades.SingleAsync()).Score.Should().Be(8m);
+    }
+
+    [Fact]
+    public async Task Simplified_grade_entry_requires_a_current_database_semester()
+    {
+        using var db = TestDb.CreateWithReferenceData();
+        var major = db.AddMajor();
+        var student = db.AddStudent(major.MajorId);
+        var course = db.AddCourse("NOCURRENT");
+        db.AddCurriculumItem(major.MajorId, course.CourseId, termNo: 1);
+        db.AddSemester("OLD24", 1);
+        var assessment = AddAssessment(db, course.CourseId, "Final exam", 1m);
+
+        var act = () => CreateService(db, student.StudentId)
+            .UpsertStudentGradeAsync(
+                student.StudentId,
+                enrollmentId: 0,
+                course.CourseId,
+                assessment.AssessmentId,
+                score: 8m);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*học kỳ hiện tại*");
+        (await db.Enrollments.CountAsync()).Should().Be(0);
+        (await db.Grades.CountAsync()).Should().Be(0);
     }
 
     [Theory]

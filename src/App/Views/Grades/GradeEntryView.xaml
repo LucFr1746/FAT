@@ -20,8 +20,8 @@
 
             <Grid Grid.Row="0" Margin="0,0,0,18">
                 <StackPanel>
-                    <TextBlock Text="Manage Grades" Style="{StaticResource PageTitleStyle}" />
-                    <TextBlock Text="Thêm, sửa hoặc xóa điểm trên các assessment đã có trong hệ thống."
+                    <TextBlock Text="Nhập điểm" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="Chọn học kỳ, môn học và assessment rồi nhập điểm từ 0 đến 10."
                                Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0" />
                 </StackPanel>
                 <Button Content="Làm mới" Command="{Binding RefreshCommand}"
@@ -62,7 +62,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="Chọn môn và assessment"
+                        <TextBlock Text="1. Chọn môn và assessment"
                                    Style="{StaticResource SectionTitleStyle}" />
                         <ComboBox Grid.Row="1"
                                   ItemsSource="{Binding Terms}"
@@ -102,7 +102,8 @@
 
                 <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="{Binding EditModeLabel}" Style="{StaticResource SectionTitleStyle}" />
+                        <TextBlock Text="{Binding EditModeLabel, StringFormat=2. {0}}"
+                                   Style="{StaticResource SectionTitleStyle}" />
 
                         <TextBlock Text="Môn học" Style="{StaticResource FieldLabelStyle}" />
                         <TextBlock Text="{Binding SelectedCourse.CourseCode, TargetNullValue=-}"
@@ -117,19 +118,6 @@
                         <TextBlock Text="{Binding SelectedAssessment.WeightPercent, StringFormat={}{0:0.##}%}"
                                    Foreground="{StaticResource TextBrush}" Margin="0,0,0,12" />
 
-                        <TextBlock Text="Học kỳ thực tế" Style="{StaticResource FieldLabelStyle}" />
-                        <ComboBox ItemsSource="{Binding Semesters}"
-                                  SelectedItem="{Binding SelectedSemester}"
-                                  DisplayMemberPath="Display"
-                                  IsEnabled="{Binding SelectedCourse.CanChooseSemester}"
-                                  Style="{StaticResource CatalogComboBoxStyle}"
-                                  Margin="0,0,0,6" />
-                        <TextBlock Text="Chọn học kỳ khi nhập điểm lần đầu cho môn chưa đăng ký."
-                                   Foreground="{StaticResource MutedTextBrush}"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Margin="0,0,0,12" />
-
                         <TextBlock Text="Điểm (0–10)" Style="{StaticResource FieldLabelStyle}" />
                         <TextBox Text="{Binding ScoreText, UpdateSourceTrigger=PropertyChanged}"
                                  Style="{StaticResource CatalogTextBoxStyle}"
@@ -141,7 +129,7 @@
                             <Button Content="Xóa" Command="{Binding DeleteCommand}"
                                     IsEnabled="{Binding CanDeleteSelected}"
                                     Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,8" />
-                            <Button Content="Lưu thay đổi" Command="{Binding SaveCommand}"
+                            <Button Content="Lưu điểm" Command="{Binding SaveCommand}"
                                     Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,0,8" />
                         </WrapPanel>
                     </StackPanel>

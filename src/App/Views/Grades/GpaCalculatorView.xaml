@@ -20,8 +20,8 @@
 
             <Grid Grid.Row="0" Margin="0,0,0,18">
                 <StackPanel>
-                    <TextBlock Text="GPA Calculator" Style="{StaticResource PageTitleStyle}" />
-                    <TextBlock Text="GPA thang 10 có trọng số tín chỉ, theo quy tắc hiện hữu của FAT."
+                    <TextBlock Text="GPA" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="Kết quả GPA theo học kỳ và tích lũy, có trọng số tín chỉ."
                                Style="{StaticResource PageSubtitleStyle}" Margin="0,4,0,0" />
                 </StackPanel>
                 <Button Content="Tính lại" Command="{Binding RefreshCommand}"
@@ -35,18 +35,11 @@
                            TextWrapping="Wrap" />
             </Border>
 
-            <UniformGrid Grid.Row="2" Columns="5" Margin="0,0,0,16">
+            <UniformGrid Grid.Row="2" Columns="3" Margin="0,0,0,16">
                 <Border Style="{StaticResource CardBorderStyle}" Margin="0,0,8,0">
                     <StackPanel>
                         <TextBlock Text="GPA tích lũy" Style="{StaticResource FieldLabelStyle}" />
                         <TextBlock Text="{Binding CumulativeGpaDisplay}" FontSize="26"
-                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0">
-                    <StackPanel>
-                        <TextBlock Text="Tín chỉ tính GPA" Style="{StaticResource FieldLabelStyle}" />
-                        <TextBlock Text="{Binding GpaCredits}" FontSize="26"
                                    FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
                     </StackPanel>
                 </Border>
@@ -58,13 +51,6 @@
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource CardBorderStyle}" Margin="8,0">
-                    <StackPanel>
-                        <TextBlock Text="Đang học" Style="{StaticResource FieldLabelStyle}" />
-                        <TextBlock Text="{Binding InProgressCredits}" FontSize="26"
-                                   FontWeight="ExtraBold" Foreground="{StaticResource TextBrush}" />
-                    </StackPanel>
-                </Border>
-                <Border Style="{StaticResource CardBorderStyle}" Margin="8,0,0,0">
                     <StackPanel>
                         <TextBlock Text="Tín chỉ chưa đạt" Style="{StaticResource FieldLabelStyle}" />
                         <TextBlock Text="{Binding FailedCredits}" FontSize="26"
