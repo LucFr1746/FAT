@@ -324,6 +324,57 @@ public class AuthServiceTests
         var loginResult = await authService.LoginAsync("SE170088", "NewSecret@2026");
         Assert.True(loginResult.IsSuccess);
     }
+
+    [Fact]
+    public async Task UpdateProfileAsync_GoogleLinkedAccount_PreventsEmailModification()
+    {
+        // Arrange
+        using var db = CreateInMemoryDbContext();
+        var user = new Domain.Entities.AppUser
+        {
+            Username = "SE170555",
+            GoogleId = "google_user_12345",
+            RoleId = 2,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Users.Add(user);
+        var student = new Domain.Entities.Student
+        {
+            UserId = user.UserId,
+            StudentCode = "SE170555",
+            FullName = "Sinh Viên Google",
+            Email = "google.verified@fpt.edu.vn",
+            EnrollmentDate = DateTime.Today,
+            MajorId = 1,
+            IsProfileCompleted = true
+        };
+        db.Students.Add(student);
+        await db.SaveChangesAsync();
+
+        var userService = new UserService(db);
+
+        // Verify GetProfileAsync returns IsGoogleLinked = true
+        var profile = await userService.GetProfileAsync(student.StudentId);
+        Assert.NotNull(profile);
+        Assert.True(profile.IsGoogleLinked);
+
+        // Act - Attempt to update profile with a different email
+        await userService.UpdateProfileAsync(
+            studentId: student.StudentId,
+            fullName: "Sinh Viên Google Updated",
+            email: "hacker.newemail@gmail.com",
+            dateOfBirth: new DateTime(2003, 5, 10),
+            currentSemester: "Kỳ 6",
+            selectedMajor: "Software Engineering",
+            campus: "Hồ Chí Minh");
+
+        // Assert - Email remains unchanged because account is Google linked
+        var updatedProfile = await userService.GetProfileAsync(student.StudentId);
+        Assert.NotNull(updatedProfile);
+        Assert.Equal("Sinh Viên Google Updated", updatedProfile.FullName);
+        Assert.Equal("google.verified@fpt.edu.vn", updatedProfile.Email);
+    }
 }
 
 
