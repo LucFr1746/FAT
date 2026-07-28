@@ -7,7 +7,7 @@
         WindowStartupLocation="CenterScreen"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
-        FontFamily="Arial">
+        FontFamily="Segoe UI, Arial">
 
     <!--
         Placeholder shell. The navigation rail and the ContentControl host are
