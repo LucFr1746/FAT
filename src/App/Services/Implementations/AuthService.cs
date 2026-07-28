@@ -348,7 +348,7 @@ public class AuthService : IAuthService
         }
 
         if (!System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[A-Z]") ||
-            !System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[!@#$%^&*(),.? logic :{}|<>]"))
+            !System.Text.RegularExpressions.Regex.IsMatch(newPassword, @"[!@#$%^&*(),.?:{}|<>]"))
         {
             return LoginResult.Failure("Mật khẩu mới phải có ít nhất 1 chữ hoa và 1 ký tự đặc biệt.");
         }
