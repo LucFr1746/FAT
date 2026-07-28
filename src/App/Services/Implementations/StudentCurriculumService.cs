@@ -244,7 +244,13 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             .OrderBy(a => a.DisplayOrder)
             .Select(a => new
             {
-                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.PartCount, a.MinScoreToPass, a.DisplayOrder
+                a.AssessmentId,
+                a.CourseId,
+                a.Name,
+                a.Weight,
+                a.PartCount,
+                a.MinScoreToPass,
+                a.DisplayOrder
             })
             .ToListAsync(cancellationToken);
 

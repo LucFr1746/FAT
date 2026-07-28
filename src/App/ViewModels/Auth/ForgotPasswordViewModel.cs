@@ -164,7 +164,10 @@ public partial class ForgotPasswordViewModel : ViewModelBase
     [RelayCommand]
     private async Task ResendOtpAsync()
     {
-        if (!CanResend) return;
+        if (!CanResend)
+        {
+            return;
+        }
 
         ErrorMessage = null;
         DevOtpNotice = null;
@@ -222,10 +225,7 @@ public partial class ForgotPasswordViewModel : ViewModelBase
 
     private void StopResendTimer()
     {
-        if (_countdownTimer != null)
-        {
-            _countdownTimer.Stop();
-            _countdownTimer = null;
-        }
+        _countdownTimer?.Stop();
+        _countdownTimer = null;
     }
 }
