@@ -129,11 +129,6 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
                 {
                     TermNumbers.Add(termNo);
                 }
-
-                if (SelectedTermNo <= 0)
-                {
-                    SelectedTermNo = 1;
-                }
             }
             catch (Exception ex)
             {
@@ -215,6 +210,7 @@ public partial class MyCurriculumViewModel : ViewModelBase, INavigationAware
                 Curriculum = curriculum;
                 Progress = curriculum.Progress;
                 SelectedMajor = Majors.FirstOrDefault(m => m.MajorId == curriculum.MajorId);
+                SelectedTermNo = curriculum.TermNo;
 
                 Subjects.Clear();
                 foreach (var subject in curriculum.Subjects)

@@ -68,6 +68,12 @@ public class UserService : IUserService
         if (!string.IsNullOrWhiteSpace(currentSemester))
         {
             student.CurrentSemester = currentSemester.Trim();
+            if (currentSemester.StartsWith("Kỳ ", StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(currentSemester.Substring(3).Trim(), out var parsedTermNo) &&
+                parsedTermNo >= 1 && parsedTermNo <= 9)
+            {
+                student.CurrentTermNo = parsedTermNo;
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(campus))

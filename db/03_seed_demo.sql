@@ -49,13 +49,13 @@ GO
 /* -----------------------------------------------------------------------------
    Student profiles
    ----------------------------------------------------------------------------- */
-INSERT INTO dbo.Student (UserId, StudentCode, FullName, Email, DateOfBirth, EnrollmentDate, MajorId, Status)
-SELECT au.UserId, s.StudentCode, s.FullName, s.Email, s.DateOfBirth, s.EnrollmentDate, m.MajorId, N'Active'
+INSERT INTO dbo.Student (UserId, StudentCode, FullName, Email, DateOfBirth, EnrollmentDate, MajorId, CurrentTermNo, CurrentSemester, Status)
+SELECT au.UserId, s.StudentCode, s.FullName, s.Email, s.DateOfBirth, s.EnrollmentDate, m.MajorId, s.CurrentTermNo, s.CurrentSemester, N'Active'
 FROM (VALUES
-    (N'student01', N'SE170001', N'Tran Nhat Long',  N'longtn.se170001@fpt.edu.vn', '2003-04-12', '2024-01-08'),
-    (N'student02', N'SE180002', N'Nguyen Minh Anh', N'anhnm.se180002@fpt.edu.vn',  '2004-09-30', '2025-01-06'),
-    (N'student03', N'SE190003', N'Le Hoang Phuc',   N'phuclh.se190003@fpt.edu.vn', '2005-11-21', '2026-01-05')
-) AS s(Username, StudentCode, FullName, Email, DateOfBirth, EnrollmentDate)
+    (N'student01', N'SE170001', N'Tran Nhat Long',  N'longtn.se170001@fpt.edu.vn', '2003-04-12', '2024-01-08', 8, N'Kỳ 8'),
+    (N'student02', N'SE180002', N'Nguyen Minh Anh', N'anhnm.se180002@fpt.edu.vn',  '2004-09-30', '2025-01-06', 5, N'Kỳ 5'),
+    (N'student03', N'SE190003', N'Le Hoang Phuc',   N'phuclh.se190003@fpt.edu.vn', '2005-11-21', '2026-01-05', 2, N'Kỳ 2')
+) AS s(Username, StudentCode, FullName, Email, DateOfBirth, EnrollmentDate, CurrentTermNo, CurrentSemester)
 JOIN dbo.AppUser au ON au.Username = s.Username
 CROSS JOIN dbo.Major m
 WHERE m.MajorCode = N'SE';

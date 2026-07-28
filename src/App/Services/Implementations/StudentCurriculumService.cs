@@ -40,6 +40,7 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             {
                 s.MajorId,
                 s.CurrentTermNo,
+                s.CurrentSemester,
                 MajorCode = s.Major != null ? s.Major.MajorCode : "",
                 MajorName = s.Major != null ? s.Major.MajorName : ""
             })
@@ -48,7 +49,30 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
 
         if (termNo <= 0)
         {
-            termNo = student.CurrentTermNo ?? 1;
+            if (student.CurrentTermNo.HasValue && student.CurrentTermNo.Value > 0)
+            {
+                termNo = student.CurrentTermNo.Value;
+            }
+            else if (!string.IsNullOrWhiteSpace(student.CurrentSemester) &&
+                     student.CurrentSemester.StartsWith("Kỳ ", StringComparison.OrdinalIgnoreCase) &&
+                     int.TryParse(student.CurrentSemester.Substring(3).Trim(), out var parsedTerm) &&
+                     parsedTerm >= 1 && parsedTerm <= 9)
+            {
+                termNo = parsedTerm;
+            }
+            else
+            {
+                var maxEnrolledTerm = await (
+                    from e in _db.Enrollments.AsNoTracking()
+                    where e.StudentId == studentId
+                    join ci in _db.CurriculumItems.AsNoTracking() on new { MajorId = student.MajorId, e.CourseId } equals new { ci.MajorId, ci.CourseId }
+                    select (int?)ci.TermNo
+                ).MaxAsync(cancellationToken);
+
+                termNo = (maxEnrolledTerm.HasValue && maxEnrolledTerm.Value > 0)
+                    ? Math.Min(maxEnrolledTerm.Value, CatalogRules.MaxTermNo)
+                    : 1;
+            }
         }
 
         var termName = await _db.Terms
