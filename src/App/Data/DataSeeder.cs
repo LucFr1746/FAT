@@ -41,7 +41,28 @@ public static class DataSeeder
 
     private static string? FindJsonFolderPath()
     {
-        var candidates = new[]
+        var fileCandidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "db", "data", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "db", "data", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "db", "data", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "db", "data", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(AppContext.BaseDirectory, "db", "data", "json", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(Directory.GetCurrentDirectory(), "db", "data", "json", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "db", "data", "json", "BIT_SE_K19D_K20A.json"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "db", "data", "json", "BIT_SE_K19D_K20A.json")
+        };
+
+        foreach (var candidate in fileCandidates)
+        {
+            var fullPath = Path.GetFullPath(candidate);
+            if (File.Exists(fullPath))
+            {
+                return fullPath;
+            }
+        }
+
+        var folderCandidates = new[]
         {
             Path.Combine(AppContext.BaseDirectory, "db", "data", "json"),
             Path.Combine(Directory.GetCurrentDirectory(), "db", "data", "json"),
@@ -49,7 +70,7 @@ public static class DataSeeder
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "db", "data", "json")
         };
 
-        foreach (var candidate in candidates)
+        foreach (var candidate in folderCandidates)
         {
             var fullPath = Path.GetFullPath(candidate);
             if (Directory.Exists(fullPath) && File.Exists(Path.Combine(fullPath, "subjects.json")))
