@@ -56,7 +56,8 @@ public sealed record FlmAssessmentRow(
     decimal WeightPercent,
     string? CompletionCriteria,
     bool IsSubComponent,
-    int DisplayOrder);
+    int DisplayOrder,
+    int PartCount = 1);
 
 /// <summary>One reading or link from the syllabus bibliography.</summary>
 public sealed record FlmMaterialRow(

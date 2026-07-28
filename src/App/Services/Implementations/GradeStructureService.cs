@@ -33,7 +33,7 @@ public sealed class GradeStructureService : IGradeStructureService
             .OrderBy(a => a.DisplayOrder)
             .ThenBy(a => a.Name)
             .Select(a => new AssessmentDto(
-                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder, 1))
+                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder, a.PartCount))
             .ToListAsync(cancellationToken);
 
     public async Task<int> CreateAsync(
@@ -57,6 +57,7 @@ public sealed class GradeStructureService : IGradeStructureService
             CourseId = assessment.CourseId,
             Name = name,
             Weight = Normalize(assessment.Weight),
+            PartCount = assessment.PartCount < 1 ? 1 : assessment.PartCount,
             MinScoreToPass = assessment.MinScoreToPass,
             DisplayOrder = assessment.DisplayOrder
         };
@@ -86,6 +87,7 @@ public sealed class GradeStructureService : IGradeStructureService
 
         entity.Name = name;
         entity.Weight = Normalize(assessment.Weight);
+        entity.PartCount = assessment.PartCount < 1 ? 1 : assessment.PartCount;
         entity.MinScoreToPass = assessment.MinScoreToPass;
         entity.DisplayOrder = assessment.DisplayOrder;
 

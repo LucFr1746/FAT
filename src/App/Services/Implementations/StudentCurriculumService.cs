@@ -244,7 +244,7 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             .OrderBy(a => a.DisplayOrder)
             .Select(a => new
             {
-                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder
+                a.AssessmentId, a.CourseId, a.Name, a.Weight, a.PartCount, a.MinScoreToPass, a.DisplayOrder
             })
             .ToListAsync(cancellationToken);
 
@@ -252,9 +252,10 @@ public sealed class StudentCurriculumService : IStudentCurriculumService
             .Select(a =>
             {
                 schedulePartCounts.TryGetValue(a.AssessmentId, out var count);
+                int effectivePartCount = a.PartCount > 1 ? a.PartCount : (count > 0 ? count : 1);
                 return new AssessmentDto(
                     a.AssessmentId, a.CourseId, a.Name, a.Weight, a.MinScoreToPass, a.DisplayOrder,
-                    PartCount: count > 0 ? count : 1);
+                    PartCount: effectivePartCount);
             })
             .ToList();
 

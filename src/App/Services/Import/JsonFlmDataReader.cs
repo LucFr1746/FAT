@@ -256,7 +256,8 @@ public sealed class JsonFlmDataReader : IFlmDataReader
                 WeightPercent: FlmValueParser.ParsePercent(Get(row, "weight")),
                 CompletionCriteria: FlmValueParser.Clean(Get(row, "completionCriteria")),
                 IsSubComponent: Get(row, "isSubComponent")?.Trim() == "1",
-                DisplayOrder: order));
+                DisplayOrder: order,
+                PartCount: FlmValueParser.ParseIntOrNull(Get(row, "part")) ?? 1));
         }
 
         return result;

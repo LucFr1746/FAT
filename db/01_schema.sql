@@ -318,6 +318,8 @@ CREATE TABLE dbo.Assessment
     Name           NVARCHAR(200) NOT NULL,
     -- Weight as a fraction: 0.30 means 30%. Components of one course sum to 1.
     Weight         DECIMAL(5,4)  NOT NULL,
+    -- Number of parts/assignments in this assessment category (default 1).
+    PartCount      INT           NOT NULL CONSTRAINT DF_Assessment_PartCount DEFAULT (1),
     -- Per-component minimum. Falling below it fails the course even when the
     -- weighted total is 5.0 or higher.
     MinScoreToPass DECIMAL(4,2)  NULL,
@@ -325,6 +327,7 @@ CREATE TABLE dbo.Assessment
     CONSTRAINT PK_Assessment        PRIMARY KEY (AssessmentId),
     CONSTRAINT UQ_Assessment_Name   UNIQUE (CourseId, Name),
     CONSTRAINT CK_Assessment_Weight CHECK (Weight > 0 AND Weight <= 1),
+    CONSTRAINT CK_Assessment_PartCount CHECK (PartCount >= 1),
     CONSTRAINT FK_Assessment_Course FOREIGN KEY (CourseId) REFERENCES dbo.Course (CourseId) ON DELETE CASCADE
 );
 GO

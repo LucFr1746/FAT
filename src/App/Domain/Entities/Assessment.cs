@@ -14,6 +14,9 @@ public class Assessment
     /// <summary>Weight expressed as a fraction: 0.40 means 40%.</summary>
     public decimal Weight { get; set; }
 
+    /// <summary>Number of parts/assignments in this assessment category (default 1).</summary>
+    public int PartCount { get; set; } = 1;
+
     /// <summary>
     /// Minimum score required on this component alone. Falling below it FAILS
     /// the course even when the weighted total is 5.0 or higher (the usual

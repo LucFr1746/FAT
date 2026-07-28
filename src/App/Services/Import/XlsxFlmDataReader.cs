@@ -222,7 +222,8 @@ public sealed class XlsxFlmDataReader : IFlmDataReader
                 WeightPercent: FlmValueParser.ParsePercent(Cell(row, 7)),
                 CompletionCriteria: FlmValueParser.Clean(Cell(row, 8)),
                 IsSubComponent: level is not null && !level.Equals("Chính", StringComparison.OrdinalIgnoreCase),
-                DisplayOrder: order));
+                DisplayOrder: order,
+                PartCount: FlmValueParser.ParseIntOrNull(Cell(row, 6)) ?? 1));
         }
 
         return result;

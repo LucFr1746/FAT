@@ -119,290 +119,290 @@ GO
 /* -----------------------------------------------------------------------------
    Assessment - parsed from BIT_SE_K19D_K20A.json
    ----------------------------------------------------------------------------- */
-INSERT INTO dbo.Assessment (CourseId, Name, Weight, MinScoreToPass, DisplayOrder)
-SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*1'
+INSERT INTO dbo.Assessment (CourseId, Name, Weight, PartCount, MinScoreToPass, DisplayOrder)
+SELECT CourseId, N'Final exam', 1.0, 1, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*1'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+SELECT CourseId, N'Assignment', 0.15, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
 UNION ALL
-SELECT CourseId, N'Participation', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+SELECT CourseId, N'Participation', 0.15, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.7, 4, 3 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
+SELECT CourseId, N'Final exam', 0.7, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'TMI_ELE'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CEA201'
+SELECT CourseId, N'Assignment', 0.2, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CEA201'
 UNION ALL
-SELECT CourseId, N'Exercises', 0.4, 0, 2 FROM dbo.Course WHERE CourseCode = N'CEA201'
+SELECT CourseId, N'Exercises', 0.4, 4, 0, 2 FROM dbo.Course WHERE CourseCode = N'CEA201'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'CEA201'
+SELECT CourseId, N'Final exam', 0.4, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'CEA201'
 UNION ALL
-SELECT CourseId, N'Group presentation', 0.1, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSI106'
+SELECT CourseId, N'Group presentation', 0.1, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSI106'
 UNION ALL
-SELECT CourseId, N'Lab', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSI106'
+SELECT CourseId, N'Lab', 0.2, 2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSI106'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSI106'
+SELECT CourseId, N'Progress Test', 0.3, 3, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSI106'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSI106'
+SELECT CourseId, N'Final exam', 0.4, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSI106'
 UNION ALL
-SELECT CourseId, N'Assignments/Exercises', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAE101'
+SELECT CourseId, N'Assignments/Exercises', 0.3, 3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAE101'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAE101'
+SELECT CourseId, N'Progress Test', 0.3, 3, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAE101'
 UNION ALL
-SELECT CourseId, N'Final Exam', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'MAE101'
+SELECT CourseId, N'Final Exam', 0.4, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'MAE101'
 UNION ALL
-SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*2'
+SELECT CourseId, N'Final exam', 1.0, 1, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*2'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRF192'
+SELECT CourseId, N'Assignment', 0.15, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRF192'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRF192'
+SELECT CourseId, N'Practical Exam', 0.3, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRF192'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRF192'
+SELECT CourseId, N'Progress test', 0.15, 2, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRF192'
 UNION ALL
-SELECT CourseId, N'Workshop', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRF192'
+SELECT CourseId, N'Workshop', 0.1, 5, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRF192'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRF192'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRF192'
 UNION ALL
-SELECT CourseId, N'Theoretical Exam (TE)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'SSL101c'
+SELECT CourseId, N'Theoretical Exam (TE)', 1.0, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'SSL101c'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAD101'
+SELECT CourseId, N'Progress Test', 0.3, 3, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAD101'
 UNION ALL
-SELECT CourseId, N'Assignments/Exercises', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAD101'
+SELECT CourseId, N'Assignments/Exercises', 0.2, 2, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAD101'
 UNION ALL
-SELECT CourseId, N'Programming Assignment', 0.1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAD101'
+SELECT CourseId, N'Programming Assignment', 0.1, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAD101'
 UNION ALL
-SELECT CourseId, N'Final Exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAD101'
+SELECT CourseId, N'Final Exam', 0.4, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAD101'
 UNION ALL
-SELECT CourseId, N'Lab', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'NWC204'
+SELECT CourseId, N'Lab', 0.2, 3, 0, 1 FROM dbo.Course WHERE CourseCode = N'NWC204'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'NWC204'
+SELECT CourseId, N'Progress Test', 0.2, 2, 0, 2 FROM dbo.Course WHERE CourseCode = N'NWC204'
 UNION ALL
-SELECT CourseId, N'Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'NWC204'
+SELECT CourseId, N'Project', 0.3, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'NWC204'
 UNION ALL
-SELECT CourseId, N'Final Exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'NWC204'
+SELECT CourseId, N'Final Exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'NWC204'
 UNION ALL
-SELECT CourseId, N'Lab', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'OSG202'
+SELECT CourseId, N'Lab', 0.2, 4, 0, 1 FROM dbo.Course WHERE CourseCode = N'OSG202'
 UNION ALL
-SELECT CourseId, N'Presentation', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'OSG202'
+SELECT CourseId, N'Presentation', 0.2, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'OSG202'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'OSG202'
+SELECT CourseId, N'Progress test', 0.2, 2, 0, 3 FROM dbo.Course WHERE CourseCode = N'OSG202'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'OSG202'
+SELECT CourseId, N'Final exam', 0.4, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'OSG202'
 UNION ALL
-SELECT CourseId, N'Final exam', 1.0, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*3'
+SELECT CourseId, N'Final exam', 1.0, 1, 5, 1 FROM dbo.Course WHERE CourseCode = N'PHE_COM*3'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRO192'
+SELECT CourseId, N'Assignment', 0.2, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRO192'
 UNION ALL
-SELECT CourseId, N'Lab', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRO192'
+SELECT CourseId, N'Lab', 0.1, 6, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRO192'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRO192'
+SELECT CourseId, N'Practical Exam', 0.3, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRO192'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRO192'
+SELECT CourseId, N'Progress Test', 0.1, 2, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRO192'
 UNION ALL
-SELECT CourseId, N'Final Exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRO192'
+SELECT CourseId, N'Final Exam', 0.3, 1, 4, 5 FROM dbo.Course WHERE CourseCode = N'PRO192'
 UNION ALL
-SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'WED201c'
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'WED201c'
 UNION ALL
-SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'WED201c'
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 1, 4, 2 FROM dbo.Course WHERE CourseCode = N'WED201c'
 UNION ALL
-SELECT CourseId, N'Progress test (PT)', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSD201'
+SELECT CourseId, N'Progress test (PT)', 0.2, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'CSD201'
 UNION ALL
-SELECT CourseId, N'Assignment (AS)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSD201'
+SELECT CourseId, N'Assignment (AS)', 0.2, 2, 0, 2 FROM dbo.Course WHERE CourseCode = N'CSD201'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSD201'
+SELECT CourseId, N'Practical Exam', 0.3, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'CSD201'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSD201'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'CSD201'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'DBI202'
+SELECT CourseId, N'Assignment', 0.2, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'DBI202'
 UNION ALL
-SELECT CourseId, N'Lab', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'DBI202'
+SELECT CourseId, N'Lab', 0.1, 5, 0, 2 FROM dbo.Course WHERE CourseCode = N'DBI202'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'DBI202'
+SELECT CourseId, N'Practical Exam', 0.3, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'DBI202'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'DBI202'
+SELECT CourseId, N'Progress test', 0.1, 2, 0, 4 FROM dbo.Course WHERE CourseCode = N'DBI202'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 5 FROM dbo.Course WHERE CourseCode = N'DBI202'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 5 FROM dbo.Course WHERE CourseCode = N'DBI202'
 UNION ALL
-SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD113'
+SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD113'
 UNION ALL
-SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD113'
+SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD113'
 UNION ALL
-SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD113'
+SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD113'
 UNION ALL
-SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD113'
+SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 1, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD113'
 UNION ALL
-SELECT CourseId, N'Course Completion', 1.0, NULL, 1 FROM dbo.Course WHERE CourseCode = N'LAB211'
+SELECT CourseId, N'Course Completion', 1.0, 1, NULL, 1 FROM dbo.Course WHERE CourseCode = N'LAB211'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAS291'
+SELECT CourseId, N'Assignment', 0.2, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MAS291'
 UNION ALL
-SELECT CourseId, N'Computer Project', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAS291'
+SELECT CourseId, N'Computer Project', 0.15, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MAS291'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAS291'
+SELECT CourseId, N'Progress Test', 0.3, 3, 0, 3 FROM dbo.Course WHERE CourseCode = N'MAS291'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.35, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAS291'
+SELECT CourseId, N'Final exam', 0.35, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'MAS291'
 UNION ALL
-SELECT CourseId, N'Active learning', 0.1, 0, 1 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'Active learning', 0.1, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'Final Project Presentation', 0.2, 4, 2 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'Final Project Presentation', 0.2, 1, 4, 2 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'On-Going Project Assessment', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'On-Going Project Assessment', 0.3, 2, 0, 3 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'Presentation', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'Presentation', 0.1, 1, 0, 4 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'Progress test (Practice/Exercises/Quiz)', 0.1, 0, 5 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'Progress test (Practice/Exercises/Quiz)', 0.1, 2, 0, 5 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.2, 4, 6 FROM dbo.Course WHERE CourseCode = N'IOT102'
+SELECT CourseId, N'Final exam', 0.2, 1, 4, 6 FROM dbo.Course WHERE CourseCode = N'IOT102'
 UNION ALL
-SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD123'
+SELECT CourseId, N'Small test (Kiểm tra nhỏ)', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'JPD123'
 UNION ALL
-SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD123'
+SELECT CourseId, N'Class Participation (Tham gia giờ học)', 0.15, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'JPD123'
 UNION ALL
-SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD123'
+SELECT CourseId, N'Final Exam - Written (Lý thuyết)', 0.15, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'JPD123'
 UNION ALL
-SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD123'
+SELECT CourseId, N'Final Exam - Speaking (Nói)', 0.3, 1, 0, 4 FROM dbo.Course WHERE CourseCode = N'JPD123'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.3, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Assignment', 0.3, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.3, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Practical Exam', 0.3, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Progress Test 1', 0.05, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Progress Test 1', 0.05, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Progress Test 2', 0.05, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Progress Test 2', 0.05, 1, 0, 4 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Workshop 1', 0.05, 0, 5 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Workshop 1', 0.05, 1, 0, 5 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Workshop 2', 0.05, 0, 6 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Workshop 2', 0.05, 1, 0, 6 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Final Exam', 0.2, 4, 7 FROM dbo.Course WHERE CourseCode = N'PRJ301'
+SELECT CourseId, N'Final Exam', 0.2, 1, 4, 7 FROM dbo.Course WHERE CourseCode = N'PRJ301'
 UNION ALL
-SELECT CourseId, N'Activity', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Activity', 0.15, 3, 0, 1 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'Group assignment (Group asm)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Group assignment (Group asm)', 0.2, 2, 0, 2 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'Group Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Group Project', 0.3, 3, 0, 3 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 4 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 4 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'Quiz', 0.05, 0, 5 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Quiz', 0.05, 1, 0, 5 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.2, 4, 6 FROM dbo.Course WHERE CourseCode = N'SSG104'
+SELECT CourseId, N'Final exam', 0.2, 1, 4, 6 FROM dbo.Course WHERE CourseCode = N'SSG104'
 UNION ALL
-SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'SWE202c'
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'SWE202c'
 UNION ALL
-SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'SWE202c'
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 1, 4, 2 FROM dbo.Course WHERE CourseCode = N'SWE202c'
 UNION ALL
-SELECT CourseId, N'Assessment 1 (Week 3)', 0.15, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWP391'
+SELECT CourseId, N'Assessment 1 (Week 3)', 0.15, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWP391'
 UNION ALL
-SELECT CourseId, N'Assessment 2 (Week 8)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWP391'
+SELECT CourseId, N'Assessment 2 (Week 8)', 0.2, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWP391'
 UNION ALL
-SELECT CourseId, N'Assessment 3 (Week 10)', 0.25, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWP391'
+SELECT CourseId, N'Assessment 3 (Week 10)', 0.25, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWP391'
 UNION ALL
-SELECT CourseId, N'Final Project Presentation', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWP391'
+SELECT CourseId, N'Final Project Presentation', 0.4, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWP391'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.2, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWR302'
+SELECT CourseId, N'Assignment', 0.2, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWR302'
 UNION ALL
-SELECT CourseId, N'LAB', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWR302'
+SELECT CourseId, N'LAB', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWR302'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWR302'
+SELECT CourseId, N'Progress Test', 0.2, 3, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWR302'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.25, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWR302'
+SELECT CourseId, N'Practical Exam', 0.25, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWR302'
 UNION ALL
-SELECT CourseId, N'Theory Exam', 0.25, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWR302'
+SELECT CourseId, N'Theory Exam', 0.25, 1, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWR302'
 UNION ALL
-SELECT CourseId, N'Lab', 0.25, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWT301'
+SELECT CourseId, N'Lab', 0.25, 4, 0, 1 FROM dbo.Course WHERE CourseCode = N'SWT301'
 UNION ALL
-SELECT CourseId, N'Presentation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWT301'
+SELECT CourseId, N'Presentation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWT301'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.15, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWT301'
+SELECT CourseId, N'Progress Test', 0.15, 3, 0, 3 FROM dbo.Course WHERE CourseCode = N'SWT301'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.25, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWT301'
+SELECT CourseId, N'Practical Exam', 0.25, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWT301'
 UNION ALL
-SELECT CourseId, N'Theory Exam', 0.25, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWT301'
+SELECT CourseId, N'Theory Exam', 0.25, 1, 4, 5 FROM dbo.Course WHERE CourseCode = N'SWT301'
 UNION ALL
-SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'WDU203c'
+SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'WDU203c'
 UNION ALL
-SELECT CourseId, N'Final Exam', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'ENW493c'
+SELECT CourseId, N'Final Exam', 1.0, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'ENW493c'
 UNION ALL
-SELECT CourseId, N'Professional knowledge and skills', 0.4, 4, 1 FROM dbo.Course WHERE CourseCode = N'OJT202'
+SELECT CourseId, N'Professional knowledge and skills', 0.4, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'OJT202'
 UNION ALL
-SELECT CourseId, N'Soft skills', 0.3, 4, 2 FROM dbo.Course WHERE CourseCode = N'OJT202'
+SELECT CourseId, N'Soft skills', 0.3, 1, 4, 2 FROM dbo.Course WHERE CourseCode = N'OJT202'
 UNION ALL
-SELECT CourseId, N'Attitude', 0.3, 4, 3 FROM dbo.Course WHERE CourseCode = N'OJT202'
+SELECT CourseId, N'Attitude', 0.3, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'OJT202'
 UNION ALL
-SELECT CourseId, N'Constructivism Presentations', 0.15, 5, 1 FROM dbo.Course WHERE CourseCode = N'EXE101'
+SELECT CourseId, N'Constructivism Presentations', 0.15, 1, 5, 1 FROM dbo.Course WHERE CourseCode = N'EXE101'
 UNION ALL
-SELECT CourseId, N'Group Assignment 1 (Checkpoint 1)', 0.1, 5, 2 FROM dbo.Course WHERE CourseCode = N'EXE101'
+SELECT CourseId, N'Group Assignment 1 (Checkpoint 1)', 0.1, 1, 5, 2 FROM dbo.Course WHERE CourseCode = N'EXE101'
 UNION ALL
-SELECT CourseId, N'Group Assignment 2 (Checkpoint 2)', 0.2, 5, 3 FROM dbo.Course WHERE CourseCode = N'EXE101'
+SELECT CourseId, N'Group Assignment 2 (Checkpoint 2)', 0.2, 1, 5, 3 FROM dbo.Course WHERE CourseCode = N'EXE101'
 UNION ALL
-SELECT CourseId, N'Group Assignment 3 (Checkpoint 3)', 0.15, 5, 4 FROM dbo.Course WHERE CourseCode = N'EXE101'
+SELECT CourseId, N'Group Assignment 3 (Checkpoint 3)', 0.15, 1, 5, 4 FROM dbo.Course WHERE CourseCode = N'EXE101'
 UNION ALL
-SELECT CourseId, N'Presentation (Checkpoint 4)', 0.4, 5, 5 FROM dbo.Course WHERE CourseCode = N'EXE101'
+SELECT CourseId, N'Presentation (Checkpoint 4)', 0.4, 1, 5, 5 FROM dbo.Course WHERE CourseCode = N'EXE101'
 UNION ALL
-SELECT CourseId, N'PE (Practical Exam)', 0.5, 4, 1 FROM dbo.Course WHERE CourseCode = N'PMG201c'
+SELECT CourseId, N'PE (Practical Exam)', 0.5, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'PMG201c'
 UNION ALL
-SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 4, 2 FROM dbo.Course WHERE CourseCode = N'PMG201c'
+SELECT CourseId, N'TE (Theoretical Exam)', 0.5, 1, 4, 2 FROM dbo.Course WHERE CourseCode = N'PMG201c'
 UNION ALL
-SELECT CourseId, N'Course Project', 0.25, 5, 1 FROM dbo.Course WHERE CourseCode = N'SWD392'
+SELECT CourseId, N'Course Project', 0.25, 1, 5, 1 FROM dbo.Course WHERE CourseCode = N'SWD392'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWD392'
+SELECT CourseId, N'Progress test', 0.15, 3, 0, 2 FROM dbo.Course WHERE CourseCode = N'SWD392'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.2, 4, 3 FROM dbo.Course WHERE CourseCode = N'SWD392'
+SELECT CourseId, N'Practical Exam', 0.2, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'SWD392'
 UNION ALL
-SELECT CourseId, N'Theory Exam', 0.4, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWD392'
+SELECT CourseId, N'Theory Exam', 0.4, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'SWD392'
 UNION ALL
-SELECT CourseId, N'Outcome 1 (Product/Service)', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'EXE201'
+SELECT CourseId, N'Outcome 1 (Product/Service)', 0.4, 1, 0, 1 FROM dbo.Course WHERE CourseCode = N'EXE201'
 UNION ALL
-SELECT CourseId, N'Outcome 2 (Presentation)', 0.2, 0, 2 FROM dbo.Course WHERE CourseCode = N'EXE201'
+SELECT CourseId, N'Outcome 2 (Presentation)', 0.2, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'EXE201'
 UNION ALL
-SELECT CourseId, N'Outcome 3 (Sales Results)', 0.4, 4, 3 FROM dbo.Course WHERE CourseCode = N'EXE201'
+SELECT CourseId, N'Outcome 3 (Sales Results)', 0.4, 1, 4, 3 FROM dbo.Course WHERE CourseCode = N'EXE201'
 UNION ALL
-SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 4, 1 FROM dbo.Course WHERE CourseCode = N'ITE302c'
+SELECT CourseId, N'TE (Theoretical Exam)', 1.0, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'ITE302c'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN111'
+SELECT CourseId, N'Assignment', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN111'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN111'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN111'
 UNION ALL
-SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN111'
+SELECT CourseId, N'Progress tests', 0.2, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN111'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN111'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN111'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN122'
+SELECT CourseId, N'Assignment', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN122'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN122'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN122'
 UNION ALL
-SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN122'
+SELECT CourseId, N'Progress tests', 0.2, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN122'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN122'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN122'
 UNION ALL
-SELECT CourseId, N'Practical Exam', 0.25, 4, 1 FROM dbo.Course WHERE CourseCode = N'PRM393'
+SELECT CourseId, N'Practical Exam', 0.25, 1, 4, 1 FROM dbo.Course WHERE CourseCode = N'PRM393'
 UNION ALL
-SELECT CourseId, N'Progress Test', 0.15, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRM393'
+SELECT CourseId, N'Progress Test', 0.15, 3, 0, 2 FROM dbo.Course WHERE CourseCode = N'PRM393'
 UNION ALL
-SELECT CourseId, N'Project', 0.3, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRM393'
+SELECT CourseId, N'Project', 0.3, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'PRM393'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'PRM393'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'PRM393'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'HCM202'
+SELECT CourseId, N'Assignment', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'HCM202'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'HCM202'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'HCM202'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'HCM202'
+SELECT CourseId, N'Progress test', 0.2, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'HCM202'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'HCM202'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'HCM202'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN131'
+SELECT CourseId, N'Assignment', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'MLN131'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN131'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'MLN131'
 UNION ALL
-SELECT CourseId, N'Progress tests', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN131'
+SELECT CourseId, N'Progress tests', 0.2, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'MLN131'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN131'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'MLN131'
 UNION ALL
-SELECT CourseId, N'Assignment', 0.4, 0, 1 FROM dbo.Course WHERE CourseCode = N'VNR202'
+SELECT CourseId, N'Assignment', 0.4, 2, 0, 1 FROM dbo.Course WHERE CourseCode = N'VNR202'
 UNION ALL
-SELECT CourseId, N'Participation', 0.1, 0, 2 FROM dbo.Course WHERE CourseCode = N'VNR202'
+SELECT CourseId, N'Participation', 0.1, 1, 0, 2 FROM dbo.Course WHERE CourseCode = N'VNR202'
 UNION ALL
-SELECT CourseId, N'Progress test', 0.2, 0, 3 FROM dbo.Course WHERE CourseCode = N'VNR202'
+SELECT CourseId, N'Progress test', 0.2, 1, 0, 3 FROM dbo.Course WHERE CourseCode = N'VNR202'
 UNION ALL
-SELECT CourseId, N'Final exam', 0.3, 4, 4 FROM dbo.Course WHERE CourseCode = N'VNR202'
+SELECT CourseId, N'Final exam', 0.3, 1, 4, 4 FROM dbo.Course WHERE CourseCode = N'VNR202'
 ;
 GO
 

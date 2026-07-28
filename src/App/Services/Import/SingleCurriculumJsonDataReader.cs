@@ -143,6 +143,14 @@ public sealed class SingleCurriculumJsonDataReader : IFlmDataReader
                             ? wElem.GetDecimal()
                             : 0m;
 
+                        int partCount = component.TryGetProperty("part_count", out var pElem) && pElem.ValueKind == JsonValueKind.Number
+                            ? pElem.GetInt32()
+                            : 1;
+                        if (partCount < 1)
+                        {
+                            partCount = 1;
+                        }
+
                         string? criteria = component.TryGetProperty("completion_criteria", out var cElem)
                             ? cElem.GetString()
                             : null;
@@ -158,7 +166,8 @@ public sealed class SingleCurriculumJsonDataReader : IFlmDataReader
                             WeightPercent: weightPercent,
                             CompletionCriteria: criteria,
                             IsSubComponent: false,
-                            DisplayOrder: displayOrder++));
+                            DisplayOrder: displayOrder++,
+                            PartCount: partCount));
                     }
                 }
             }

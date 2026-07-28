@@ -399,10 +399,12 @@ public sealed partial class FlmImportService
                 }
 
                 var modified = assessment.Weight != weight
+                               || assessment.PartCount != row.PartCount
                                || assessment.MinScoreToPass != minScore
                                || assessment.DisplayOrder != row.DisplayOrder;
 
                 assessment.Weight = weight;
+                assessment.PartCount = row.PartCount;
                 assessment.MinScoreToPass = minScore;
                 assessment.DisplayOrder = row.DisplayOrder;
                 session.Assessments.CountUpsert(isNew: false, wasModified: modified);
@@ -414,6 +416,7 @@ public sealed partial class FlmImportService
                 CourseId = courseId,
                 Name = row.Category,
                 Weight = weight,
+                PartCount = row.PartCount,
                 MinScoreToPass = minScore,
                 DisplayOrder = row.DisplayOrder
             };

@@ -105,12 +105,16 @@ foreach ($s in $json.subjects) {
             if ($seenKeys.Add($key)) {
                 $catEsc = $cat.Replace("'", "''")
                 $weight = [Math]::Round([decimal]($a.weight_percent) / 100.0, 4)
+                $partCount = 1
+                if ($a.part_count -and [int]$a.part_count -ge 1) {
+                    $partCount = [int]$a.part_count
+                }
                 $minPass = "NULL"
                 if ($a.completion_criteria -and $a.completion_criteria -match ">=?\s*([0-9\.]+)") {
                     $val = $Matches[1]
                     $minPass = [string][decimal]$val
                 }
-                $assessRows += "SELECT CourseId, N'$catEsc', $weight, $minPass, $order FROM dbo.Course WHERE CourseCode = N'$code'"
+                $assessRows += "SELECT CourseId, N'$catEsc', $weight, $partCount, $minPass, $order FROM dbo.Course WHERE CourseCode = N'$code'"
                 $order++
             }
         }
@@ -118,7 +122,7 @@ foreach ($s in $json.subjects) {
 }
 
 if ($assessRows.Count -gt 0) {
-    [void]$sb.AppendLine("INSERT INTO dbo.Assessment (CourseId, Name, Weight, MinScoreToPass, DisplayOrder)")
+    [void]$sb.AppendLine("INSERT INTO dbo.Assessment (CourseId, Name, Weight, PartCount, MinScoreToPass, DisplayOrder)")
     [void]$sb.AppendLine(($assessRows -join "`nUNION ALL`n"))
     [void]$sb.AppendLine(";")
     [void]$sb.AppendLine("GO")
