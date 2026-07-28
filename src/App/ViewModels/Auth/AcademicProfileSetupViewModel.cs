@@ -222,11 +222,7 @@ public partial class AcademicProfileSetupViewModel : ViewModelBase, INavigationA
         {
             int.TryParse(SelectedTermOption.Replace("Kỳ ", "").Trim(), out termNo);
         }
-        if (termNo < 1 || termNo > 9)
-        {
-            termNo = 1;
-        }
-
+        if (termNo < 1 || termNo > 9) termNo = 1;
         SelectedTermNo = termNo;
 
         await RunBusyAsync(async () =>
